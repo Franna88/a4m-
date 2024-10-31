@@ -1,6 +1,7 @@
 import 'package:a4m/CommonComponents/CustomButton.dart';
 import 'package:a4m/CommonComponents/myTextFields.dart';
 import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Login/Tabs/StudentTab/studentSignUp.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -12,7 +13,7 @@ class StudentLoginTab extends StatefulWidget {
 }
 
 class _StudentLoginTabState extends State<StudentLoginTab> {
-  bool isSignUp = false; // Toggle between login and sign-up
+  bool isSignUp = false; 
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +22,7 @@ class _StudentLoginTabState extends State<StudentLoginTab> {
         // Display either the login or sign-up form based on `isSignUp`
         Expanded(
           child:
-              isSignUp ? const StudentSignUpView() : const StudentLoginView(),
+              isSignUp ? const StudentSignUp() : const StudentLoginView(),
         ),
 
         // Footer section: This stays consistent for both views
@@ -60,9 +61,14 @@ class _StudentLoginTabState extends State<StudentLoginTab> {
 }
 
 // Student Login View
-class StudentLoginView extends StatelessWidget {
+class StudentLoginView extends StatefulWidget {
   const StudentLoginView({super.key});
 
+  @override
+  State<StudentLoginView> createState() => _StudentLoginViewState();
+}
+
+class _StudentLoginViewState extends State<StudentLoginView> {
   @override
   Widget build(BuildContext context) {
     final emailController = TextEditingController();
@@ -107,14 +113,20 @@ class StudentLoginView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 5),
-        InkWell(
-          onTap: () {
-            // TO DO: Handle forgot password action
-          },
-          child: Text(
-            'Forgot Password?',
-            textAlign: TextAlign.right,
-            style: GoogleFonts.kanit(color: Mycolors().blue, fontSize: 12),
+        SizedBox(
+          width: 380,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: InkWell(
+              onTap: () {
+                // TO DO: Handle forgot password action
+              },
+              child: Text(
+                'Forgot Password?',
+                textAlign: TextAlign.right,
+                style: GoogleFonts.kanit(color: Mycolors().blue, fontSize: 12),
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 15),
@@ -141,118 +153,3 @@ class StudentLoginView extends StatelessWidget {
   }
 }
 
-// Student Sign Up View
-class StudentSignUpView extends StatefulWidget {
-  const StudentSignUpView({super.key});
-
-  @override
-  State<StudentSignUpView> createState() => _StudentSignUpViewState();
-}
-
-class _StudentSignUpViewState extends State<StudentSignUpView> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  final facilitatorCodeController = TextEditingController();
-  final nameController = TextEditingController();
-  final phoneNumController = TextEditingController();
-
-  bool isFirstStep = true;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          'Student Sign Up',
-          style: GoogleFonts.inter(
-            fontSize: 28,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        const SizedBox(height: 15),
-        Text(
-          'Please Enter your Details',
-          style: GoogleFonts.kanit(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 25),
-
-        // First Step: Full Name and Phone Number
-        if (isFirstStep) ...[
-          SizedBox(
-            width: 380,
-            child: MyTextFields(
-              inputController: nameController,
-              headerText: "Full Name",
-              hintText: 'Name and surname',
-              keyboardType: '',
-            ),
-          ),
-          const SizedBox(height: 15),
-          SizedBox(
-            width: 380,
-            child: MyTextFields(
-              inputController: phoneNumController,
-              headerText: "Phone Number",
-              hintText: '082 222 959 332',
-              keyboardType: 'intType',
-            ),
-          ),
-        ] else ...[
-          // Second Step: Email, Password, and Facilitator Code
-          SizedBox(
-            width: 380,
-            child: MyTextFields(
-              inputController: emailController,
-              headerText: "Email*",
-              hintText: 'Enter your email',
-              keyboardType: 'email',
-            ),
-          ),
-          const SizedBox(height: 15),
-          SizedBox(
-            width: 380,
-            child: MyTextFields(
-              inputController: passwordController,
-              headerText: "Password*",
-              hintText: 'Enter your password',
-              keyboardType: '',
-            ),
-          ),
-          const SizedBox(height: 15),
-          SizedBox(
-            width: 380,
-            child: MyTextFields(
-              inputController: facilitatorCodeController,
-              headerText: "Facilitator Code",
-              hintText: 'Enter facilitator code',
-              keyboardType: 'intType',
-              isOptional: true,
-            ),
-          ),
-        ],
-
-        const SizedBox(height: 25),
-        // "Next" or "Sign Up" Button
-        CustomButton(
-          buttonText: isFirstStep ? 'Next' : 'Sign Up',
-          buttonColor: Mycolors().blue,
-          onPressed: () {
-            if (isFirstStep) {
-              setState(() {
-                isFirstStep = false; // Move to the next step
-              });
-            } else {
-              // TO DO: Handle sign-up submission
-            }
-          },
-          width: 120,
-        ),
-
-        const SizedBox(height: 25),
-      ],
-    );
-  }
-}

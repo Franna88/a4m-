@@ -18,7 +18,7 @@ class _ContentDevSignUpState extends State<ContentDevSignUp> {
   final nameController = TextEditingController();
   final phoneNumController = TextEditingController();
 
-  bool isFirstStep = true; 
+  bool isFirstStep = true;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +40,7 @@ class _ContentDevSignUpState extends State<ContentDevSignUp> {
           ),
         ),
         const SizedBox(height: 25),
-        
+
         // First Step: Full Name and Phone Number
         if (isFirstStep) ...[
           SizedBox(
@@ -106,7 +106,7 @@ class _ContentDevSignUpState extends State<ContentDevSignUp> {
             ),
           ),
         ],
-        
+
         const SizedBox(height: 25),
         // "Next" or "Sign Up" Button
         CustomButton(
@@ -122,33 +122,6 @@ class _ContentDevSignUpState extends State<ContentDevSignUp> {
             }
           },
           width: 120,
-        ),
-        
-        const SizedBox(height: 25),
-        Container(
-          height: 180,
-          width: 500,
-          color: Mycolors().navyBlue,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Already Have an Account?',
-                  style: GoogleFonts.kanit(color: Colors.white, fontSize: 12),
-                ),
-                const SizedBox(height: 25),
-                CustomButton(
-                  buttonText: 'Login',
-                  buttonColor: Mycolors().green,
-                  onPressed: () {
-                    // TO DO: Navigate to login
-                  },
-                  width: 100,
-                ),
-              ],
-            ),
-          ),
         ),
       ],
     );

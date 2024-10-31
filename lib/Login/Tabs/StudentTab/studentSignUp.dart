@@ -114,32 +114,7 @@ class _StudentSignUpState extends State<StudentSignUp> {
           width: 120,
         ),
         
-        const SizedBox(height: 25),
-        Container(
-          height: 180,
-          width: 500,
-          color: Mycolors().navyBlue,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Already Have an Account?',
-                  style: GoogleFonts.kanit(color: Colors.white, fontSize: 12),
-                ),
-                const SizedBox(height: 25),
-                CustomButton(
-                  buttonText: 'Login',
-                  buttonColor: Mycolors().green,
-                  onPressed: () {
-                    // TO DO: Navigate to login
-                  },
-                  width: 100,
-                ),
-              ],
-            ),
-          ),
-        ),
+        
       ],
     );
   }
