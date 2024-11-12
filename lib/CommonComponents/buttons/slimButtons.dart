@@ -18,6 +18,7 @@ class SlimButtons extends StatelessWidget {
       onTap: onPressed,
       child: Container(
         height: 30,
+        width: customWidth,
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(5), color: buttonColor),
         child: Center(

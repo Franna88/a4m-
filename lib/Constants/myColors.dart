@@ -8,4 +8,6 @@ class Mycolors {
   final darkGrey = Color.fromRGBO(96, 96, 96, 1);
   final offWhite = Color.fromRGBO(236, 236, 236, 1);
   final darkTeal = Color.fromRGBO(3, 123, 110, 1);
+  final peach = Color.fromRGBO(245, 140, 111, 1);
+  final red = Color.fromRGBO(255, 106, 106, 1);
 }

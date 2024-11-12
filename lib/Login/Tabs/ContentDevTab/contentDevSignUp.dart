@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../CommonComponents/CustomButton.dart';
-import '../../../CommonComponents/myTextFields.dart';
+import '../../../CommonComponents/buttons/CustomButton.dart';
+import '../../../CommonComponents/inputFields/myTextFields.dart';
 import '../../../Constants/myColors.dart';
 
 class ContentDevSignUp extends StatefulWidget {

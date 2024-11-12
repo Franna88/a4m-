@@ -1,6 +1,6 @@
 import 'package:a4m/CommonComponents/A4mFooter.dart';
-import 'package:a4m/CommonComponents/myDropDownMenu.dart';
-import 'package:a4m/CommonComponents/mySearchBar.dart';
+import 'package:a4m/CommonComponents/inputFields/myDropDownMenu.dart';
+import 'package:a4m/CommonComponents/inputFields/mySearchBar.dart';
 import 'package:a4m/Constants/myColors.dart';
 import 'package:a4m/LandingPage/CourseListPage/ui/categoryNameStack.dart';
 import 'package:a4m/LandingPage/CourseListPage/ui/courseContainers.dart';

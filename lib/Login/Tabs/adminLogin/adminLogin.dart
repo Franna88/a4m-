@@ -1,5 +1,5 @@
-import 'package:a4m/CommonComponents/CustomButton.dart';
-import 'package:a4m/CommonComponents/myTextFields.dart';
+import 'package:a4m/CommonComponents/buttons/CustomButton.dart';
+import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
 import 'package:a4m/Constants/myColors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

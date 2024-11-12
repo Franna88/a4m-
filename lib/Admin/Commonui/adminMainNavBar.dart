@@ -1,17 +1,28 @@
-import 'package:a4m/Admin/Commonui/navButtons.dart';
+import 'package:a4m/CommonComponents/buttons/navButtons.dart';
 import 'package:a4m/Constants/myColors.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 
 class AdminMainNavBar extends StatefulWidget {
+  final Function(int) changePage;
   final Widget child;
-  const AdminMainNavBar({super.key, required this.child});
+  const AdminMainNavBar(
+      {super.key, required this.child, required this.changePage});
 
   @override
   State<AdminMainNavBar> createState() => _AdminMainNavBarState();
 }
 
 class _AdminMainNavBarState extends State<AdminMainNavBar> {
+  int activeIndex = 0;
+
+  void _handleItemClick(int index) {
+    setState(() {
+      activeIndex = index;
+    });
+    widget.changePage(index); // Notify the parent widget to change the page
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,42 +54,48 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
                 ),
                 NavButtons(
                   buttonText: 'Dashboard',
-                  onTap: () {},
+                  onTap: () => _handleItemClick(0),
+                  isActive: activeIndex == 0,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
                   buttonText: 'Courses',
-                  onTap: () {},
+                   onTap: () => _handleItemClick(1),
+                  isActive: activeIndex == 1,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
                   buttonText: 'Marketing',
-                  onTap: () {},
+                   onTap: () => _handleItemClick(2),
+                  isActive: activeIndex == 2,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
                   buttonText: 'A4M Members',
-                  onTap: () {},
+                   onTap: () => _handleItemClick(3),
+                  isActive: activeIndex == 3,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
                   buttonText: 'Certification',
-                  onTap: () {},
+                   onTap: () => _handleItemClick(4),
+                  isActive: activeIndex == 4,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
                   buttonText: 'Review Content',
-                  onTap: () {},
+                  onTap: () => _handleItemClick(5),
+                  isActive: activeIndex == 5,
                 ),
                 const Spacer(),
                 Container(
@@ -89,21 +106,24 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
                 const Spacer(),
                 NavButtons(
                   buttonText: 'Complaints/Suggestions',
-                  onTap: () {},
+                  onTap: () => _handleItemClick(6),
+                  isActive: activeIndex == 6,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
                   buttonText: 'Messages',
-                  onTap: () {},
+                  onTap: () => _handleItemClick(7),
+                  isActive: activeIndex == 7,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
                   buttonText: 'Curriculum Vitae',
-                  onTap: () {},
+                  onTap: () => _handleItemClick(8),
+                  isActive: activeIndex == 8,
                 ),
                 const SizedBox(
                   height: 25,
@@ -112,6 +132,7 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
             ),
           ),
           Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 color: Mycolors().darkGrey,

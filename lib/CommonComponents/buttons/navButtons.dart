@@ -5,14 +5,15 @@ import 'package:google_fonts/google_fonts.dart';
 class NavButtons extends StatefulWidget {
   final String buttonText;
   final Function() onTap;
-  const NavButtons({super.key, required this.buttonText, required this.onTap});
+  final bool isActive;
+  const NavButtons({super.key, required this.buttonText, required this.onTap, required this.isActive});
 
   @override
   State<NavButtons> createState() => _NavButtonsState();
 }
 
 class _NavButtonsState extends State<NavButtons> {
-  bool isSelected = false;
+  
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +23,7 @@ class _NavButtonsState extends State<NavButtons> {
         width: 220,
         height: 40,
         decoration: BoxDecoration(
-          color: isSelected ? Mycolors().green : Colors.white,
+          color: widget.isActive ? Mycolors().green : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             width: 2,
@@ -34,7 +35,7 @@ class _NavButtonsState extends State<NavButtons> {
             widget.buttonText,
             style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : Colors.black),
+                color: widget.isActive ? Colors.white : Colors.black),
           ),
         ),
       ),
