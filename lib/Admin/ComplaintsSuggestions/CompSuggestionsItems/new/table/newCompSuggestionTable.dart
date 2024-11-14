@@ -3,15 +3,14 @@ import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../../../Constants/myColors.dart';
+import '../../../../../Themes/Constants/myColors.dart';
 import '../../../../../../TableWidgets/tableStructure.dart';
 
 class NewCompSuggestionTable extends StatefulWidget {
   const NewCompSuggestionTable({super.key});
 
   @override
-  State<NewCompSuggestionTable> createState() =>
-      _NewCompSuggestionTableState();
+  State<NewCompSuggestionTable> createState() => _NewCompSuggestionTableState();
 }
 
 class _NewCompSuggestionTableState extends State<NewCompSuggestionTable> {
@@ -21,17 +20,14 @@ class _NewCompSuggestionTableState extends State<NewCompSuggestionTable> {
       {
         'from': 'James Harmse',
         'dateAdded': '2024-02-01',
-        
       },
       {
         'from': 'Anton Clark',
         'dateAdded': '2024-02-01',
-        
       },
       {
         'from': 'Kyle Arms',
         'dateAdded': '2024-02-01',
-        
       },
     ];
 
@@ -134,8 +130,9 @@ class _NewCompSuggestionTableState extends State<NewCompSuggestionTable> {
               ),
               TableStructure(
                 child: TableCell(
-                  child: CompSuggestionStatus(isResolved: true,)
-                ),
+                    child: CompSuggestionStatus(
+                  isResolved: true,
+                )),
               ),
               TableStructure(
                 child: TableCell(

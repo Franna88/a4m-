@@ -4,12 +4,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../CommonComponents/buttons/CustomButton.dart';
 import '../../../CommonComponents/inputFields/myTextFields.dart';
-import '../../../Constants/myColors.dart';
+import '../../../Themes/Constants/myColors.dart';
+
 class StudentSignUp extends StatefulWidget {
   const StudentSignUp({super.key});
   @override
   State<StudentSignUp> createState() => _StudentSignUpState();
 }
+
 class _StudentSignUpState extends State<StudentSignUp> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -74,6 +76,7 @@ class _StudentSignUpState extends State<StudentSignUp> {
       });
     }
   }
+
   // Method to show error dialogs
   void _showErrorDialog(String message) {
     showDialog(
@@ -92,6 +95,7 @@ class _StudentSignUpState extends State<StudentSignUp> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(

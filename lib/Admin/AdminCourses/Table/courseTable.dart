@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/TableWidgets/tableStructure.dart';
 
 class CourseTable extends StatefulWidget {
@@ -115,7 +115,7 @@ class _CourseTableState extends State<CourseTable> {
             decoration: BoxDecoration(
               color: index % 2 == 1
                   ? Colors.white
-                  : Color.fromRGBO(209, 210, 146, 0.50) ,
+                  : Color.fromRGBO(209, 210, 146, 0.50),
               border: Border(
                 bottom: BorderSide(width: 1, color: Colors.black),
               ),

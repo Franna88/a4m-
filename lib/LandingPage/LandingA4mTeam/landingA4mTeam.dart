@@ -1,4 +1,4 @@
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/LandingPage/LandingA4mTeam/signUpCards.dart';
 import 'package:a4m/LandingPage/LandingA4mTeam/ui/landingHeaderStacks.dart';
 import 'package:a4m/myutility.dart';
@@ -37,7 +37,8 @@ class _LandingA4mTeamState extends State<LandingA4mTeam> {
           const SizedBox(
             height: 80,
           ),
-          Row(mainAxisAlignment: MainAxisAlignment.center,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SignUpCards(
                 description:
@@ -47,7 +48,9 @@ class _LandingA4mTeamState extends State<LandingA4mTeam> {
                 onPressed: () {},
                 image: 'images/signUp1.png',
               ),
-              const SizedBox(width: 50,),
+              const SizedBox(
+                width: 50,
+              ),
               SignUpCards(
                 description:
                     'Create educational learning content and assignments for our students.',
@@ -56,7 +59,9 @@ class _LandingA4mTeamState extends State<LandingA4mTeam> {
                 onPressed: () {},
                 image: 'images/signUp2.png',
               ),
-              const SizedBox(width: 50,),
+              const SizedBox(
+                width: 50,
+              ),
               SignUpCards(
                 description:
                     'Create educational learning content and assignments for our students.',
@@ -65,7 +70,9 @@ class _LandingA4mTeamState extends State<LandingA4mTeam> {
                 onPressed: () {},
                 image: 'images/signUp3.png',
               ),
-              const SizedBox(width: 50,),
+              const SizedBox(
+                width: 50,
+              ),
               SignUpCards(
                 description:
                     'Create educational learning content and assignments for our students.',
@@ -74,7 +81,6 @@ class _LandingA4mTeamState extends State<LandingA4mTeam> {
                 onPressed: () {},
                 image: 'images/signUp3.png',
               ),
-              
             ],
           )
         ],

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../CommonComponents/displayCardIcons.dart';
-import '../../../Constants/myColors.dart';
+import '../../../Themes/Constants/myColors.dart';
 
 class MemberContainers extends StatefulWidget {
   final bool? isLecturer;
@@ -23,7 +23,8 @@ class MemberContainers extends StatefulWidget {
       required this.name,
       required this.number,
       this.studentAmount,
-      this.contentTotal, this.rating});
+      this.contentTotal,
+      this.rating});
 
   @override
   State<MemberContainers> createState() => _MemberContainersState();

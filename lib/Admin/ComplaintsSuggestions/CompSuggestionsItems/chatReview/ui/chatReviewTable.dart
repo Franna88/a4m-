@@ -3,7 +3,7 @@ import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../../../Constants/myColors.dart';
+import '../../../../../Themes/Constants/myColors.dart';
 import '../../../../../../TableWidgets/tableStructure.dart';
 import '../../../../../myutility.dart';
 
@@ -36,18 +36,18 @@ class _ChatReviewTableState extends State<ChatReviewTable> {
     ];
 
     return Container(
-       decoration: BoxDecoration(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(8),
-            topRight: Radius.circular(8),
-          ),
-          border: Border.all(
-            width: 2,
-            color: Colors.black,
-          ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(8),
+          topRight: Radius.circular(8),
         ),
-        width: MyUtility(context).width - 580,
-        height: MyUtility(context).height - 110,
+        border: Border.all(
+          width: 2,
+          color: Colors.black,
+        ),
+      ),
+      width: MyUtility(context).width - 580,
+      height: MyUtility(context).height - 110,
       child: Table(
         defaultVerticalAlignment: TableCellVerticalAlignment.middle,
         children: [

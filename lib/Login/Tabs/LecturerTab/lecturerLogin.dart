@@ -1,6 +1,6 @@
 import 'package:a4m/CommonComponents/buttons/CustomButton.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Login/Tabs/LecturerTab/lecturerSignUp.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,8 +21,7 @@ class _LecturerLoginState extends State<LecturerLogin> {
       children: [
         // Display either the login or sign-up form based on `isSignUp`
         Expanded(
-          child:
-              isSignUp ? const LecturerSignUp() : const LecturerLoginView(),
+          child: isSignUp ? const LecturerSignUp() : const LecturerLoginView(),
         ),
 
         // Footer section: This stays consistent for both views
@@ -70,12 +69,9 @@ class LecturerLoginView extends StatefulWidget {
 class _LecturerLoginViewState extends State<LecturerLoginView> {
   @override
   Widget build(BuildContext context) {
-
-
     final email = TextEditingController();
     final password = TextEditingController();
     final lecturerCode = TextEditingController();
-
 
     return Column(children: [
       Text(
@@ -164,5 +160,3 @@ class _LecturerLoginViewState extends State<LecturerLoginView> {
     ]);
   }
 }
-
-

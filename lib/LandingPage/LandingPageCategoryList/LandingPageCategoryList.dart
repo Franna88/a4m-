@@ -1,4 +1,4 @@
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/LandingPage/LandingPageCategoryList/ui/landingCategoryCards.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
@@ -35,7 +35,8 @@ class _LandingPageCategoryListState extends State<LandingPageCategoryList> {
           const SizedBox(
             height: 30,
           ),
-          Row(mainAxisAlignment: MainAxisAlignment.center,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               LandingCategoryCards(
                 image: 'images/categoryPlaceholder1.png',

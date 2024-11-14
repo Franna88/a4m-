@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../CommonComponents/buttons/CustomButton.dart';
 import '../../../CommonComponents/inputFields/myTextFields.dart';
-import '../../../Constants/myColors.dart';
+import '../../../Themes/Constants/myColors.dart';
 
 class ContentDevSignUp extends StatefulWidget {
   const ContentDevSignUp({super.key});

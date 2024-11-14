@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../CommonComponents/buttons/CustomButton.dart';
 import '../../../CommonComponents/inputFields/myTextFields.dart';
-import '../../../Constants/myColors.dart';
+import '../../../Themes/Constants/myColors.dart';
 
 class LecturerSignUp extends StatefulWidget {
   const LecturerSignUp({super.key});
@@ -18,7 +18,7 @@ class _LecturerSignUpState extends State<LecturerSignUp> {
   final nameController = TextEditingController();
   final phoneNumController = TextEditingController();
 
-  bool isFirstStep = true; 
+  bool isFirstStep = true;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +40,7 @@ class _LecturerSignUpState extends State<LecturerSignUp> {
           ),
         ),
         const SizedBox(height: 25),
-        
+
         // First Step: Full Name and Phone Number
         if (isFirstStep) ...[
           SizedBox(
@@ -106,7 +106,7 @@ class _LecturerSignUpState extends State<LecturerSignUp> {
             ),
           ),
         ],
-        
+
         const SizedBox(height: 25),
         // "Next" or "Sign Up" Button
         CustomButton(
@@ -123,8 +123,6 @@ class _LecturerSignUpState extends State<LecturerSignUp> {
           },
           width: 120,
         ),
-        
-       
       ],
     );
   }

@@ -3,17 +3,17 @@ import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 
-class AdminMainNavBar extends StatefulWidget {
+class ContentDevNavBar extends StatefulWidget {
   final Function(int) changePage;
   final Widget child;
-  const AdminMainNavBar(
+  const ContentDevNavBar(
       {super.key, required this.child, required this.changePage});
 
   @override
-  State<AdminMainNavBar> createState() => _AdminMainNavBarState();
+  State<ContentDevNavBar> createState() => _AdminMainNavBarState();
 }
 
-class _AdminMainNavBarState extends State<AdminMainNavBar> {
+class _AdminMainNavBarState extends State<ContentDevNavBar> {
   int activeIndex = 0;
 
   void _handleItemClick(int index) {
@@ -53,7 +53,7 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
                   height: 20,
                 ),
                 NavButtons(
-                  buttonText: 'Dashboard',
+                  buttonText: 'Create Course',
                   onTap: () => _handleItemClick(0),
                   isActive: activeIndex == 0,
                 ),
@@ -61,69 +61,9 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
                   height: 25,
                 ),
                 NavButtons(
-                  buttonText: 'Courses',
-                   onTap: () => _handleItemClick(1),
+                  buttonText: 'Edit Course',
+                  onTap: () => _handleItemClick(1),
                   isActive: activeIndex == 1,
-                ),
-                const SizedBox(
-                  height: 25,
-                ),
-                NavButtons(
-                  buttonText: 'Marketing',
-                   onTap: () => _handleItemClick(2),
-                  isActive: activeIndex == 2,
-                ),
-                const SizedBox(
-                  height: 25,
-                ),
-                NavButtons(
-                  buttonText: 'A4M Members',
-                   onTap: () => _handleItemClick(3),
-                  isActive: activeIndex == 3,
-                ),
-                const SizedBox(
-                  height: 25,
-                ),
-                NavButtons(
-                  buttonText: 'Certification',
-                   onTap: () => _handleItemClick(4),
-                  isActive: activeIndex == 4,
-                ),
-                const SizedBox(
-                  height: 25,
-                ),
-                NavButtons(
-                  buttonText: 'Review Content',
-                  onTap: () => _handleItemClick(5),
-                  isActive: activeIndex == 5,
-                ),
-                const Spacer(),
-                Container(
-                  width: 220,
-                  height: 4,
-                  color: Mycolors().green,
-                ),
-                const Spacer(),
-                NavButtons(
-                  buttonText: 'Complaints/Suggestions',
-                  onTap: () => _handleItemClick(6),
-                  isActive: activeIndex == 6,
-                ),
-                const SizedBox(
-                  height: 25,
-                ),
-                NavButtons(
-                  buttonText: 'Messages',
-                  onTap: () => _handleItemClick(7),
-                  isActive: activeIndex == 7,
-                ),
-                const SizedBox(
-                  height: 25,
-                ),
-                NavButtons(
-                  buttonText: 'Curriculum Vitae',
-                  onTap: () => _handleItemClick(8),
-                  isActive: activeIndex == 8,
                 ),
                 const SizedBox(
                   height: 25,
@@ -132,7 +72,7 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
             ),
           ),
           Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            // crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 color: Mycolors().darkGrey,

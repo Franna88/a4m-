@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../CommonComponents/buttons/slimButtons.dart';
-import '../../../../Constants/myColors.dart';
+import '../../../../Themes/Constants/myColors.dart';
 
 class A4mBackMemberCard extends StatefulWidget {
   const A4mBackMemberCard({super.key});

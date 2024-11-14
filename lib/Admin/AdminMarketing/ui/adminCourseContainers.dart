@@ -1,5 +1,5 @@
 import 'package:a4m/CommonComponents/displayCardIcons.dart';
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -20,7 +20,8 @@ class AdminCourseContainers extends StatefulWidget {
       required this.totalStudents,
       required this.moduleAmount,
       required this.assessmentAmount,
-      required this.courseImage, required this.onTap});
+      required this.courseImage,
+      required this.onTap});
 
   @override
   State<AdminCourseContainers> createState() => _AdminCourseContainersState();
@@ -138,7 +139,6 @@ class _AdminCourseContainersState extends State<AdminCourseContainers> {
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.montserrat(
-                  
                     fontSize: 12,
                     color: Colors.grey,
                     fontWeight: FontWeight.w600),

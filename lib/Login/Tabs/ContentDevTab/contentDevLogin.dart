@@ -1,6 +1,6 @@
 import 'package:a4m/CommonComponents/buttons/CustomButton.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Login/Tabs/ContentDevTab/contentDevSignUp.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,19 +13,11 @@ class ContentDevLogin extends StatefulWidget {
 }
 
 class _ContentDevLoginState extends State<ContentDevLogin> {
-
-   bool isSignUp = false; 
-
+  bool isSignUp = false;
 
   @override
   Widget build(BuildContext context) {
-
-    
-
-
-
-    return 
-        Column(
+    return Column(
       children: [
         // Display either the login or sign-up form based on `isSignUp`
         Expanded(
@@ -65,10 +57,8 @@ class _ContentDevLoginState extends State<ContentDevLogin> {
         ),
       ],
     );
-    
   }
 }
-
 
 class ContentDevLoginView extends StatefulWidget {
   const ContentDevLoginView({super.key});
@@ -80,98 +70,94 @@ class ContentDevLoginView extends StatefulWidget {
 class _ContentDevLoginViewState extends State<ContentDevLoginView> {
   @override
   Widget build(BuildContext context) {
-
     final email = TextEditingController();
     final password = TextEditingController();
     final contentDevCode = TextEditingController();
 
-
-
-
-    return Column(
-      children: [
-        Text(
-          'Content Dev Log In',
-          style: GoogleFonts.inter(
-            fontSize: 28,
-            fontWeight: FontWeight.w400,
+    return Column(children: [
+      Text(
+        'Content Dev Log In',
+        style: GoogleFonts.inter(
+          fontSize: 28,
+          fontWeight: FontWeight.w400,
+        ),
+      ),
+      const SizedBox(
+        height: 15,
+      ),
+      Text(
+        'Please Enter your Details',
+        style: GoogleFonts.kanit(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      const SizedBox(
+        height: 25,
+      ),
+      SizedBox(
+        width: 380,
+        child: MyTextFields(
+          inputController: email,
+          headerText: "Email*",
+          hintText: 'Enter your email',
+          keyboardType: 'email',
+        ),
+      ),
+      const SizedBox(
+        height: 15,
+      ),
+      SizedBox(
+        width: 380,
+        child: MyTextFields(
+          inputController: password,
+          headerText: "Password*",
+          hintText: 'Enter your password',
+          keyboardType: '',
+        ),
+      ),
+      const SizedBox(
+        height: 5,
+      ),
+      SizedBox(
+        width: 380,
+        child: InkWell(
+          onTap: () {
+            //TO DO
+          },
+          child: Text(
+            textAlign: TextAlign.right,
+            'Forgot Password?',
+            style: GoogleFonts.kanit(color: Mycolors().blue, fontSize: 12),
           ),
         ),
-        const SizedBox(
-          height: 15,
+      ),
+      const SizedBox(
+        height: 15,
+      ),
+      SizedBox(
+        width: 380,
+        child: MyTextFields(
+          inputController: contentDevCode,
+          headerText: "Content Dev Code*",
+          hintText: 'Enter your Content Dev code',
+          keyboardType: 'intType',
         ),
-        Text(
-          'Please Enter your Details',
-          style: GoogleFonts.kanit(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(
-          height: 25,
-        ),
-        SizedBox(
-          width: 380,
-          child: MyTextFields(
-            inputController: email,
-            headerText: "Email*",
-            hintText: 'Enter your email',
-            keyboardType: 'email',
-          ),
-        ),
-        const SizedBox(
-          height: 15,
-        ),
-        SizedBox(
-          width: 380,
-          child: MyTextFields(
-            inputController: password,
-            headerText: "Password*",
-            hintText: 'Enter your password',
-            keyboardType: '',
-          ),
-        ),
-        const SizedBox(
-          height: 5,
-        ),
-        SizedBox(
-          width: 380,
-          child: InkWell(
-            onTap: () {
-              //TO DO
-            },
-            child: Text(
-              textAlign: TextAlign.right,
-              'Forgot Password?',
-              style: GoogleFonts.kanit(color: Mycolors().blue, fontSize: 12),
-            ),
-          ),
-        ),
-        const SizedBox(
-          height: 15,
-        ),
-        SizedBox(
-          width: 380,
-          child: MyTextFields(
-            inputController: contentDevCode,
-            headerText: "Content Dev Code*",
-            hintText: 'Enter your Content Dev code',
-            keyboardType: 'intType',
-          ),
-        ),
-        const SizedBox(
-          height: 25,
-        ),
-        CustomButton(
-            buttonText: 'Login',
-            buttonColor: Mycolors().green,
-            onPressed: () {
-              //TO DO
-            },
-            width: 100),
-        const SizedBox(
-          height: 25,
-        ),
-        Spacer(),]);
+      ),
+      const SizedBox(
+        height: 25,
+      ),
+      CustomButton(
+          buttonText: 'Login',
+          buttonColor: Mycolors().green,
+          onPressed: () {
+            //TO DO
+          },
+          width: 100),
+      const SizedBox(
+        height: 25,
+      ),
+      Spacer(),
+    ]);
   }
 }

@@ -1,8 +1,8 @@
 import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../../../Constants/myColors.dart';
 import '../../../../../../TableWidgets/tableStructure.dart';
 
 class AdminImportMessagesTable extends StatefulWidget {

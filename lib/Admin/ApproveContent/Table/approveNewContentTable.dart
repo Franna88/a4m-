@@ -1,7 +1,7 @@
 import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/TableWidgets/tableStructure.dart';
 
 class ApproveNewContentTable extends StatefulWidget {

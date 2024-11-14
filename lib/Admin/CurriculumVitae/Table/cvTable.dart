@@ -2,7 +2,7 @@ import 'package:a4m/Admin/CurriculumVitae/ui/cvStatus.dart';
 import 'package:a4m/CommonComponents/buttons/deleteButton.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/TableWidgets/tableStructure.dart';
 
 class CvTable extends StatefulWidget {

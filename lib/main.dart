@@ -7,12 +7,14 @@ import 'package:a4m/Admin/ApproveContent/Table/reviewMarksTable.dart';
 import 'package:a4m/Admin/ApproveContent/approveContent.dart';
 import 'package:a4m/Admin/Commonui/adminMainNavBar.dart';
 import 'package:a4m/Admin/Dashboard/adminDashboardMain.dart';
+import 'package:a4m/ContentDev/content_dev_landing.dart';
 import 'package:a4m/LandingPage/CourseListPage/courseListPage.dart';
 import 'package:a4m/LandingPage/landingPageMain.dart';
 import 'package:a4m/Login/loginPopup.dart';
 import 'package:a4m/adminHome.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
@@ -31,10 +33,11 @@ void main() async {
   }
   runApp(
     const MaterialApp(
-        home: //CourseListPage()
-            LandingPageMain()
-        // AdminHome()
-        //LoginPopup(),
-        ),
+      home: //CourseListPage()
+          // LandingPageMain()
+          // AdminHome()
+          //LoginPopup(),
+          ContentDevHome(),
+    ),
   );
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../Constants/myColors.dart';
+import '../../Themes/Constants/myColors.dart';
 
 class HeaderStackSmall extends StatelessWidget {
   final String text;

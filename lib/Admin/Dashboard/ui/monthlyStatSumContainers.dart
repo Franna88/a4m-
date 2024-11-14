@@ -1,4 +1,4 @@
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -51,8 +51,8 @@ class _MonthlyStatSumContainersState extends State<MonthlyStatSumContainers> {
               Text(
                 widget.totalSum,
                 style: GoogleFonts.kanit(
-                    fontWeight: FontWeight.w600, fontSize:  MyUtility(context).width < 1500
-                  ? 45 : 55),
+                    fontWeight: FontWeight.w600,
+                    fontSize: MyUtility(context).width < 1500 ? 45 : 55),
               ),
               const SizedBox(
                 height: 8,
@@ -70,8 +70,8 @@ class _MonthlyStatSumContainersState extends State<MonthlyStatSumContainers> {
                   Text(
                     widget.increasedAmount,
                     style: GoogleFonts.kanit(
-                        fontWeight: FontWeight.w600, fontSize:  MyUtility(context).width < 1500
-                  ? 20 : 22),
+                        fontWeight: FontWeight.w600,
+                        fontSize: MyUtility(context).width < 1500 ? 20 : 22),
                   ),
                 ],
               ),
@@ -80,8 +80,7 @@ class _MonthlyStatSumContainersState extends State<MonthlyStatSumContainers> {
                 'Current Month',
                 style: GoogleFonts.kanit(
                     fontWeight: FontWeight.w600,
-                    fontSize: MyUtility(context).width < 1500
-                  ? 16 : 18,
+                    fontSize: MyUtility(context).width < 1500 ? 16 : 18,
                     color: const Color.fromARGB(255, 185, 185, 185)),
               )
             ],

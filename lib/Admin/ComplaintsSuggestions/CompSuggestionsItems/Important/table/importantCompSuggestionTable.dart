@@ -3,7 +3,7 @@ import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../../../Constants/myColors.dart';
+import '../../../../../Themes/Constants/myColors.dart';
 import '../../../../../../TableWidgets/tableStructure.dart';
 
 class ImportantCompSuggestionTable extends StatefulWidget {
@@ -14,24 +14,22 @@ class ImportantCompSuggestionTable extends StatefulWidget {
       _ImportantCompSuggestionTableState();
 }
 
-class _ImportantCompSuggestionTableState extends State<ImportantCompSuggestionTable> {
+class _ImportantCompSuggestionTableState
+    extends State<ImportantCompSuggestionTable> {
   @override
   Widget build(BuildContext context) {
     final List<Map<String, String>> importantCompSuggestions = [
       {
         'from': 'James Harmse',
         'dateAdded': '2024-02-01',
-        
       },
       {
         'from': 'Anton Clark',
         'dateAdded': '2024-02-01',
-        
       },
       {
         'from': 'Kyle Arms',
         'dateAdded': '2024-02-01',
-        
       },
     ];
 
@@ -134,8 +132,9 @@ class _ImportantCompSuggestionTableState extends State<ImportantCompSuggestionTa
               ),
               TableStructure(
                 child: TableCell(
-                  child: CompSuggestionStatus(isResolved: false,)
-                ),
+                    child: CompSuggestionStatus(
+                  isResolved: false,
+                )),
               ),
               TableStructure(
                 child: TableCell(

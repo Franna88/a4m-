@@ -4,14 +4,14 @@ import 'package:a4m/Admin/Dashboard/ui/monthlyStatSumContainers.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 
-class AdminDashboardMain extends StatefulWidget {
-  const AdminDashboardMain({super.key});
+class EditCourseButton extends StatefulWidget {
+  const EditCourseButton({super.key});
 
   @override
-  State<AdminDashboardMain> createState() => _AdminDashboardMainState();
+  State<EditCourseButton> createState() => _AdminDashboardMainState();
 }
 
-class _AdminDashboardMainState extends State<AdminDashboardMain> {
+class _AdminDashboardMainState extends State<EditCourseButton> {
   @override
   Widget build(BuildContext context) {
     return Column(
