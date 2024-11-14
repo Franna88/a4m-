@@ -6,18 +6,18 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../../../Constants/myColors.dart';
 import '../../../../../../TableWidgets/tableStructure.dart';
 
-class NewCompSuggestionTable extends StatefulWidget {
-  const NewCompSuggestionTable({super.key});
+class ImportantCompSuggestionTable extends StatefulWidget {
+  const ImportantCompSuggestionTable({super.key});
 
   @override
-  State<NewCompSuggestionTable> createState() =>
-      _NewCompSuggestionTableState();
+  State<ImportantCompSuggestionTable> createState() =>
+      _ImportantCompSuggestionTableState();
 }
 
-class _NewCompSuggestionTableState extends State<NewCompSuggestionTable> {
+class _ImportantCompSuggestionTableState extends State<ImportantCompSuggestionTable> {
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> newCompSuggestionsList = [
+    final List<Map<String, String>> importantCompSuggestions = [
       {
         'from': 'James Harmse',
         'dateAdded': '2024-02-01',
@@ -96,8 +96,8 @@ class _NewCompSuggestionTableState extends State<NewCompSuggestionTable> {
             ),
           ],
         ),
-        ...List.generate(newCompSuggestionsList.length, (index) {
-          final course = newCompSuggestionsList[index];
+        ...List.generate(importantCompSuggestions.length, (index) {
+          final course = importantCompSuggestions[index];
           return TableRow(
             decoration: BoxDecoration(
               color: index % 2 == 1
@@ -134,7 +134,7 @@ class _NewCompSuggestionTableState extends State<NewCompSuggestionTable> {
               ),
               TableStructure(
                 child: TableCell(
-                  child: CompSuggestionStatus(isResolved: true,)
+                  child: CompSuggestionStatus(isResolved: false,)
                 ),
               ),
               TableStructure(

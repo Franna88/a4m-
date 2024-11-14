@@ -6,18 +6,18 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../../../Constants/myColors.dart';
 import '../../../../../../TableWidgets/tableStructure.dart';
 
-class NewCompSuggestionTable extends StatefulWidget {
-  const NewCompSuggestionTable({super.key});
+class ArchiveTable extends StatefulWidget {
+  const ArchiveTable({super.key});
 
   @override
-  State<NewCompSuggestionTable> createState() =>
-      _NewCompSuggestionTableState();
+  State<ArchiveTable> createState() =>
+      _ArchiveTableState();
 }
 
-class _NewCompSuggestionTableState extends State<NewCompSuggestionTable> {
+class _ArchiveTableState extends State<ArchiveTable> {
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> newCompSuggestionsList = [
+    final List<Map<String, String>> archiveCompSuggestions = [
       {
         'from': 'James Harmse',
         'dateAdded': '2024-02-01',
@@ -96,8 +96,8 @@ class _NewCompSuggestionTableState extends State<NewCompSuggestionTable> {
             ),
           ],
         ),
-        ...List.generate(newCompSuggestionsList.length, (index) {
-          final course = newCompSuggestionsList[index];
+        ...List.generate(archiveCompSuggestions.length, (index) {
+          final course = archiveCompSuggestions[index];
           return TableRow(
             decoration: BoxDecoration(
               color: index % 2 == 1
