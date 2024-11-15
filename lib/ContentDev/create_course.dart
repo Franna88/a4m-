@@ -1,19 +1,43 @@
 import 'package:a4m/Admin/Dashboard/ui/coursePerformancePieChart.dart';
 import 'package:a4m/Admin/Dashboard/ui/monthlySalesChart.dart';
 import 'package:a4m/Admin/Dashboard/ui/monthlyStatSumContainers.dart';
+import 'package:a4m/ContentDev/create_course_textfields.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Themes/text_style.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 
 class CreateCourse extends StatefulWidget {
-  const CreateCourse({super.key});
+  CreateCourse({super.key});
 
   @override
-  State<CreateCourse> createState() => _AdminDashboardMainState();
+  State<CreateCourse> createState() => _CreateCourseState();
 }
 
-class _AdminDashboardMainState extends State<CreateCourse> {
+class _CreateCourseState extends State<CreateCourse> {
+  late TextEditingController _courseNameController;
+  late TextEditingController _coursePriceController;
+  late TextEditingController _courseCategoryController;
+  late TextEditingController _courseDescriptionController;
+
+  @override
+  void initState() {
+    super.initState();
+    _courseNameController = TextEditingController();
+    _coursePriceController = TextEditingController();
+    _courseCategoryController = TextEditingController();
+    _courseDescriptionController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _courseNameController.dispose();
+    _coursePriceController.dispose();
+    _courseCategoryController.dispose();
+    _courseDescriptionController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -37,87 +61,68 @@ class _AdminDashboardMainState extends State<CreateCourse> {
                   width: MyUtility(context).width,
                   child: Center(
                     child: Text(
-                      'Please Choose an Option',
+                      'Create Course',
                       style: MyTextStyles(context).headerWhite,
                     ),
                   ),
                 ),
               ),
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      // Add your function here, e.g., navigate to a new page or open a dialog
-                      print("Create New Course Content tapped");
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      width: MyUtility(context).width * 0.35,
-                      height: MyUtility(context).height * 0.7,
-                      child: Center(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+              Container(
+                  color: Colors.white,
+                  width: MyUtility(context).width,
+                  height: MyUtility(context).height * 0.78,
+                  child: Padding(
+                    padding: const EdgeInsets.all(30.0),
+                    child: Column(
+                      children: [
+                        Row(
                           children: [
-                            SizedBox(
-                              height: MyUtility(context).height * 0.04,
-                            ),
-                            Text(
-                              'Create New Course Content',
-                              style: MyTextStyles(context).subHeaderBlack,
+                            Container(
+                              height: MyUtility(context).height * 0.38,
+                              width: MyUtility(context).width * 0.3,
+                              decoration: BoxDecoration(
+                                color: Mycolors().offWhite,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  Icons.image,
+                                  size: 50,
+                                  color: Mycolors().darkGrey,
+                                ),
+                              ),
                             ),
                             Spacer(),
-                            Image.asset(
-                              'images/create_course_content.png',
-                              width: MyUtility(context).width * 0.5,
-                              height: MyUtility(context).height * 0.6,
-                              fit: BoxFit.fill,
-                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                CreateCourseTextfields(
+                                  title: 'Course Name',
+                                  controller: _courseNameController,
+                                ),
+                                CreateCourseTextfields(
+                                  title: 'Course Price',
+                                  controller: _coursePriceController,
+                                ),
+                                CreateCourseTextfields(
+                                  title: 'Course Category',
+                                  controller: _courseCategoryController,
+                                ),
+                              ],
+                            )
                           ],
                         ),
-                      ),
-                    ),
-                  ),
-                  Spacer(),
-                  GestureDetector(
-                    onTap: () {
-                      // Add your function here
-                      print("Upload Course Content tapped");
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      width: MyUtility(context).width * 0.35,
-                      height: MyUtility(context).height * 0.7,
-                      child: Center(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              height: MyUtility(context).height * 0.04,
-                            ),
-                            Text(
-                              'Upload Course Content',
-                              style: MyTextStyles(context).subHeaderBlack,
-                            ),
-                            Spacer(),
-                            Image.asset(
-                              'images/upload_course_content.png',
-                              width: MyUtility(context).width * 0.5,
-                              height: MyUtility(context).height * 0.6,
-                              fit: BoxFit.fill,
-                            ),
-                          ],
+                        Center(
+                          child: CreateCourseTextfields(
+                            title: 'Course Description',
+                            widthFactor: 0.9,
+                            heightFactor: 0.7,
+                            controller: _courseDescriptionController,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ),
-                ],
-              )
+                  ))
             ],
           ),
         ),

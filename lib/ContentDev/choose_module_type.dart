@@ -6,14 +6,19 @@ import 'package:a4m/Themes/text_style.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 
-class CreateCourseMain extends StatefulWidget {
-  const CreateCourseMain({super.key});
+class ChooseModuleType extends StatefulWidget {
+  Function(int) changePageIndex;
+
+  ChooseModuleType({
+    super.key,
+    required this.changePageIndex,
+  });
 
   @override
-  State<CreateCourseMain> createState() => _AdminDashboardMainState();
+  State<ChooseModuleType> createState() => _AdminDashboardMainState();
 }
 
-class _AdminDashboardMainState extends State<CreateCourseMain> {
+class _AdminDashboardMainState extends State<ChooseModuleType> {
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -47,6 +52,7 @@ class _AdminDashboardMainState extends State<CreateCourseMain> {
                 children: [
                   GestureDetector(
                     onTap: () {
+                      widget.changePageIndex(2);
                       print("Create New Course Content tapped");
                     },
                     child: Container(

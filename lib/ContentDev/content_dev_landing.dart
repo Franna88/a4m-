@@ -11,7 +11,7 @@ import 'package:a4m/Admin/CurriculumVitae/cirriculumVitae.dart';
 import 'package:a4m/Admin/Dashboard/adminDashboardMain.dart';
 import 'package:a4m/ContentDev/content_dev_navbar.dart';
 import 'package:a4m/ContentDev/create_course.dart';
-import 'package:a4m/ContentDev/create_course_main.dart';
+import 'package:a4m/ContentDev/choose_module_type.dart';
 import 'package:a4m/ContentDev/edit_course_button.dart';
 import 'package:flutter/material.dart';
 
@@ -19,20 +19,29 @@ class ContentDevHome extends StatefulWidget {
   const ContentDevHome({super.key});
 
   @override
-  State<ContentDevHome> createState() => _AdminHomeState();
+  State<ContentDevHome> createState() => _ContentDevHomeState();
 }
 
-class _AdminHomeState extends State<ContentDevHome> {
+class _ContentDevHomeState extends State<ContentDevHome> {
   var pageIndex = 0;
 
-  var pages = [
-    CreateCourseMain(),
-    EditCourseButton(),
-    // CreateCourse(),
-    // Add other pages here
-  ];
+  late List<Widget> pages;
 
-  void changePage(int value) {
+  @override
+  void initState() {
+    super.initState();
+    pages = [
+      ChooseModuleType(
+        changePageIndex: changePageIndex,
+      ),
+      EditCourseButton(),
+      CreateCourse(),
+      // CreateCourse(),
+      // Add other pages here
+    ];
+  }
+
+  void changePageIndex(int value) {
     setState(() {
       pageIndex = value;
     });
@@ -41,7 +50,7 @@ class _AdminHomeState extends State<ContentDevHome> {
   @override
   Widget build(BuildContext context) {
     return ContentDevNavBar(
-      changePage: changePage,
+      changePage: changePageIndex,
       child: pages[pageIndex],
     );
   }
