@@ -11,8 +11,10 @@ import 'package:a4m/Admin/CurriculumVitae/cirriculumVitae.dart';
 import 'package:a4m/Admin/Dashboard/adminDashboardMain.dart';
 import 'package:a4m/ContentDev/content_dev_navbar.dart';
 import 'package:a4m/ContentDev/create_course.dart';
-import 'package:a4m/ContentDev/choose_module_type.dart';
+import 'package:a4m/ContentDev/choose_course_type.dart';
+import 'package:a4m/ContentDev/create_module.dart';
 import 'package:a4m/ContentDev/edit_course_button.dart';
+import 'package:a4m/ContentDev/module_assessments.dart';
 import 'package:flutter/material.dart';
 
 class ContentDevHome extends StatefulWidget {
@@ -31,11 +33,15 @@ class _ContentDevHomeState extends State<ContentDevHome> {
   void initState() {
     super.initState();
     pages = [
-      ChooseModuleType(
+      ChooseCourseType(
         changePageIndex: changePageIndex,
       ),
       EditCourseButton(),
-      CreateCourse(),
+      CreateCourse(
+        changePageIndex: changePageIndex,
+      ),
+      CreateModule(changePageIndex: changePageIndex),
+      ModuleAssessments(changePageIndex: changePageIndex),
       // CreateCourse(),
       // Add other pages here
     ];

@@ -65,8 +65,22 @@ class _AdminMainNavBarState extends State<ContentDevNavBar> {
                   onTap: () => _handleItemClick(1),
                   isActive: activeIndex == 1,
                 ),
-                const SizedBox(
-                  height: 25,
+                Spacer(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 30.0, vertical: 8.0),
+                  child: Divider(
+                    color: Color.fromRGBO(138, 183, 71, 1),
+                    thickness: 3,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 50.0),
+                  child: NavButtons(
+                    buttonText: 'Messages',
+                    onTap: () => _handleItemClick(1),
+                    isActive: activeIndex == 1,
+                  ),
                 ),
               ],
             ),

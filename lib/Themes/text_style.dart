@@ -18,15 +18,15 @@ class MyTextStyles {
         color: Colors.black,
       );
 
-  TextStyle get bodyText1 => GoogleFonts.kanit(
+  TextStyle get mediumBlack => GoogleFonts.kanit(
         fontWeight: FontWeight.w600,
-        fontSize: MyUtility(context).width < 1500 ? 16 : 18,
+        fontSize: MyUtility(context).width / 90,
         color: Colors.black,
       );
 
-  TextStyle get bodyText2 => GoogleFonts.kanit(
-        fontWeight: FontWeight.w600,
-        fontSize: MyUtility(context).width < 1500 ? 14 : 16,
+  TextStyle get smallBlack => GoogleFonts.kanit(
+        fontWeight: FontWeight.normal,
+        fontSize: MyUtility(context).width / 110,
         color: Colors.black,
       );
 

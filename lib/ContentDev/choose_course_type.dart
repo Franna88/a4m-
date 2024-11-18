@@ -6,19 +6,19 @@ import 'package:a4m/Themes/text_style.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 
-class ChooseModuleType extends StatefulWidget {
+class ChooseCourseType extends StatefulWidget {
   Function(int) changePageIndex;
 
-  ChooseModuleType({
+  ChooseCourseType({
     super.key,
     required this.changePageIndex,
   });
 
   @override
-  State<ChooseModuleType> createState() => _AdminDashboardMainState();
+  State<ChooseCourseType> createState() => _AdminDashboardMainState();
 }
 
-class _AdminDashboardMainState extends State<ChooseModuleType> {
+class _AdminDashboardMainState extends State<ChooseCourseType> {
   @override
   Widget build(BuildContext context) {
     return Material(

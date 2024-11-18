@@ -1,14 +1,20 @@
 import 'package:a4m/Admin/Dashboard/ui/coursePerformancePieChart.dart';
 import 'package:a4m/Admin/Dashboard/ui/monthlySalesChart.dart';
 import 'package:a4m/Admin/Dashboard/ui/monthlyStatSumContainers.dart';
-import 'package:a4m/ContentDev/create_course_textfields.dart';
+import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
+import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
+
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Themes/text_style.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 
 class CreateCourse extends StatefulWidget {
-  CreateCourse({super.key});
+  Function(int) changePageIndex;
+  CreateCourse({
+    super.key,
+    required this.changePageIndex,
+  });
 
   @override
   State<CreateCourse> createState() => _CreateCourseState();
@@ -74,6 +80,7 @@ class _CreateCourseState extends State<CreateCourse> {
                   child: Padding(
                     padding: const EdgeInsets.all(30.0),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
@@ -93,32 +100,69 @@ class _CreateCourseState extends State<CreateCourse> {
                               ),
                             ),
                             Spacer(),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                CreateCourseTextfields(
-                                  title: 'Course Name',
-                                  controller: _courseNameController,
-                                ),
-                                CreateCourseTextfields(
-                                  title: 'Course Price',
-                                  controller: _coursePriceController,
-                                ),
-                                CreateCourseTextfields(
-                                  title: 'Course Category',
-                                  controller: _courseCategoryController,
-                                ),
-                              ],
+                            SizedBox(
+                              height: MyUtility(context).height * 0.38,
+                              width: MyUtility(context).width * 0.3,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  SizedBox(
+                                    width: MyUtility(context).width * 0.3,
+                                    child: MyTextFields(
+                                      headerText: 'Course Name',
+                                      inputController: _courseNameController,
+                                      keyboardType: '',
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: MyUtility(context).width * 0.3,
+                                    child: MyTextFields(
+                                      headerText: 'Course Price',
+                                      inputController: _coursePriceController,
+                                      keyboardType: 'intType',
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: MyUtility(context).width * 0.3,
+                                    child: MyTextFields(
+                                      headerText: 'Course Category',
+                                      inputController:
+                                          _courseCategoryController,
+                                      keyboardType: '',
+                                    ),
+                                  ),
+                                ],
+                              ),
                             )
                           ],
                         ),
-                        Center(
-                          child: CreateCourseTextfields(
-                            title: 'Course Description',
-                            widthFactor: 0.9,
-                            heightFactor: 0.7,
-                            controller: _courseDescriptionController,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12.0),
+                          child: Center(
+                            child: SizedBox(
+                              width: MyUtility(context).width * 0.8,
+                              child: MyTextFields(
+                                headerText: 'Course Description',
+                                inputController: _courseDescriptionController,
+                                keyboardType: '',
+                                maxLines: 9,
+                              ),
+                            ),
                           ),
+                        ),
+                        Spacer(),
+                        SlimButtons(
+                          buttonText: 'Next',
+                          buttonColor: Colors.white,
+                          borderColor: Color.fromRGBO(203, 210, 224, 1),
+                          textColor: Mycolors().green,
+                          onPressed: () {
+                            widget.changePageIndex(3);
+                          },
+                          customWidth: 85,
+                          customHeight: 35,
                         ),
                       ],
                     ),
