@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class MyTextFields extends StatelessWidget {
@@ -7,20 +8,23 @@ class MyTextFields extends StatelessWidget {
   final String keyboardType;
   final TextEditingController inputController;
   final bool? isOptional;
-  const MyTextFields(
-      {Key? key,
-      required this.inputController,
-      this.hintText,
-      required this.headerText,
-      required this.keyboardType, this.isOptional})
-      : super(key: key);
+  final bool? isNumberField;
+
+  const MyTextFields({
+    Key? key,
+    required this.inputController,
+    this.hintText,
+    required this.headerText,
+    required this.keyboardType,
+    this.isOptional,
+    this.isNumberField,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color.fromRGBO(203, 210, 224, 1);
     const secondaryColor = Color.fromRGBO(72, 128, 255, 1);
     const accentColor = Color(0xffffffff);
-
     const errorColor = Color(0xffEF4444);
 
     return Column(
@@ -31,48 +35,48 @@ class MyTextFields extends StatelessWidget {
           children: [
             Text(
               headerText,
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
             ),
             Visibility(
               visible: isOptional == true,
               child: Text(
                 'Optional',
                 style: GoogleFonts.inter(
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14),
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
               ),
-            )
+            ),
           ],
         ),
-        const SizedBox(
-          height: 8,
-        ),
+        const SizedBox(height: 8),
         Container(
           height: 50,
           decoration: BoxDecoration(boxShadow: [
             BoxShadow(
-                offset: const Offset(12, 26),
-                blurRadius: 50,
-                spreadRadius: 0,
-                color: Colors.grey.withOpacity(.1)),
+              offset: const Offset(12, 26),
+              blurRadius: 50,
+              spreadRadius: 0,
+              color: Colors.grey.withOpacity(.1),
+            ),
           ]),
           child: TextField(
             controller: inputController,
-            onChanged: (value) {
-              //Do something wi
-            },
-            keyboardType: keyboardType == 'email'
-                ? TextInputType.emailAddress
-                : keyboardType == 'intType'
-                    ? TextInputType.number
-                    : TextInputType.none,
+            keyboardType: isNumberField == true
+                ? TextInputType.number
+                : keyboardType == 'email'
+                    ? TextInputType.emailAddress
+                    : TextInputType.text,
+            inputFormatters: isNumberField == true
+                ? [FilteringTextInputFormatter.digitsOnly]
+                : [],
             style: const TextStyle(fontSize: 14, color: Colors.black),
             decoration: InputDecoration(
-              // prefixIcon: Icon(Icons.email),
               filled: true,
               fillColor: accentColor,
               hintText: hintText,

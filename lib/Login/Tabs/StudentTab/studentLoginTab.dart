@@ -13,7 +13,13 @@ class StudentLoginTab extends StatefulWidget {
 }
 
 class _StudentLoginTabState extends State<StudentLoginTab> {
-  bool isSignUp = false; 
+  bool isSignUp = false;
+
+  void switchToLogin() {
+    setState(() {
+      isSignUp = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,8 +27,7 @@ class _StudentLoginTabState extends State<StudentLoginTab> {
       children: [
         // Display either the login or sign-up form based on `isSignUp`
         Expanded(
-          child:
-              isSignUp ? const StudentSignUp() : const StudentLoginView(),
+          child: isSignUp ? const StudentSignUp() : const StudentLoginView(),
         ),
 
         // Footer section: This stays consistent for both views
@@ -75,81 +80,86 @@ class _StudentLoginViewState extends State<StudentLoginView> {
     final passwordController = TextEditingController();
     final studentCodeController = TextEditingController();
 
-    return Column(
-      children: [
-        Text(
-          'Student Log In',
-          style: GoogleFonts.inter(
-            fontSize: 28,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        const SizedBox(height: 15),
-        Text(
-          'Please Enter your Details',
-          style: GoogleFonts.kanit(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 25),
-        SizedBox(
-          width: 380,
-          child: MyTextFields(
-            inputController: emailController,
-            headerText: "Email*",
-            hintText: 'Enter your email',
-            keyboardType: 'email',
-          ),
-        ),
-        const SizedBox(height: 15),
-        SizedBox(
-          width: 380,
-          child: MyTextFields(
-            inputController: passwordController,
-            headerText: "Password*",
-            hintText: 'Enter your password',
-            keyboardType: '',
-          ),
-        ),
-        const SizedBox(height: 5),
-        SizedBox(
-          width: 380,
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: InkWell(
-              onTap: () {
-                // TO DO: Handle forgot password action
-              },
-              child: Text(
-                'Forgot Password?',
-                textAlign: TextAlign.right,
-                style: GoogleFonts.kanit(color: Mycolors().blue, fontSize: 12),
+    return SingleChildScrollView(
+      child: SizedBox(
+        height: 500,
+        child: Column(
+          children: [
+            Text(
+              'Student Log In',
+              style: GoogleFonts.inter(
+                fontSize: 28,
+                fontWeight: FontWeight.w400,
               ),
             ),
-          ),
+            const SizedBox(height: 15),
+            Text(
+              'Please Enter your Details',
+              style: GoogleFonts.kanit(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 25),
+            SizedBox(
+              width: 380,
+              child: MyTextFields(
+                inputController: emailController,
+                headerText: "Email*",
+                hintText: 'Enter your email',
+                keyboardType: 'email',
+              ),
+            ),
+            const SizedBox(height: 15),
+            SizedBox(
+              width: 380,
+              child: MyTextFields(
+                inputController: passwordController,
+                headerText: "Password*",
+                hintText: 'Enter your password',
+                keyboardType: '',
+              ),
+            ),
+            const SizedBox(height: 5),
+            SizedBox(
+              width: 380,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: InkWell(
+                  onTap: () {
+                    // TO DO: Handle forgot password action
+                  },
+                  child: Text(
+                    'Forgot Password?',
+                    textAlign: TextAlign.right,
+                    style:
+                        GoogleFonts.kanit(color: Mycolors().blue, fontSize: 12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
+            SizedBox(
+              width: 380,
+              child: MyTextFields(
+                inputController: studentCodeController,
+                headerText: "Student Code*",
+                hintText: 'Enter your student code',
+                keyboardType: 'intType',
+              ),
+            ),
+            const SizedBox(height: 25),
+            CustomButton(
+              buttonText: 'Login',
+              buttonColor: Mycolors().green,
+              onPressed: () {
+                // TO DO: Handle login action
+              },
+              width: 100,
+            ),
+          ],
         ),
-        const SizedBox(height: 15),
-        SizedBox(
-          width: 380,
-          child: MyTextFields(
-            inputController: studentCodeController,
-            headerText: "Student Code*",
-            hintText: 'Enter your student code',
-            keyboardType: 'intType',
-          ),
-        ),
-        const SizedBox(height: 25),
-        CustomButton(
-          buttonText: 'Login',
-          buttonColor: Mycolors().green,
-          onPressed: () {
-            // TO DO: Handle login action
-          },
-          width: 100,
-        ),
-      ],
+      ),
     );
   }
 }
-

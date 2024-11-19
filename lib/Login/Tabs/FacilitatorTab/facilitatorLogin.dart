@@ -1,4 +1,6 @@
 import 'package:a4m/Login/Tabs/FacilitatorTab/facilitatorSignUp.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -14,23 +16,17 @@ class FacilitatorLogin extends StatefulWidget {
 }
 
 class _FacilitatorLoginState extends State<FacilitatorLogin> {
-
-   bool isSignUp = false; 
-
-
+  bool isSignUp = false;
 
   @override
   Widget build(BuildContext context) {
-   
-
-
-    return 
-       Column(
+    return Column(
       children: [
         // Display either the login or sign-up form based on `isSignUp`
         Expanded(
-          child:
-              isSignUp ? const FacilitatorSignUp() : const FacilitatorLoginView(),
+          child: isSignUp
+              ? const FacilitatorSignUp()
+              : const FacilitatorLoginView(),
         ),
 
         // Footer section: This stays consistent for both views
@@ -76,99 +72,182 @@ class FacilitatorLoginView extends StatefulWidget {
 }
 
 class _FacilitatorLoginViewState extends State<FacilitatorLoginView> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final facilitatorCodeController = TextEditingController();
+
+  bool isLoading = false;
+
+  Future<void> _loginFacilitator() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      String email = emailController.text.trim();
+      String password = passwordController.text.trim();
+      String facilitatorCode = facilitatorCodeController.text.trim();
+
+      if (email.isEmpty || password.isEmpty) {
+        _showErrorDialog('Please fill in all required fields.');
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      // Print a successful login
+      print('Login successful for user: ${userCredential.user!.email}');
+
+      if (facilitatorCode.isNotEmpty) {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('Users')
+            .doc(userCredential.user!.uid)
+            .get();
+
+        if (userDoc.exists && userDoc['facilitatorCode'] != facilitatorCode) {
+          _showErrorDialog('Invalid Facilitator Code.');
+          setState(() {
+            isLoading = false;
+          });
+          return;
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      String errorMessage;
+      if (e.code == 'user-not-found' || e.code == 'wrong-password') {
+        errorMessage = 'Email or password was incorrect.';
+      } else {
+        errorMessage = 'An unexpected error occurred. Please try again.';
+      }
+      _showErrorDialog(errorMessage);
+    } catch (e) {
+      _showErrorDialog('An unexpected error occurred. Please try again.');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Login Failed'),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Okay'),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-
-      final email = TextEditingController();
-    final password = TextEditingController();
-    final facilitatorCode = TextEditingController();
-
-
-
-
-    return Column(
-      children: [
-        Text(
-          'Facilitator Log In',
-          style: GoogleFonts.inter(
-            fontSize: 28,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        const SizedBox(
-          height: 15,
-        ),
-        Text(
-          'Please Enter your Details',
-          style: GoogleFonts.kanit(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(
-          height: 25,
-        ),
-        SizedBox(
-          width: 380,
-          child: MyTextFields(
-            inputController: email,
-            headerText: "Email*",
-            hintText: 'Enter your email',
-            keyboardType: 'email',
-          ),
-        ),
-        const SizedBox(
-          height: 15,
-        ),
-        SizedBox(
-          width: 380,
-          child: MyTextFields(
-            inputController: password,
-            headerText: "Password*",
-            hintText: 'Enter your password',
-            keyboardType: '',
-          ),
-        ),
-        const SizedBox(
-          height: 5,
-        ),
-        SizedBox(
-          width: 380,
-          child: InkWell(
-            onTap: () {
-              //TO DO
-            },
-            child: Text(
-              textAlign: TextAlign.right,
-              'Forgot Password?',
-              style: GoogleFonts.kanit(color: Mycolors().blue, fontSize: 12),
+    return SingleChildScrollView(
+      child: SizedBox(
+        height: 500,
+        child: Column(children: [
+          Text(
+            'Facilitator Log In',
+            style: GoogleFonts.inter(
+              fontSize: 28,
+              fontWeight: FontWeight.w400,
             ),
           ),
-        ),
-        const SizedBox(
-          height: 15,
-        ),
-        SizedBox(
-          width: 380,
-          child: MyTextFields(
-            inputController: facilitatorCode,
-            headerText: "Facilitator Code*",
-            hintText: 'Enter your facilitator code',
-            keyboardType: 'intType',
+          const SizedBox(
+            height: 15,
           ),
-        ),
-        const SizedBox(
-          height: 25,
-        ),
-        CustomButton(
-            buttonText: 'Login',
-            buttonColor: Mycolors().green,
-            onPressed: () {
-              //TO DO
-            },
-            width: 100),
-        const SizedBox(
-          height: 25,
-        ),Spacer(),]);
+          Text(
+            'Please Enter your Details',
+            style: GoogleFonts.kanit(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(
+            height: 25,
+          ),
+          SizedBox(
+            width: 380,
+            child: MyTextFields(
+              inputController: emailController,
+              headerText: "Email*",
+              hintText: 'Enter your email',
+              keyboardType: 'email',
+            ),
+          ),
+          const SizedBox(
+            height: 15,
+          ),
+          SizedBox(
+            width: 380,
+            child: MyTextFields(
+              inputController: passwordController,
+              headerText: "Password*",
+              hintText: 'Enter your password',
+              keyboardType: '',
+            ),
+          ),
+          const SizedBox(
+            height: 5,
+          ),
+          SizedBox(
+            width: 380,
+            child: InkWell(
+              onTap: () {
+                FirebaseAuth.instance
+                    .sendPasswordResetEmail(email: emailController.text.trim())
+                    .then((_) {
+                  _showErrorDialog('Password reset email sent.');
+                }).catchError((error) {
+                  _showErrorDialog('Failed to send password reset email.');
+                });
+              },
+              child: Text(
+                textAlign: TextAlign.right,
+                'Forgot Password?',
+                style: GoogleFonts.kanit(color: Mycolors().blue, fontSize: 12),
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 15,
+          ),
+          SizedBox(
+            width: 380,
+            child: MyTextFields(
+              inputController: facilitatorCodeController,
+              headerText: "Facilitator Code (Optional)",
+              hintText: 'Enter your facilitator code',
+              keyboardType: 'intType',
+            ),
+          ),
+          const SizedBox(
+            height: 25,
+          ),
+          isLoading
+              ? const CircularProgressIndicator()
+              : CustomButton(
+                  buttonText: 'Login',
+                  buttonColor: Mycolors().green,
+                  onPressed: _loginFacilitator,
+                  width: 100),
+          const SizedBox(
+            height: 25,
+          ),
+          const Spacer(),
+        ]),
+      ),
+    );
   }
 }

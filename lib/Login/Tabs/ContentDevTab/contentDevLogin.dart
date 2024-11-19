@@ -2,6 +2,8 @@ import 'package:a4m/CommonComponents/buttons/CustomButton.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
 import 'package:a4m/Constants/myColors.dart';
 import 'package:a4m/Login/Tabs/ContentDevTab/contentDevSignUp.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -13,19 +15,11 @@ class ContentDevLogin extends StatefulWidget {
 }
 
 class _ContentDevLoginState extends State<ContentDevLogin> {
-
-   bool isSignUp = false; 
-
+  bool isSignUp = false;
 
   @override
   Widget build(BuildContext context) {
-
-    
-
-
-
-    return 
-        Column(
+    return Column(
       children: [
         // Display either the login or sign-up form based on `isSignUp`
         Expanded(
@@ -65,10 +59,8 @@ class _ContentDevLoginState extends State<ContentDevLogin> {
         ),
       ],
     );
-    
   }
 }
-
 
 class ContentDevLoginView extends StatefulWidget {
   const ContentDevLoginView({super.key});
@@ -78,100 +70,190 @@ class ContentDevLoginView extends StatefulWidget {
 }
 
 class _ContentDevLoginViewState extends State<ContentDevLoginView> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final contentDevCodeController = TextEditingController();
+
+  bool isLoading = false;
+
+  Future<void> _loginContentDev() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      String email = emailController.text.trim();
+      String password = passwordController.text.trim();
+      String contentDevCode = contentDevCodeController.text.trim();
+
+      if (email.isEmpty || password.isEmpty || contentDevCode.isEmpty) {
+        _showErrorDialog('Please fill in all required fields.');
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      // Authenticate user with Firebase
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      // getting the USerDetails for conformation and login
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (userDoc.exists) {
+        var userData = userDoc.data() as Map<String, dynamic>;
+        String userType = userData['userType'] ?? '';
+        String status = userData['status'] ?? '';
+        String storedContentDevCode = userData['contentDevCode'] ?? '';
+
+        // Check if user is a content developer and approved
+        if (userType == 'contentDev' &&
+            status == 'approved' &&
+            storedContentDevCode == contentDevCode) {
+          //Connect Navigation Logic here
+          Navigator.pushReplacementNamed(context, '/contentDevDashboard');
+        } else if (status == 'pending') {
+          _showErrorDialog(
+              'Your account is still pending approval. Please wait for admin verification.');
+        } else {
+          _showErrorDialog(
+              'Invalid credentials or your account is not verified.');
+        }
+      } else {
+        _showErrorDialog('User not found.');
+      }
+    } on FirebaseAuthException catch (e) {
+      String errorMessage;
+      if (e.code == 'user-not-found') {
+        errorMessage = 'No user found for that email.';
+      } else if (e.code == 'wrong-password') {
+        errorMessage = 'Wrong password provided.';
+      } else {
+        errorMessage = 'An error occurred. Please try again.';
+      }
+      _showErrorDialog(errorMessage);
+    } catch (e) {
+      _showErrorDialog('An unexpected error occurred. Please try again.');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Login Failed'),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Okay'),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-
-    final email = TextEditingController();
-    final password = TextEditingController();
-    final contentDevCode = TextEditingController();
-
-
-
-
-    return Column(
-      children: [
-        Text(
-          'Content Dev Log In',
-          style: GoogleFonts.inter(
-            fontSize: 28,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        const SizedBox(
-          height: 15,
-        ),
-        Text(
-          'Please Enter your Details',
-          style: GoogleFonts.kanit(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(
-          height: 25,
-        ),
-        SizedBox(
-          width: 380,
-          child: MyTextFields(
-            inputController: email,
-            headerText: "Email*",
-            hintText: 'Enter your email',
-            keyboardType: 'email',
-          ),
-        ),
-        const SizedBox(
-          height: 15,
-        ),
-        SizedBox(
-          width: 380,
-          child: MyTextFields(
-            inputController: password,
-            headerText: "Password*",
-            hintText: 'Enter your password',
-            keyboardType: '',
-          ),
-        ),
-        const SizedBox(
-          height: 5,
-        ),
-        SizedBox(
-          width: 380,
-          child: InkWell(
-            onTap: () {
-              //TO DO
-            },
-            child: Text(
-              textAlign: TextAlign.right,
-              'Forgot Password?',
-              style: GoogleFonts.kanit(color: Mycolors().blue, fontSize: 12),
+    return SingleChildScrollView(
+      child: SizedBox(
+        height: 500,
+        child: Column(children: [
+          Text(
+            'Content Dev Log In',
+            style: GoogleFonts.inter(
+              fontSize: 28,
+              fontWeight: FontWeight.w400,
             ),
           ),
-        ),
-        const SizedBox(
-          height: 15,
-        ),
-        SizedBox(
-          width: 380,
-          child: MyTextFields(
-            inputController: contentDevCode,
-            headerText: "Content Dev Code*",
-            hintText: 'Enter your Content Dev code',
-            keyboardType: 'intType',
+          const SizedBox(
+            height: 15,
           ),
-        ),
-        const SizedBox(
-          height: 25,
-        ),
-        CustomButton(
-            buttonText: 'Login',
-            buttonColor: Mycolors().green,
-            onPressed: () {
-              //TO DO
-            },
-            width: 100),
-        const SizedBox(
-          height: 25,
-        ),
-        Spacer(),]);
+          Text(
+            'Please Enter your Details',
+            style: GoogleFonts.kanit(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(
+            height: 25,
+          ),
+          SizedBox(
+            width: 380,
+            child: MyTextFields(
+              inputController: emailController,
+              headerText: "Email*",
+              hintText: 'Enter your email',
+              keyboardType: 'email',
+            ),
+          ),
+          const SizedBox(
+            height: 15,
+          ),
+          SizedBox(
+            width: 380,
+            child: MyTextFields(
+              inputController: passwordController,
+              headerText: "Password*",
+              hintText: 'Enter your password',
+              keyboardType: '',
+            ),
+          ),
+          const SizedBox(
+            height: 5,
+          ),
+          SizedBox(
+            width: 380,
+            child: InkWell(
+              onTap: () {
+                //TO DO
+              },
+              child: Text(
+                textAlign: TextAlign.right,
+                'Forgot Password?',
+                style: GoogleFonts.kanit(color: Mycolors().blue, fontSize: 12),
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 15,
+          ),
+          SizedBox(
+            width: 380,
+            child: MyTextFields(
+              inputController: contentDevCodeController,
+              headerText: "Content Dev Code*",
+              hintText: 'Enter your Content Dev code',
+              keyboardType: 'intType',
+            ),
+          ),
+          const SizedBox(
+            height: 25,
+          ),
+          CustomButton(
+              buttonText: 'Login',
+              buttonColor: Mycolors().green,
+              onPressed: () {
+                //TO DO
+              },
+              width: 100),
+          const SizedBox(
+            height: 25,
+          ),
+          Spacer(),
+        ]),
+      ),
+    );
   }
 }
