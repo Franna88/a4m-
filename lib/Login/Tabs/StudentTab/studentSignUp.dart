@@ -5,11 +5,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../CommonComponents/buttons/CustomButton.dart';
 import '../../../CommonComponents/inputFields/myTextFields.dart';
 import '../../../Constants/myColors.dart';
+
 class StudentSignUp extends StatefulWidget {
   const StudentSignUp({super.key});
   @override
   State<StudentSignUp> createState() => _StudentSignUpState();
 }
+
 class _StudentSignUpState extends State<StudentSignUp> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -18,6 +20,7 @@ class _StudentSignUpState extends State<StudentSignUp> {
   final phoneNumController = TextEditingController();
   bool isFirstStep = true;
   bool isLoading = false;
+
   // Sign-up process to handle user registration with Firebase
   Future<void> _signUpProcess() async {
     setState(() {
@@ -29,34 +32,49 @@ class _StudentSignUpState extends State<StudentSignUp> {
       String name = nameController.text.trim();
       String phoneNumber = phoneNumController.text.trim();
       String facilitatorCode = facilitatorCodeController.text.trim();
-      // Validation
-      if (email.isEmpty ||
-          password.isEmpty ||
-          name.isEmpty ||
-          phoneNumber.isEmpty) {
-        _showErrorDialog('Please fill in all required fields');
-        setState(() {
-          isLoading = false;
-        });
-        return;
-      }
-      // Create user with Firebase Auth
+
+      print('Creating user with email: $email');
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
-      // Save additional data to Firestore
-      await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(userCredential.user!.uid)
-          .set({
+
+      print('User created with UID: ${userCredential.user!.uid}');
+
+      final userData = {
         'userType': 'student',
         'email': email,
         'name': name,
         'phoneNumber': phoneNumber,
-        'facilitatorCode': facilitatorCode.isEmpty ? null : facilitatorCode,
+      };
+
+      if (facilitatorCode.isNotEmpty) {
+        userData['facilitatorCode'] = facilitatorCode;
+      }
+
+      print('Writing user data to Firestore...');
+      await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(userCredential.user!.uid)
+          .set(userData);
+      print('User data successfully written to Firestore');
+
+      // Show success message and navigate back to login
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Update state to go back to the login page
+      setState(() {
+        isLoading = false;
+
+        // This assumes that the StudentSignUp is within the StudentLoginTab
+        // Update the state in the parent widget to show the login view
+        Navigator.pop(context);
       });
-      // Navigate to the student dashboard or show success message
-      Navigator.pushReplacementNamed(context, '/studentDashboard');
     } on FirebaseAuthException catch (e) {
+      print('FirebaseAuthException: $e');
       String errorMessage;
       if (e.code == 'email-already-in-use') {
         errorMessage = 'The email is already in use by another account.';
@@ -67,6 +85,7 @@ class _StudentSignUpState extends State<StudentSignUp> {
       }
       _showErrorDialog(errorMessage);
     } catch (e) {
+      print('General Exception: $e');
       _showErrorDialog('An unexpected error occurred. Please try again.');
     } finally {
       setState(() {
@@ -74,6 +93,7 @@ class _StudentSignUpState extends State<StudentSignUp> {
       });
     }
   }
+
   // Method to show error dialogs
   void _showErrorDialog(String message) {
     showDialog(
@@ -92,6 +112,7 @@ class _StudentSignUpState extends State<StudentSignUp> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -132,6 +153,7 @@ class _StudentSignUpState extends State<StudentSignUp> {
                 headerText: "Phone Number",
                 hintText: '082 222 959 332',
                 keyboardType: 'intType',
+                isNumberField: true,
               ),
             ),
           ] else ...[
