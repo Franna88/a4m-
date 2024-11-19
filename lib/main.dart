@@ -34,11 +34,13 @@ void main() async {
   }
   runApp(
     const MaterialApp(
-      home: //CourseListPage()
-          // LandingPageMain()
-          // AdminHome()
-          // LoginPopup(),
-          ContentDevHome(),
+      home: Scaffold(
+        body: ContentDevHome(),
+        //CourseListPage()
+        // LandingPageMain()
+        // AdminHome()
+        // LoginPopup(),),
+      ),
     ),
   );
 }

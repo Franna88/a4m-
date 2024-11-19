@@ -60,7 +60,7 @@ class _CreateModuleState extends State<CreateModule> {
         width: MyUtility(context).width - 280,
         height: MyUtility(context).height - 80,
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(8.0),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -84,110 +84,107 @@ class _CreateModuleState extends State<CreateModule> {
                 ),
                 Container(
                   color: Colors.white,
-                  width: MyUtility(context).width,
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: MyUtility(context).width * 0.3,
-                                child: MyTextFields(
-                                  inputController: _moduleNameController,
-                                  headerText: 'Module Name',
-                                  keyboardType: '',
-                                ),
-                              ),
-                              Spacer(),
-                              SlimButtons(
-                                buttonText: 'Save',
-                                textColor: Mycolors().darkGrey,
-                                buttonColor: Colors.white,
-                                borderColor: Mycolors().darkGrey,
-                                onPressed: () {},
-                                customWidth: 75,
-                                customHeight: 40,
-                              ),
-                              SizedBox(width: 30),
-                              SlimButtons(
-                                buttonText: 'Assessments',
-                                textColor: Mycolors().darkGrey,
-                                buttonColor: Colors.white,
-                                borderColor: Mycolors().darkGrey,
-                                onPressed: () {
-                                  widget.changePageIndex(4);
-                                },
-                                customWidth: 125,
-                                customHeight: 40,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Row(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: Row(
                           children: [
-                            Container(
-                              height: MyUtility(context).height * 0.38,
-                              width: MyUtility(context).width * 0.3,
-                              decoration: BoxDecoration(
-                                color: Mycolors().offWhite,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Center(
-                                child: Icon(
-                                  Icons.image,
-                                  size: 50,
-                                  color: Mycolors().darkGrey,
-                                ),
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.3,
+                              child: MyTextFields(
+                                inputController: _moduleNameController,
+                                headerText: 'Module Name',
+                                keyboardType: '',
                               ),
                             ),
                             Spacer(),
+                            SlimButtons(
+                              buttonText: 'Save',
+                              textColor: Mycolors().darkGrey,
+                              buttonColor: Colors.white,
+                              borderColor: Mycolors().darkGrey,
+                              onPressed: () {},
+                              customWidth: 75,
+                              customHeight: 40,
+                            ),
+                            SizedBox(width: 30),
+                            SlimButtons(
+                              buttonText: 'Assessments',
+                              textColor: Mycolors().darkGrey,
+                              buttonColor: Colors.white,
+                              borderColor: Mycolors().darkGrey,
+                              onPressed: () {
+                                widget.changePageIndex(4);
+                              },
+                              customWidth: 125,
+                              customHeight: 40,
+                            ),
                           ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          child: Center(
-                            child: SizedBox(
-                              width: MyUtility(context).width * 0.82,
-                              child: MyTextFields(
-                                headerText: 'Module Description',
-                                inputController: _moduleDescriptionController,
-                                keyboardType: '',
-                                maxLines: 9,
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            height: MediaQuery.of(context).size.height * 0.3,
+                            width: MediaQuery.of(context).size.width * 0.3,
+                            decoration: BoxDecoration(
+                              color: Mycolors().offWhite,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.image,
+                                size: 50,
+                                color: Mycolors().darkGrey,
                               ),
                             ),
                           ),
-                        ),
-                        SizedBox(height: 20), // Add spacing for better layout
-                        SlimButtons(
-                          buttonText: 'Add Content',
-                          buttonColor: Colors.white,
-                          borderColor: Mycolors().darkGrey,
-                          textColor: Mycolors().darkGrey,
-                          onPressed: () {
-                            openAddContentPopup();
-                          },
-                          customWidth: 125,
-                          customHeight: 40,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          child: Center(
-                            child: SizedBox(
-                              width: MyUtility(context).width * 0.82,
-                              child: MyTextFields(
-                                inputController: _contentDescriptionController,
-                                keyboardType: '',
-                                maxLines: 3,
-                              ),
+                          Spacer(),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        child: Center(
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.82,
+                            child: MyTextFields(
+                              headerText: 'Module Description',
+                              inputController: _moduleDescriptionController,
+                              keyboardType: '',
+                              maxLines: 9,
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      SizedBox(height: 20),
+                      SlimButtons(
+                        buttonText: 'Add Content',
+                        buttonColor: Colors.white,
+                        borderColor: Mycolors().darkGrey,
+                        textColor: Mycolors().darkGrey,
+                        onPressed: () {
+                          openAddContentPopup();
+                        },
+                        customWidth: 125,
+                        customHeight: 40,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        child: Center(
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.82,
+                            child: MyTextFields(
+                              inputController: _contentDescriptionController,
+                              keyboardType: '',
+                              maxLines: 3,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

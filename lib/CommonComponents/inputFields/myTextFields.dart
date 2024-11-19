@@ -7,7 +7,7 @@ class MyTextFields extends StatelessWidget {
   final String keyboardType;
   final TextEditingController inputController;
   final bool? isOptional;
-  final double? containerHeight; // Parameter for container height
+
   final int? maxLines; // New parameter for max lines
 
   const MyTextFields({
@@ -17,7 +17,6 @@ class MyTextFields extends StatelessWidget {
     this.headerText,
     required this.keyboardType,
     this.isOptional,
-    this.containerHeight,
     this.maxLines, // Add maxLines to the constructor
   }) : super(key: key);
 
@@ -57,7 +56,6 @@ class MyTextFields extends StatelessWidget {
         if (headerText != null)
           const SizedBox(height: 8), // Add spacing if headerText is not null
         Container(
-          height: containerHeight, // Use the custom container height
           decoration: BoxDecoration(boxShadow: [
             BoxShadow(
                 offset: const Offset(12, 26),

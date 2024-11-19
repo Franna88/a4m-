@@ -15,6 +15,7 @@ import 'package:a4m/ContentDev/choose_course_type.dart';
 import 'package:a4m/ContentDev/create_module.dart';
 import 'package:a4m/ContentDev/edit_course_button.dart';
 import 'package:a4m/ContentDev/module_assessments.dart';
+import 'package:a4m/ContentDev/module_content.dart';
 import 'package:flutter/material.dart';
 
 class ContentDevHome extends StatefulWidget {
@@ -42,8 +43,7 @@ class _ContentDevHomeState extends State<ContentDevHome> {
       ),
       CreateModule(changePageIndex: changePageIndex),
       ModuleAssessments(changePageIndex: changePageIndex),
-      // CreateCourse(),
-      // Add other pages here
+      ModuleContent(changePageIndex: changePageIndex),
     ];
   }
 
