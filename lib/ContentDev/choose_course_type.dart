@@ -88,7 +88,7 @@ class _AdminDashboardMainState extends State<ChooseCourseType> {
                   Spacer(),
                   GestureDetector(
                     onTap: () {
-                      // Add your function here
+                      widget.changePageIndex(2);
                       print("Upload Course Content tapped");
                     },
                     child: Container(

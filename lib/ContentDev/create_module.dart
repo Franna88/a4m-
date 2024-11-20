@@ -117,7 +117,7 @@ class _CreateModuleState extends State<CreateModule> {
                               buttonColor: Colors.white,
                               borderColor: Mycolors().darkGrey,
                               onPressed: () {
-                                widget.changePageIndex(4);
+                                widget.changePageIndex(5);
                               },
                               customWidth: 125,
                               customHeight: 40,

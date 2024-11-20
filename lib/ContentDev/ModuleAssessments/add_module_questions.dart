@@ -1,3 +1,4 @@
+import 'package:a4m/ContentDev/ModuleAssessments/module_list_item_reusables.dart';
 import 'package:flutter/material.dart';
 import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
@@ -5,19 +6,19 @@ import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Themes/text_style.dart';
 import 'package:a4m/myutility.dart';
 
-class ModuleAssessments extends StatefulWidget {
+class AddModuleQuestions extends StatefulWidget {
   final Function(int) changePageIndex;
 
-  ModuleAssessments({
+  AddModuleQuestions({
     super.key,
     required this.changePageIndex,
   });
 
   @override
-  State<ModuleAssessments> createState() => _ModuleAssessmentsState();
+  State<AddModuleQuestions> createState() => _AddModuleQuestionsState();
 }
 
-class _ModuleAssessmentsState extends State<ModuleAssessments> {
+class _AddModuleQuestionsState extends State<AddModuleQuestions> {
   late TextEditingController _trueFalseQuestionController;
   late TextEditingController _trueFalseAnswerController;
   List<String> _answers = [];
@@ -222,93 +223,19 @@ class _ModuleAssessmentsState extends State<ModuleAssessments> {
                             Column(
                               children: [
                                 for (int i = 0; i < _answers.length; i++)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 5.0),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Container(
-                                            padding: EdgeInsets.all(10.0),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(5.0),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.grey
-                                                      .withOpacity(0.5),
-                                                  spreadRadius: 0,
-                                                  blurRadius: 5,
-                                                  offset: Offset(0, 3),
-                                                ),
-                                              ],
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                // Checkbox and text
-                                                Row(
-                                                  children: [
-                                                    Checkbox(
-                                                      value: false,
-                                                      onChanged: (bool? value) {
-                                                        // Add your checkbox logic here
-                                                      },
-                                                    ),
-                                                    Text(
-                                                      _answers[i],
-                                                      style:
-                                                          MyTextStyles(context)
-                                                              .smallBlack,
-                                                    ),
-                                                  ],
-                                                ),
-                                                Spacer(),
-                                                Column(
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        SlimButtons(
-                                                          onPressed: () {
-                                                            // Add edit logic here
-                                                          },
-                                                          buttonText: 'EDIT',
-                                                          buttonColor:
-                                                              Mycolors().blue,
-                                                          textColor:
-                                                              Colors.white,
-                                                          customWidth: 75,
-                                                          customHeight: 30,
-                                                        ),
-                                                        SizedBox(width: 10),
-                                                        Container(
-                                                          width: 2,
-                                                          height: 30,
-                                                          color: Colors.grey,
-                                                        ),
-                                                        SizedBox(width: 10),
-                                                        SlimButtons(
-                                                          onPressed: () =>
-                                                              _removeAnswerField(
-                                                                  i),
-                                                          buttonText: 'DELETE',
-                                                          buttonColor:
-                                                              Mycolors().red,
-                                                          textColor:
-                                                              Colors.white,
-                                                          customWidth: 75,
-                                                          customHeight: 30,
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                  AddModuleListItem(
+                                    text: 'Question Title',
+                                    onEdit: () {},
+                                    onDelete: () => _removeAnswerField(i),
+                                    showCheckbox:
+                                        true, // Ensure the checkbox is displayed
+                                    checkboxValue:
+                                        false, // Initial checkbox state
+                                    onCheckboxChanged: (bool? value) {
+                                      setState(() {
+                                        // Update checkbox logic if needed
+                                      });
+                                    },
                                   ),
                               ],
                             ),

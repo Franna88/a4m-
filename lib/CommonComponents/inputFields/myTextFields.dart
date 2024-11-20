@@ -37,7 +37,7 @@ class MyTextFields extends StatelessWidget {
               Text(
                 headerText!,
                 style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: Colors.black),
               ),
@@ -48,7 +48,7 @@ class MyTextFields extends StatelessWidget {
                   style: GoogleFonts.inter(
                       color: Colors.grey,
                       fontWeight: FontWeight.w500,
-                      fontSize: 14),
+                      fontSize: 12),
                 ),
               )
             ],
@@ -71,7 +71,7 @@ class MyTextFields extends StatelessWidget {
                 : keyboardType == 'intType'
                     ? TextInputType.number
                     : TextInputType.multiline,
-            style: const TextStyle(fontSize: 14, color: Colors.black),
+            style: const TextStyle(fontSize: 12, color: Colors.black),
             decoration: InputDecoration(
               filled: true,
               fillColor: accentColor,

@@ -1,3 +1,4 @@
+import 'package:a4m/ContentDev/ModuleAssessments/module_list_item_reusables.dart';
 import 'package:flutter/material.dart';
 import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
@@ -61,110 +62,127 @@ class _ModuleContentState extends State<ModuleContent> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Row(
+                          Column(
                             children: [
-                              // Dropdown for Question Type
-                              Text(
-                                'Tests',
-                                style: MyTextStyles(context).mediumBlack,
+                              Row(
+                                children: [
+                                  // Dropdown for Question Type
+                                  Text(
+                                    'Tests',
+                                    style: MyTextStyles(context).mediumBlack,
+                                  ),
+                                  Spacer(),
+                                  SlimButtons(
+                                    buttonText: 'Add Question',
+                                    buttonColor: Colors.white,
+                                    onPressed: () {
+                                      widget.changePageIndex(4);
+                                    },
+                                    customWidth: 160,
+                                    customHeight: 40,
+                                    borderColor: Mycolors().darkGrey,
+                                    textColor: Mycolors().darkGrey,
+                                  ),
+                                ],
                               ),
-                              Spacer(),
-                              SlimButtons(
-                                buttonText: 'Add Question',
-                                buttonColor: Colors.white,
-                                onPressed: () {},
-                                customWidth: 160,
-                                customHeight: 40,
-                                borderColor: Mycolors().darkGrey,
-                                textColor: Mycolors().darkGrey,
+                              SizedBox(height: 20),
+                              Container(
+                                decoration: BoxDecoration(
+                                  // border: Border.all(
+                                  //   color: Mycolors().darkGrey,
+                                  //   width: 1.0,
+                                  // ),
+                                  borderRadius: BorderRadius.circular(3.0),
+                                ),
+                                child: AddModuleListItem(
+                                  text: 'Question Title',
+                                  onEdit: () {},
+                                  onDelete: () {},
+                                ),
                               ),
                             ],
                           ),
-                          Container(
-                            child: Column(
-                              children: [
-                                Column(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 5.0),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Container(
-                                              padding: EdgeInsets.all(10.0),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(5.0),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.grey
-                                                        .withOpacity(0.5),
-                                                    spreadRadius: 0,
-                                                    blurRadius: 5,
-                                                    offset: Offset(0, 3),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: Row(
-                                                children: [
-                                                  // Checkbox and text
-                                                  Text(
-                                                    'True/False',
-                                                    style: MyTextStyles(context)
-                                                        .smallBlack,
-                                                  ),
-                                                  Spacer(),
-                                                  Column(
-                                                    children: [
-                                                      Row(
-                                                        children: [
-                                                          SlimButtons(
-                                                            onPressed: () {
-                                                              // Add edit logic here
-                                                            },
-                                                            buttonText: 'EDIT',
-                                                            buttonColor:
-                                                                Mycolors().blue,
-                                                            textColor:
-                                                                Colors.white,
-                                                            customWidth: 75,
-                                                            customHeight: 30,
-                                                          ),
-                                                          SizedBox(width: 10),
-                                                          Container(
-                                                            width: 2,
-                                                            height: 30,
-                                                            color: Colors.grey,
-                                                          ),
-                                                          SizedBox(width: 10),
-                                                          SlimButtons(
-                                                            onPressed: () {},
-                                                            buttonText:
-                                                                'DELETE',
-                                                            buttonColor:
-                                                                Mycolors().red,
-                                                            textColor:
-                                                                Colors.white,
-                                                            customWidth: 75,
-                                                            customHeight: 30,
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                          SizedBox(height: 20),
+                          Column(
+                            children: [
+                              Row(
+                                children: [
+                                  // Dropdown for Question Type
+                                  Text(
+                                    'Task/Activities',
+                                    style: MyTextStyles(context).mediumBlack,
+                                  ),
+                                  Spacer(),
+                                  SlimButtons(
+                                    buttonText: 'Add Task',
+                                    buttonColor: Colors.white,
+                                    onPressed: () {
+                                      widget.changePageIndex(6);
+                                    },
+                                    customWidth: 160,
+                                    customHeight: 40,
+                                    borderColor: Mycolors().darkGrey,
+                                    textColor: Mycolors().darkGrey,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 20),
+                              Container(
+                                decoration: BoxDecoration(
+                                  // border: Border.all(
+                                  //   color: Mycolors().darkGrey,
+                                  //   width: 1.0,
+                                  // ),
+                                  borderRadius: BorderRadius.circular(3.0),
                                 ),
-                              ],
-                            ),
+                                child: AddModuleListItem(
+                                  text: 'Question Title',
+                                  onEdit: () {},
+                                  onDelete: () {},
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 20),
+                          Column(
+                            children: [
+                              Row(
+                                children: [
+                                  // Dropdown for Question Type
+                                  Text(
+                                    'Assignments',
+                                    style: MyTextStyles(context).mediumBlack,
+                                  ),
+                                  Spacer(),
+                                  SlimButtons(
+                                    buttonText: 'Add Assessment',
+                                    buttonColor: Colors.white,
+                                    onPressed: () {
+                                      widget.changePageIndex(7);
+                                    },
+                                    customWidth: 160,
+                                    customHeight: 40,
+                                    borderColor: Mycolors().darkGrey,
+                                    textColor: Mycolors().darkGrey,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 20),
+                              Container(
+                                decoration: BoxDecoration(
+                                  // border: Border.all(
+                                  //   color: Mycolors().darkGrey,
+                                  //   width: 1.0,
+                                  // ),
+                                  borderRadius: BorderRadius.circular(3.0),
+                                ),
+                                child: AddModuleListItem(
+                                  text: 'Question Title',
+                                  onEdit: () {},
+                                  onDelete: () {},
+                                ),
+                              ),
+                            ],
                           )
                         ],
                       ),

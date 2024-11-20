@@ -9,12 +9,14 @@ import 'package:a4m/Admin/Commonui/adminMainNavBar.dart';
 import 'package:a4m/Admin/ComplaintsSuggestions/compSuggestionsMain.dart';
 import 'package:a4m/Admin/CurriculumVitae/cirriculumVitae.dart';
 import 'package:a4m/Admin/Dashboard/adminDashboardMain.dart';
+import 'package:a4m/ContentDev/ModuleAssessments/add_module_assignments.dart';
+import 'package:a4m/ContentDev/ModuleAssessments/add_module_tasks.dart';
 import 'package:a4m/ContentDev/content_dev_navbar.dart';
 import 'package:a4m/ContentDev/create_course.dart';
 import 'package:a4m/ContentDev/choose_course_type.dart';
 import 'package:a4m/ContentDev/create_module.dart';
 import 'package:a4m/ContentDev/edit_course_button.dart';
-import 'package:a4m/ContentDev/module_assessments.dart';
+import 'package:a4m/ContentDev/ModuleAssessments/add_module_questions.dart';
 import 'package:a4m/ContentDev/module_content.dart';
 import 'package:flutter/material.dart';
 
@@ -42,8 +44,10 @@ class _ContentDevHomeState extends State<ContentDevHome> {
         changePageIndex: changePageIndex,
       ),
       CreateModule(changePageIndex: changePageIndex),
-      ModuleAssessments(changePageIndex: changePageIndex),
+      AddModuleQuestions(changePageIndex: changePageIndex),
       ModuleContent(changePageIndex: changePageIndex),
+      AddModuleTasks(changePageIndex: changePageIndex),
+      AddModuleAssignments(changePageIndex: changePageIndex),
     ];
   }
 
