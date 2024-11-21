@@ -1,3 +1,4 @@
+import 'package:a4m/CommonComponents/inputFields/contentDevTextfields.dart';
 import 'package:a4m/ContentDev/ModuleAssessments/module_list_item_reusables.dart';
 import 'package:flutter/material.dart';
 import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
@@ -104,7 +105,7 @@ class _AddModuleTasksState extends State<AddModuleTasks> {
                             style: MyTextStyles(context).smallBlack,
                           ),
                           SizedBox(height: 10),
-                          MyTextFields(
+                          ContentDevTextfields(
                             inputController: _trueFalseQuestionController,
                             keyboardType: '',
                             maxLines: 5,
@@ -120,7 +121,7 @@ class _AddModuleTasksState extends State<AddModuleTasks> {
                                 SizedBox(width: 8),
                                 SizedBox(
                                   width: MyUtility(context).width * 0.05,
-                                  child: MyTextFields(
+                                  child: ContentDevTextfields(
                                     inputController: _studentScoreController,
                                     keyboardType: '',
                                     maxLines: 1,
@@ -134,7 +135,7 @@ class _AddModuleTasksState extends State<AddModuleTasks> {
                             style: MyTextStyles(context).smallBlack,
                           ),
                           SizedBox(height: 10),
-                          MyTextFields(
+                          ContentDevTextfields(
                             inputController: _trueFalseAnswerController,
                             keyboardType: '',
                             maxLines: 3,

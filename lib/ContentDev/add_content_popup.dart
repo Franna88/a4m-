@@ -1,4 +1,5 @@
 import 'package:a4m/CommonComponents/buttons/AddContentButton.dart';
+import 'package:a4m/CommonComponents/inputFields/contentDevTextfields.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
 import 'package:a4m/Themes/text_style.dart';
 import 'package:a4m/myutility.dart';
@@ -160,7 +161,7 @@ class _AdminCourseDetailsPopupState extends State<AddContentPopup> {
                       ),
                     ],
                   ),
-                  MyTextFields(
+                  ContentDevTextfields(
                     inputController: _contentTitleController,
                     keyboardType: '',
                     headerText: 'Title',

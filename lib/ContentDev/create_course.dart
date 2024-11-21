@@ -2,7 +2,8 @@ import 'package:a4m/Admin/Dashboard/ui/coursePerformancePieChart.dart';
 import 'package:a4m/Admin/Dashboard/ui/monthlySalesChart.dart';
 import 'package:a4m/Admin/Dashboard/ui/monthlyStatSumContainers.dart';
 import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
-import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
+
+import 'package:a4m/CommonComponents/inputFields/contentDevTextfields.dart';
 
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Themes/text_style.dart';
@@ -111,7 +112,7 @@ class _CreateCourseState extends State<CreateCourse> {
                                   children: [
                                     SizedBox(
                                       width: MyUtility(context).width * 0.3,
-                                      child: MyTextFields(
+                                      child: ContentDevTextfields(
                                         headerText: 'Course Name',
                                         inputController: _courseNameController,
                                         keyboardType: '',
@@ -119,7 +120,7 @@ class _CreateCourseState extends State<CreateCourse> {
                                     ),
                                     SizedBox(
                                       width: MyUtility(context).width * 0.3,
-                                      child: MyTextFields(
+                                      child: ContentDevTextfields(
                                         headerText: 'Course Price',
                                         inputController: _coursePriceController,
                                         keyboardType: 'intType',
@@ -127,7 +128,7 @@ class _CreateCourseState extends State<CreateCourse> {
                                     ),
                                     SizedBox(
                                       width: MyUtility(context).width * 0.3,
-                                      child: MyTextFields(
+                                      child: ContentDevTextfields(
                                         headerText: 'Course Category',
                                         inputController:
                                             _courseCategoryController,
@@ -144,7 +145,7 @@ class _CreateCourseState extends State<CreateCourse> {
                             child: Center(
                               child: SizedBox(
                                 width: MyUtility(context).width * 0.8,
-                                child: MyTextFields(
+                                child: ContentDevTextfields(
                                   headerText: 'Course Description',
                                   inputController: _courseDescriptionController,
                                   keyboardType: '',

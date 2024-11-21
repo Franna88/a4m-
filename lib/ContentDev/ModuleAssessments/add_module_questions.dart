@@ -1,3 +1,4 @@
+import 'package:a4m/CommonComponents/inputFields/contentDevTextfields.dart';
 import 'package:a4m/ContentDev/ModuleAssessments/module_list_item_reusables.dart';
 import 'package:flutter/material.dart';
 import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
@@ -136,7 +137,7 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
                               style: MyTextStyles(context).smallBlack,
                             ),
                             SizedBox(height: 10),
-                            MyTextFields(
+                            ContentDevTextfields(
                               inputController: _trueFalseQuestionController,
                               keyboardType: '',
                               maxLines: 5,
@@ -189,7 +190,7 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
                               style: MyTextStyles(context).smallBlack,
                             ),
                             SizedBox(height: 10),
-                            MyTextFields(
+                            ContentDevTextfields(
                               inputController: _trueFalseQuestionController,
                               keyboardType: '',
                               maxLines: 5,
@@ -199,7 +200,7 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
                               style: MyTextStyles(context).smallBlack,
                             ),
                             SizedBox(height: 10),
-                            MyTextFields(
+                            ContentDevTextfields(
                               inputController: _trueFalseAnswerController,
                               keyboardType: '',
                               maxLines: 3,

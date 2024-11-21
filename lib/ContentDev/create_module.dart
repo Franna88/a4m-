@@ -2,6 +2,7 @@ import 'package:a4m/Admin/Dashboard/ui/coursePerformancePieChart.dart';
 import 'package:a4m/Admin/Dashboard/ui/monthlySalesChart.dart';
 import 'package:a4m/Admin/Dashboard/ui/monthlyStatSumContainers.dart';
 import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
+import 'package:a4m/CommonComponents/inputFields/contentDevTextfields.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
 import 'package:a4m/ContentDev/add_content_popup.dart';
 
@@ -94,7 +95,7 @@ class _CreateModuleState extends State<CreateModule> {
                           children: [
                             SizedBox(
                               width: MediaQuery.of(context).size.width * 0.3,
-                              child: MyTextFields(
+                              child: ContentDevTextfields(
                                 inputController: _moduleNameController,
                                 headerText: 'Module Name',
                                 keyboardType: '',
@@ -150,7 +151,7 @@ class _CreateModuleState extends State<CreateModule> {
                         child: Center(
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width * 0.82,
-                            child: MyTextFields(
+                            child: ContentDevTextfields(
                               headerText: 'Module Description',
                               inputController: _moduleDescriptionController,
                               keyboardType: '',
@@ -176,7 +177,7 @@ class _CreateModuleState extends State<CreateModule> {
                         child: Center(
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width * 0.82,
-                            child: MyTextFields(
+                            child: ContentDevTextfields(
                               inputController: _contentDescriptionController,
                               keyboardType: '',
                               maxLines: 3,
