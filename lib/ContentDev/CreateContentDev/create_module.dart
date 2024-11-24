@@ -4,7 +4,7 @@ import 'package:a4m/Admin/Dashboard/ui/monthlyStatSumContainers.dart';
 import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
 import 'package:a4m/CommonComponents/inputFields/contentDevTextfields.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
-import 'package:a4m/ContentDev/add_content_popup.dart';
+import 'package:a4m/ContentDev/CreateContentDev/add_content_popup.dart';
 
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Themes/text_style.dart';

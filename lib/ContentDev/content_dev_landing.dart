@@ -9,15 +9,16 @@ import 'package:a4m/Admin/Commonui/adminMainNavBar.dart';
 import 'package:a4m/Admin/ComplaintsSuggestions/compSuggestionsMain.dart';
 import 'package:a4m/Admin/CurriculumVitae/cirriculumVitae.dart';
 import 'package:a4m/Admin/Dashboard/adminDashboardMain.dart';
+import 'package:a4m/ContentDev/EditContentDev/edit_module.dart';
 import 'package:a4m/ContentDev/ModuleAssessments/add_module_assignments.dart';
 import 'package:a4m/ContentDev/ModuleAssessments/add_module_tasks.dart';
-import 'package:a4m/ContentDev/content_dev_navbar.dart';
-import 'package:a4m/ContentDev/create_course.dart';
-import 'package:a4m/ContentDev/choose_course_type.dart';
-import 'package:a4m/ContentDev/create_module.dart';
-import 'package:a4m/ContentDev/edit_course_button.dart';
+import 'package:a4m/ContentDev/CreateContentDev/content_dev_navbar.dart';
+import 'package:a4m/ContentDev/CreateContentDev/create_course.dart';
+import 'package:a4m/ContentDev/CreateContentDev/choose_course_type.dart';
+import 'package:a4m/ContentDev/CreateContentDev/create_module.dart';
+import 'package:a4m/ContentDev/EditContentDev/edit_content_dev.dart';
 import 'package:a4m/ContentDev/ModuleAssessments/add_module_questions.dart';
-import 'package:a4m/ContentDev/module_content.dart';
+import 'package:a4m/ContentDev/CreateContentDev/module_content.dart';
 import 'package:flutter/material.dart';
 
 class ContentDevHome extends StatefulWidget {
@@ -39,7 +40,7 @@ class _ContentDevHomeState extends State<ContentDevHome> {
       ChooseCourseType(
         changePageIndex: changePageIndex,
       ),
-      EditCourseButton(),
+      EditContentDev(changePageIndex: changePageIndex),
       CreateCourse(
         changePageIndex: changePageIndex,
       ),
@@ -48,6 +49,7 @@ class _ContentDevHomeState extends State<ContentDevHome> {
       ModuleContent(changePageIndex: changePageIndex),
       AddModuleTasks(changePageIndex: changePageIndex),
       AddModuleAssignments(changePageIndex: changePageIndex),
+      EditModule(changePageIndex: changePageIndex),
     ];
   }
 

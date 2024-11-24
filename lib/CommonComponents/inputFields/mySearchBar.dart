@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class MySearchBar extends StatelessWidget {
   final TextEditingController textController;
   final String hintText;
@@ -21,10 +20,10 @@ class MySearchBar extends StatelessWidget {
       child: TextField(
         controller: textController,
         onChanged: (value) {
-          //Do something wi
+          // Do something with the value
         },
         decoration: InputDecoration(
-          prefixIcon: Icon(
+          suffixIcon: Icon(
             Icons.search,
             color: Colors.grey[500]!,
           ),
@@ -39,11 +38,13 @@ class MySearchBar extends StatelessWidget {
             borderRadius: BorderRadius.all(Radius.circular(45.0)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: const Color.fromARGB(255, 54, 54, 54)!, width: 1.0),
+            borderSide: BorderSide(
+                color: const Color.fromARGB(255, 54, 54, 54)!, width: 1.0),
             borderRadius: BorderRadius.all(Radius.circular(45.0)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: const Color.fromARGB(255, 54, 54, 54)!, width: 1.5),
+            borderSide: BorderSide(
+                color: const Color.fromARGB(255, 54, 54, 54)!, width: 1.5),
             borderRadius: BorderRadius.all(Radius.circular(45.0)),
           ),
         ),
