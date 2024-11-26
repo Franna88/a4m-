@@ -78,8 +78,8 @@ class _AdminMainNavBarState extends State<ContentDevNavBar> {
                   padding: const EdgeInsets.only(bottom: 50.0),
                   child: NavButtons(
                     buttonText: 'Messages',
-                    onTap: () => _handleItemClick(1),
-                    isActive: activeIndex == 1,
+                    onTap: () => _handleItemClick(9),
+                    isActive: activeIndex == 9,
                   ),
                 ),
               ],

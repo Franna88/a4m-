@@ -3,6 +3,7 @@ import 'package:a4m/Admin/AdminMarketing/dummyData/adminCourseDummyData.dart';
 import 'package:a4m/Admin/AdminMarketing/ui/adminCourseContainers.dart';
 import 'package:a4m/CommonComponents/inputFields/myDropDownMenu.dart';
 import 'package:a4m/CommonComponents/inputFields/mySearchBar.dart';
+import 'package:a4m/ContentDev/EditContentDev/EditContentDevComponants/edit_course_containers.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
@@ -88,7 +89,7 @@ class _EditContentDevState extends State<EditContentDev> {
                       SizedBox(
                         width: 320, // Fixed width
                         height: 340, // Fixed height
-                        child: AdminCourseContainers(
+                        child: EditCourseContainers(
                           courseName: course.courseName,
                           price: course.price,
                           courseDescription: course.courseDescription,
@@ -99,6 +100,10 @@ class _EditContentDevState extends State<EditContentDev> {
                           onTap: () {
                             widget.changePageIndex(8);
                           },
+                          editOnTap: () {
+                            widget.changePageIndex(3);
+                          },
+                          deleteOnTap: () {},
                         ),
                       ),
                   ],

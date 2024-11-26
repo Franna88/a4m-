@@ -3,17 +3,18 @@ import 'package:a4m/CommonComponents/buttons/alternateNavButtons.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 
-class AdminMessaging extends StatefulWidget {
+class ContentDevNavbarButtons extends StatefulWidget {
   final Function(int) changePage;
   final Widget child;
-  const AdminMessaging(
+  const ContentDevNavbarButtons(
       {super.key, required this.child, required this.changePage});
 
   @override
-  State<AdminMessaging> createState() => _AdminMessagingState();
+  State<ContentDevNavbarButtons> createState() =>
+      _ContentDevNavbarButtonsState();
 }
 
-class _AdminMessagingState extends State<AdminMessaging> {
+class _ContentDevNavbarButtonsState extends State<ContentDevNavbarButtons> {
   int activeIndex = 0;
 
   void _handleItemClick(int index) {
@@ -60,33 +61,12 @@ class _AdminMessagingState extends State<AdminMessaging> {
                   height: 20,
                 ),
                 AlternateNavButtons(
-                  buttonText: 'Content Devs',
+                  buttonText: 'Lecturers',
                   onTap: () => _handleItemClick(2),
                   isActive: activeIndex == 2,
                 ),
                 const SizedBox(
                   height: 20,
-                ),
-                AlternateNavButtons(
-                  buttonText: 'Lecturers',
-                  onTap: () => _handleItemClick(3),
-                  isActive: activeIndex == 3,
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                AlternateNavButtons(
-                  buttonText: 'Students',
-                  onTap: () => _handleItemClick(4),
-                  isActive: activeIndex == 4,
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                AlternateNavButtons(
-                  buttonText: 'Facilitators',
-                  onTap: () => _handleItemClick(5),
-                  isActive: activeIndex == 5,
                 ),
               ],
             ),

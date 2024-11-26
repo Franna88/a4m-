@@ -19,6 +19,7 @@ import 'package:a4m/ContentDev/CreateContentDev/create_module.dart';
 import 'package:a4m/ContentDev/EditContentDev/edit_content_dev.dart';
 import 'package:a4m/ContentDev/ModuleAssessments/add_module_questions.dart';
 import 'package:a4m/ContentDev/CreateContentDev/module_content.dart';
+import 'package:a4m/ContentDev/ContentDevMessages/content_dev_messages.dart';
 import 'package:flutter/material.dart';
 
 class ContentDevHome extends StatefulWidget {
@@ -50,6 +51,7 @@ class _ContentDevHomeState extends State<ContentDevHome> {
       AddModuleTasks(changePageIndex: changePageIndex),
       AddModuleAssignments(changePageIndex: changePageIndex),
       EditModule(changePageIndex: changePageIndex),
+      const ContentDevMessages(),
     ];
   }
 

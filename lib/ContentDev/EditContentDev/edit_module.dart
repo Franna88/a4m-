@@ -4,6 +4,7 @@ import 'package:a4m/Admin/AdminMarketing/ui/adminCourseContainers.dart';
 import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
 import 'package:a4m/CommonComponents/inputFields/myDropDownMenu.dart';
 import 'package:a4m/CommonComponents/inputFields/mySearchBar.dart';
+import 'package:a4m/ContentDev/EditContentDev/EditContentDevComponants/edit_module_containers.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Themes/text_style.dart';
 import 'package:a4m/myutility.dart';
@@ -102,7 +103,7 @@ class _EditModuleState extends State<EditModule> {
                             SizedBox(
                               width: 320, // Fixed width
                               height: 340, // Fixed height
-                              child: AdminCourseContainers(
+                              child: EditModuleContainers(
                                 courseName: course.courseName,
                                 price: course.price,
                                 courseDescription: course.courseDescription,
@@ -111,6 +112,7 @@ class _EditModuleState extends State<EditModule> {
                                 assessmentAmount: course.assessmentAmount,
                                 courseImage: course.courseImage,
                                 onTap: openCourseDetailsPopup,
+                                deleteOnTap: () {},
                               ),
                             ),
                         ],
