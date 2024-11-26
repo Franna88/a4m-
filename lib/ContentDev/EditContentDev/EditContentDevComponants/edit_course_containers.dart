@@ -1,4 +1,5 @@
 import 'package:a4m/CommonComponents/displayCardIcons.dart';
+import 'package:a4m/ContentDev/EditContentDev/EditContentDevComponants/delete_course_popup.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,25 +14,33 @@ class EditCourseContainers extends StatefulWidget {
   final String courseImage;
   final Function() onTap;
   final Function() editOnTap;
-  final Function() deleteOnTap;
-  const EditCourseContainers(
-      {super.key,
-      required this.courseName,
-      required this.price,
-      required this.courseDescription,
-      required this.totalStudents,
-      required this.moduleAmount,
-      required this.assessmentAmount,
-      required this.courseImage,
-      required this.onTap,
-      required this.editOnTap,
-      required this.deleteOnTap});
+
+  const EditCourseContainers({
+    super.key,
+    required this.courseName,
+    required this.price,
+    required this.courseDescription,
+    required this.totalStudents,
+    required this.moduleAmount,
+    required this.assessmentAmount,
+    required this.courseImage,
+    required this.onTap,
+    required this.editOnTap,
+  });
 
   @override
   State<EditCourseContainers> createState() => _EditCourseContainersState();
 }
 
 class _EditCourseContainersState extends State<EditCourseContainers> {
+  Future openDeleteCoursePopup() => showDialog(
+      context: context,
+      builder: (context) {
+        return const Dialog(
+          child: DeleteCoursePopup(),
+        );
+      });
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -153,7 +162,9 @@ class _EditCourseContainersState extends State<EditCourseContainers> {
                       color: Mycolors().peach,
                       size: 20,
                     ),
-                    onPressed: widget.deleteOnTap,
+                    onPressed: () {
+                      openDeleteCoursePopup();
+                    },
                   ),
                 ],
               ),

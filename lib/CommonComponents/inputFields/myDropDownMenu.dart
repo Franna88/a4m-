@@ -39,8 +39,9 @@ class _MyDropDownMenuState extends State<MyDropDownMenu> {
               child: Text(
                 widget.description == null ? '' : widget.description!,
                 style: GoogleFonts.lato(
-                  fontWeight:
-                      widget.isBold == null ? FontWeight.w500 : FontWeight.normal,
+                  fontWeight: widget.isBold == null
+                      ? FontWeight.w500
+                      : FontWeight.normal,
                   fontSize: 16,
                   letterSpacing: -0.5,
                   color: Color.fromARGB(255, 0, 0, 0),
@@ -57,18 +58,18 @@ class _MyDropDownMenuState extends State<MyDropDownMenu> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
                 color: Colors.white,
-                
               ),
               child: DropdownMenu<String>(
                 hintText: 'Select',
-                textStyle: GoogleFonts.inter(color: const Color.fromARGB(255, 7, 7, 7)),
+                textStyle: GoogleFonts.inter(
+                    color: const Color.fromARGB(255, 7, 7, 7)),
                 trailingIcon: Icon(
                   Icons.keyboard_arrow_down,
                   color: Colors.black,
                   size: 35,
                 ),
-                selectedTrailingIcon:
-                    Icon(Icons.keyboard_arrow_up, color: Colors.black, size: 35),
+                selectedTrailingIcon: Icon(Icons.keyboard_arrow_up,
+                    color: Colors.black, size: 35),
                 enableFilter: false,
                 enableSearch: widget.enableSearch ?? true,
                 width: widget.customSize,
@@ -79,7 +80,7 @@ class _MyDropDownMenuState extends State<MyDropDownMenu> {
                   setState(() {
                     widget.textfieldController.text = value!;
                   });
-            
+
                   if (widget.onChanged != null) {
                     widget.onChanged!();
                   }

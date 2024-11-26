@@ -3,6 +3,7 @@ import 'package:a4m/Admin/AdminMarketing/dummyData/adminCourseDummyData.dart';
 import 'package:a4m/Admin/AdminMarketing/ui/adminCourseContainers.dart';
 import 'package:a4m/CommonComponents/inputFields/myDropDownMenu.dart';
 import 'package:a4m/CommonComponents/inputFields/mySearchBar.dart';
+import 'package:a4m/ContentDev/EditContentDev/EditContentDevComponants/delete_course_popup.dart';
 import 'package:a4m/ContentDev/EditContentDev/EditContentDevComponants/edit_course_containers.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +28,18 @@ class _EditContentDevState extends State<EditContentDev> {
           child: AdminCourseDetailsPopup(),
         );
       });
+
+  // Future openDeleteCoursePopup() => showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return Dialog(
+  //         child: DeleteCoursePopup(
+  //             // closePopOnTap: () {
+  //             //   Navigator.of(context).pop();
+  //             // },
+  //             ),
+  //       );
+  //     });
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +116,6 @@ class _EditContentDevState extends State<EditContentDev> {
                           editOnTap: () {
                             widget.changePageIndex(3);
                           },
-                          deleteOnTap: () {},
                         ),
                       ),
                   ],
