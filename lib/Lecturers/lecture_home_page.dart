@@ -10,6 +10,11 @@ import 'package:a4m/Admin/ComplaintsSuggestions/compSuggestionsMain.dart';
 import 'package:a4m/Admin/CurriculumVitae/cirriculumVitae.dart';
 import 'package:a4m/Admin/Dashboard/adminDashboardMain.dart';
 import 'package:a4m/Lecturers/LectureCourses/lecture_courses.dart';
+import 'package:a4m/Lecturers/LectureCourses/view_modules_complete.dart';
+import 'package:a4m/Lecturers/LectureDashboard/lecture_dashboard.dart';
+import 'package:a4m/Lecturers/LectureMessages/lecture_messages.dart';
+import 'package:a4m/Lecturers/LecturePresentations/lecture_presentations.dart';
+import 'package:a4m/Lecturers/LectureStudents/lecture_students.dart';
 import 'package:a4m/Lecturers/lecture_navbar.dart';
 import 'package:flutter/material.dart';
 
@@ -24,14 +29,14 @@ class _LectureHomePageState extends State<LectureHomePage> {
   var pageIndex = 0;
 
   var pages = [
-    AdminDashboardMain(),
+    LectureDashboard(),
     LectureCourses(),
 
-    ApproveContent(),
+    LectureStudent(),
 
-    CirriculumVitae(),
-    AdminMessagesMain(),
-
+    LecturePresentations(),
+    LectureMessages(),
+    ViewModulesComplete(),
     // Add other pages here
   ];
 

@@ -5,7 +5,7 @@ import 'package:a4m/Lecturers/LectureCourses/view_modules_complete.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class LectureCourseContainers extends StatefulWidget {
+class LecturePresentationsContainer extends StatefulWidget {
   final String courseName;
   final String modulesComplete;
   final String courseDescription;
@@ -14,7 +14,7 @@ class LectureCourseContainers extends StatefulWidget {
   final String assessmentAmount;
   final String courseImage;
   final Function() onTap;
-  const LectureCourseContainers(
+  const LecturePresentationsContainer(
       {super.key,
       required this.courseName,
       required this.modulesComplete,
@@ -26,20 +26,12 @@ class LectureCourseContainers extends StatefulWidget {
       required this.onTap});
 
   @override
-  State<LectureCourseContainers> createState() =>
-      _LectureCourseContainersState();
+  State<LecturePresentationsContainer> createState() =>
+      _LecturePresentationsContainerState();
 }
 
-class _LectureCourseContainersState extends State<LectureCourseContainers> {
-  var pageIndex = 0;
-
-  void changePage(int index) {
-    setState(() {
-      pageIndex = index;
-    });
-    changePage(5);
-  }
-
+class _LecturePresentationsContainerState
+    extends State<LecturePresentationsContainer> {
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -83,45 +75,6 @@ class _LectureCourseContainersState extends State<LectureCourseContainers> {
                         begin: Alignment.bottomCenter,
                         end: Alignment.topCenter,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Spacer(),
-                        InkWell(
-                          onTap: () {
-                            changePage(5);
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) => ViewModulesComplete()),
-                            // );
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 10),
-                            child: Container(
-                              height:
-                                  45, // Set the height and width to the same value for a circle
-                              width: 45,
-                              decoration: BoxDecoration(
-                                shape: BoxShape
-                                    .circle, // Use BoxShape.circle to make it circular
-                                color: Mycolors().darkTeal,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  widget.modulesComplete,
-                                  style: GoogleFonts.montserrat(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                 ],

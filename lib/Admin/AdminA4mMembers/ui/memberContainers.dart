@@ -23,7 +23,8 @@ class MemberContainers extends StatefulWidget {
       required this.name,
       required this.number,
       this.studentAmount,
-      this.contentTotal, this.rating});
+      this.contentTotal,
+      this.rating});
 
   @override
   State<MemberContainers> createState() => _MemberContainersState();
@@ -145,7 +146,7 @@ class _MemberContainersState extends State<MemberContainers> {
                         tooltipText: 'Courses'),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(15),
+                    padding: const EdgeInsets.all(10),
                     child: Row(
                       children: [
                         Icon(
@@ -153,7 +154,7 @@ class _MemberContainersState extends State<MemberContainers> {
                           color: Colors.grey,
                         ),
                         const SizedBox(
-                          width: 8,
+                          width: 4,
                         ),
                         Text(
                           'Content Dev',
@@ -225,7 +226,7 @@ class _MemberContainersState extends State<MemberContainers> {
                           width: 8,
                         ),
                         Text(
-                          'Facilitator',
+                          'Admin',
                           style: GoogleFonts.montserrat(
                               fontSize: 12,
                               color: Colors.grey,

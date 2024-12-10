@@ -1,18 +1,19 @@
 import 'package:a4m/Admin/AdminA4mMembers/dummyDataModel/membersDummyData.dart';
 import 'package:a4m/CommonComponents/inputFields/myDropDownMenu.dart';
 import 'package:a4m/CommonComponents/inputFields/mySearchBar.dart';
+import 'package:a4m/Lecturers/LectureStudents/lecture_student_containers.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 
-class A4mMembersList extends StatefulWidget {
-  const A4mMembersList({super.key});
+class LectureStudent extends StatefulWidget {
+  const LectureStudent({super.key});
 
   @override
-  State<A4mMembersList> createState() => _A4mMembersListState();
+  State<LectureStudent> createState() => _LectureStudentState();
 }
 
-class _A4mMembersListState extends State<A4mMembersList> {
+class _LectureStudentState extends State<LectureStudent> {
   @override
   Widget build(BuildContext context) {
     final memberSearch = TextEditingController();
@@ -37,7 +38,13 @@ class _A4mMembersListState extends State<A4mMembersList> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 MyDropDownMenu(
-                  description: 'Member Category',
+                  description: 'A-Z',
+                  customSize: 300,
+                  items: [], // Update with member categories if needed
+                  textfieldController: memberCategorySelect,
+                ),
+                MyDropDownMenu(
+                  description: 'New',
                   customSize: 300,
                   items: [], // Update with member categories if needed
                   textfieldController: memberCategorySelect,
@@ -55,40 +62,40 @@ class _A4mMembersListState extends State<A4mMembersList> {
             const SizedBox(height: 30),
 
             // Scrollable grid layout
-            // Expanded(
-            //   child: SingleChildScrollView(
-            //     child: LayoutGrid(
-            //       columnSizes: List.generate(
-            //         crossAxisCount,
-            //         (_) => FlexibleTrackSize(220),
-            //       ),
-            //       rowSizes: List.generate(
-            //         (memberdummyData.length / crossAxisCount).ceil(),
-            //         (_) => auto,
-            //       ),
-            //       rowGap: 20, // Space between rows
-            //       columnGap: 1, // Space between columns
-            //       children: [
-            //         for (var member in memberdummyData)
-            //           SizedBox(
-            //             height: 300,
-            //             width: 250,
-            //             child: MemberContainers(
-            //               isLecturer: member.isLecturer,
-            //               isContentDev: member.isContentDev,
-            //               isFacilitator: member.isFacilitator,
-            //               image: member.image,
-            //               name: member.name,
-            //               number: member.number,
-            //               studentAmount: member.students,
-            //               contentTotal: member.content,
-            //               rating: member.rating,
-            //             ),
-            //           ),
-            //       ],
-            //     ),
-            //   ),
-            // ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: LayoutGrid(
+                  columnSizes: List.generate(
+                    crossAxisCount,
+                    (_) => FlexibleTrackSize(220),
+                  ),
+                  rowSizes: List.generate(
+                    (memberdummyData.length / crossAxisCount).ceil(),
+                    (_) => auto,
+                  ),
+                  rowGap: 20, // Space between rows
+                  columnGap: 1, // Space between columns
+                  children: [
+                    for (var member in memberdummyData)
+                      SizedBox(
+                        height: 300,
+                        width: 250,
+                        child: LectureStudentContainers(
+                          isLecturer: member.isLecturer,
+                          isContentDev: member.isContentDev,
+                          isFacilitator: member.isFacilitator,
+                          image: member.image,
+                          name: member.name,
+                          number: member.number,
+                          studentAmount: member.students,
+                          contentTotal: member.content,
+                          rating: member.rating,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),

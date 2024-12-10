@@ -36,11 +36,10 @@ class _AdminDashboardMainState extends State<AdminDashboardMain> {
                 totalSum: '345',
                 increasedAmount: '12'),
             Padding(
-              padding: MyUtility(context).width < 1500
-                  ? EdgeInsets.symmetric(vertical: 10, horizontal: 8)
-                  : EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-              child: CoursePerformanceChart()
-            ),
+                padding: MyUtility(context).width < 1500
+                    ? EdgeInsets.symmetric(vertical: 10, horizontal: 8)
+                    : EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                child: CoursePerformanceChart()),
           ],
         )
       ],

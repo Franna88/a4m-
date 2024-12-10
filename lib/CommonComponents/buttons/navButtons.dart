@@ -6,15 +6,17 @@ class NavButtons extends StatefulWidget {
   final String buttonText;
   final Function() onTap;
   final bool isActive;
-  const NavButtons({super.key, required this.buttonText, required this.onTap, required this.isActive});
+  const NavButtons(
+      {super.key,
+      required this.buttonText,
+      required this.onTap,
+      required this.isActive});
 
   @override
   State<NavButtons> createState() => _NavButtonsState();
 }
 
 class _NavButtonsState extends State<NavButtons> {
-  
-
   @override
   Widget build(BuildContext context) {
     return InkWell(
