@@ -14,6 +14,7 @@ class LectureCourseContainers extends StatefulWidget {
   final String assessmentAmount;
   final String courseImage;
   final Function() onTap;
+  final Function(int) changePage;
   const LectureCourseContainers(
       {super.key,
       required this.courseName,
@@ -23,7 +24,8 @@ class LectureCourseContainers extends StatefulWidget {
       required this.moduleAmount,
       required this.assessmentAmount,
       required this.courseImage,
-      required this.onTap});
+      required this.onTap,
+      required this.changePage});
 
   @override
   State<LectureCourseContainers> createState() =>
@@ -90,7 +92,7 @@ class _LectureCourseContainersState extends State<LectureCourseContainers> {
                         Spacer(),
                         InkWell(
                           onTap: () {
-                            changePage(5);
+                            widget.changePage(5);
                             // Navigator.push(
                             //   context,
                             //   MaterialPageRoute(

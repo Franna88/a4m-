@@ -28,18 +28,6 @@ class LectureHomePage extends StatefulWidget {
 class _LectureHomePageState extends State<LectureHomePage> {
   var pageIndex = 0;
 
-  var pages = [
-    LectureDashboard(),
-    LectureCourses(),
-
-    LectureStudent(),
-
-    LecturePresentations(),
-    LectureMessages(),
-    ViewModulesComplete(),
-    // Add other pages here
-  ];
-
   void changePage(int value) {
     setState(() {
       pageIndex = value;
@@ -48,6 +36,18 @@ class _LectureHomePageState extends State<LectureHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    var pages = [
+      LectureDashboard(),
+      LectureCourses(changePage: changePage),
+
+      LectureStudent(),
+
+      LecturePresentations(),
+      LectureMessages(),
+      ViewModulesComplete(),
+      // Add other pages here
+    ];
+
     return LectureNavbar(
       child: pages[pageIndex],
       changePage: changePage,

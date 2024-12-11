@@ -11,7 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 
 class LectureCourses extends StatefulWidget {
-  const LectureCourses({super.key});
+  final Function(int) changePage;
+  const LectureCourses({super.key, required this.changePage});
 
   @override
   State<LectureCourses> createState() => _LectureCoursesState();
@@ -96,6 +97,7 @@ class _LectureCoursesState extends State<LectureCourses> {
                           assessmentAmount: course.assessmentAmount,
                           courseImage: course.courseImage,
                           onTap: openCourseDetailsPopup,
+                          changePage: widget.changePage,
                         ),
                       ),
                   ],
