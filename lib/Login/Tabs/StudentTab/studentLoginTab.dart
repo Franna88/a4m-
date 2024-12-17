@@ -28,7 +28,6 @@ class _StudentLoginTabState extends State<StudentLoginTab> {
         // Display either the login or sign-up form based on `isSignUp`
         Expanded(
           child: isSignUp ? const StudentSignUp() : const StudentLoginView(),
-          child: isSignUp ? const StudentSignUp() : const StudentLoginView(),
         ),
 
         // Footer section: This stays consistent for both views

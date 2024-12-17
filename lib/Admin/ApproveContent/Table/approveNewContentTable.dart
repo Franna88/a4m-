@@ -3,9 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/TableWidgets/tableStructure.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class ApproveNewContentTable extends StatefulWidget {
-  const ApproveNewContentTable({super.key});
+  final Function(int, [Map<String, dynamic>?]) changePage;
+  final String status; // Added to filter courses by status
+
+  const ApproveNewContentTable({
+    super.key,
+    required this.changePage,
+    required this.status, // Pass the status to filter by
+  });
 
   @override
   State<ApproveNewContentTable> createState() => _ApproveNewContentTableState();
@@ -14,170 +23,230 @@ class ApproveNewContentTable extends StatefulWidget {
 class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> reviewMarks = [
-      {
-        'courseModuleName': 'Production Tech',
-        'date': '2024-02-04',
-      },
-      {
-        'courseModuleName': 'Manufacturing',
-        'date': '2024-02-04',
-      },
-      {
-        'courseModuleName': 'Health & Safety',
-        'date': '2024-02-04',
-      },
-    ];
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('courses')
+          .where('status', isEqualTo: widget.status) // Filter by status
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error loading data'));
+        }
 
-    return Table(
-      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-      children: [
-        TableRow(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(8),
-              topRight: Radius.circular(8),
-            ),
-            color: Mycolors().green,
-            border: Border(
-              bottom: BorderSide(color: Colors.black),
-            ),
-          ),
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(child: Text('No Course available'));
+        }
+
+        final List<DocumentSnapshot> courses = snapshot.data!.docs;
+
+        return Table(
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
           children: [
-            TableStructure(
-              child: TableCell(
-                child: Text(
-                  'Course/Module Name',
-                  style: GoogleFonts.montserrat(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+            // Table header
+            TableRow(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  topRight: Radius.circular(8),
+                ),
+                color: Mycolors().green,
+                border: Border(
+                  bottom: BorderSide(color: Colors.black),
                 ),
               ),
-            ),
-            TableStructure(
-              child: TableCell(
-                child: Text(
-                  'Date',
-                  style: GoogleFonts.montserrat(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+              children: [
+                TableStructure(
+                  child: TableCell(
+                    child: Text(
+                      'Course/Module Name',
+                      style: GoogleFonts.montserrat(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            TableStructure(
-              child: TableCell(
-                child: Text(
-                  'Review',
-                  style: GoogleFonts.montserrat(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+                TableStructure(
+                  child: TableCell(
+                    child: Text(
+                      'Date',
+                      style: GoogleFonts.montserrat(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            TableStructure(
-              child: TableCell(
-                child: Text(
-                  'Approve',
-                  style: GoogleFonts.montserrat(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+                TableStructure(
+                  child: TableCell(
+                    child: Text(
+                      'Review',
+                      style: GoogleFonts.montserrat(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                TableStructure(
+                  child: TableCell(
+                    child: Text(
+                      'Approve',
+                      style: GoogleFonts.montserrat(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
+            // Course rows
+            ...courses.map((course) {
+              final courseName = course['courseName'] ?? 'Unknown';
+              final createdAt = course['createdAt'] != null
+                  ? DateFormat('yyyy-MM-dd')
+                      .format((course['createdAt'] as Timestamp).toDate())
+                  : 'Unknown Date';
+
+              return TableRow(
+                decoration: BoxDecoration(
+                  color: courses.indexOf(course) % 2 == 1
+                      ? Colors.white
+                      : Color.fromRGBO(209, 210, 146, 0.50),
+                  border: Border(
+                    bottom: BorderSide(width: 1, color: Colors.black),
+                  ),
+                ),
+                children: [
+                  TableStructure(
+                    child: TableCell(
+                      child: Text(
+                        courseName,
+                        style: GoogleFonts.montserrat(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                  TableStructure(
+                    child: TableCell(
+                      child: Text(
+                        createdAt,
+                        style: GoogleFonts.montserrat(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                  TableStructure(
+                    child: TableCell(
+                      child: SizedBox(
+                        width: 80,
+                        child: SlimButtons(
+                          buttonText: 'View',
+                          buttonColor: Mycolors().peach,
+                          onPressed: () {
+                            // Debugging statement to check the courseId value
+                            print(
+                                'ApproveNewContentTable: Navigating with courseId: ${course.id}');
+
+                            widget.changePage(9, {
+                              'courseId': course.id // Pass courseId to navigate
+                            });
+                          },
+                          customWidth: 100,
+                        ),
+                      ),
+                    ),
+                  ),
+                  TableStructure(
+                    child: TableCell(
+                      child: Container(
+                        constraints: BoxConstraints(
+                          minWidth: 350, // Minimum width to fit both buttons
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (widget.status == 'pending_approval')
+                              SizedBox(
+                                width: 100,
+                                child: SlimButtons(
+                                  buttonText: 'Approve',
+                                  buttonColor: Mycolors().blue,
+                                  onPressed: () {
+                                    _approveCourse(course.id);
+                                  },
+                                  customWidth: 100,
+                                ),
+                              ),
+                            if (widget.status == 'pending_approval')
+                              const SizedBox(
+                                width: 8,
+                              ),
+                            if (widget.status == 'pending_approval')
+                              SizedBox(
+                                width: 100,
+                                child: SlimButtons(
+                                  buttonText: 'Decline',
+                                  buttonColor: Mycolors().red,
+                                  onPressed: () {
+                                    _declineCourse(course.id);
+                                  },
+                                  customWidth: 100,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
           ],
-        ),
-        ...List.generate(reviewMarks.length, (index) {
-          final course = reviewMarks[index];
-          return TableRow(
-            decoration: BoxDecoration(
-              color: index % 2 == 1
-                  ? Colors.white
-                  : Color.fromRGBO(209, 210, 146, 0.50),
-              border: Border(
-                bottom: BorderSide(width: 1, color: Colors.black),
-              ),
-            ),
-            children: [
-              TableStructure(
-                child: TableCell(
-                  child: Text(
-                    course['courseModuleName']!,
-                    style: GoogleFonts.montserrat(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-              TableStructure(
-                child: TableCell(
-                  child: Text(
-                    course['date']!,
-                    style: GoogleFonts.montserrat(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-              TableStructure(
-                child: TableCell(
-                  child: SizedBox(
-                    width: 80,
-                    child: SlimButtons(
-                      buttonText: 'View',
-                      buttonColor: Mycolors().peach,
-                      onPressed: () {},
-                      customWidth: 100,
-                    ),
-                  ),
-                ),
-              ),
-              TableStructure(
-                child: TableCell(
-                  child: Container(
-                    constraints: BoxConstraints(
-                      minWidth: 350, // Minimum width to fit both buttons
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 100,
-                          child: SlimButtons(
-                            buttonText: 'Approve',
-                            buttonColor: Mycolors().blue,
-                            onPressed: () {},
-                            customWidth: 100,
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 8,
-                        ),
-                        SizedBox(
-                          width: 100,
-                          child: SlimButtons(
-                            buttonText: 'Decline',
-                            buttonColor: Mycolors().red,
-                            onPressed: () {},
-                            customWidth: 100,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }),
-      ],
+        );
+      },
     );
+  }
+
+  Future<void> _approveCourse(String courseId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('courses')
+          .doc(courseId)
+          .update({'status': 'approved'});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Course approved successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to approve course: $e')),
+      );
+    }
+  }
+
+  Future<void> _declineCourse(String courseId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('courses')
+          .doc(courseId)
+          .update({'status': 'declined'});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Course declined successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to decline course: $e')),
+      );
+    }
   }
 }

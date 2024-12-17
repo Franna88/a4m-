@@ -8,11 +8,13 @@ import 'package:a4m/Themes/text_style.dart';
 import 'package:a4m/myutility.dart';
 
 class AddModuleTasks extends StatefulWidget {
-  final Function(int) changePageIndex;
+  final Function(int, {int? moduleIndex}) changePageIndex;
+  final int moduleIndex;
 
   AddModuleTasks({
     super.key,
     required this.changePageIndex,
+    required this.moduleIndex,
   });
 
   @override
@@ -36,6 +38,8 @@ class _AddModuleTasksState extends State<AddModuleTasks> {
   @override
   void dispose() {
     _trueFalseQuestionController.dispose();
+    _trueFalseAnswerController.dispose();
+    _studentScoreController.dispose();
     super.dispose();
   }
 
@@ -172,7 +176,8 @@ class _AddModuleTasksState extends State<AddModuleTasks> {
                             buttonText: 'Save',
                             buttonColor: Colors.white,
                             onPressed: () {
-                              widget.changePageIndex(5);
+                              widget.changePageIndex(5,
+                                  moduleIndex: widget.moduleIndex);
                             },
                             customWidth: 160,
                             customHeight: 40,

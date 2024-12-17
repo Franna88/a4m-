@@ -62,7 +62,7 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
                 ),
                 NavButtons(
                   buttonText: 'Courses',
-                   onTap: () => _handleItemClick(1),
+                  onTap: () => _handleItemClick(1),
                   isActive: activeIndex == 1,
                 ),
                 const SizedBox(
@@ -70,15 +70,15 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
                 ),
                 NavButtons(
                   buttonText: 'Marketing',
-                   onTap: () => _handleItemClick(2),
+                  onTap: () => _handleItemClick(2),
                   isActive: activeIndex == 2,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
-                  buttonText: 'A4M Members',
-                   onTap: () => _handleItemClick(3),
+                  buttonText: 'A4M Team',
+                  onTap: () => _handleItemClick(3),
                   isActive: activeIndex == 3,
                 ),
                 const SizedBox(
@@ -86,14 +86,14 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
                 ),
                 NavButtons(
                   buttonText: 'Certification',
-                   onTap: () => _handleItemClick(4),
+                  onTap: () => _handleItemClick(4),
                   isActive: activeIndex == 4,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
-                  buttonText: 'Review Content',
+                  buttonText: 'Review Courses',
                   onTap: () => _handleItemClick(5),
                   isActive: activeIndex == 5,
                 ),

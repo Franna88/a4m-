@@ -4,6 +4,7 @@ import 'package:a4m/CommonComponents/inputFields/mySearchBar.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'ui/memberContainers.dart';
 
@@ -14,7 +15,38 @@ class A4mMembersList extends StatefulWidget {
   State<A4mMembersList> createState() => _A4mMembersListState();
 }
 
-class _A4mMembersListState extends State<A4mMembersList> {
+class _A4mMembersListState extends State<A4mMembersList>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  String selectedTab = 'Lecturer';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      setState(() {
+        switch (_tabController.index) {
+          case 0:
+            selectedTab = 'Lecturer';
+            break;
+          case 1:
+            selectedTab = 'ContentDev';
+            break;
+          case 2:
+            selectedTab = 'Facilitators';
+            break;
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final memberSearch = TextEditingController();
@@ -33,6 +65,8 @@ class _A4mMembersListState extends State<A4mMembersList> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // TabBar to filter members
+
             // Search bar and dropdown
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -56,6 +90,33 @@ class _A4mMembersListState extends State<A4mMembersList> {
             ),
             const SizedBox(height: 30),
 
+            TabBar(
+              controller: _tabController,
+              labelColor: Colors.black,
+              indicatorColor: Colors.green,
+              tabs: [
+                Tab(
+                  child: Text(
+                    'Lecturer',
+                    style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Tab(
+                  child: Text(
+                    'ContentDev',
+                    style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Tab(
+                  child: Text(
+                    'Facilitators',
+                    style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
             // Scrollable grid layout
             Expanded(
               child: SingleChildScrollView(
@@ -72,21 +133,27 @@ class _A4mMembersListState extends State<A4mMembersList> {
                   columnGap: 1, // Space between columns
                   children: [
                     for (var member in memberdummyData)
-                      SizedBox(
-                        height: 300,
-                        width: 250,
-                        child: MemberContainers(
-                          isLecturer: member.isLecturer,
-                          isContentDev: member.isContentDev,
-                          isFacilitator: member.isFacilitator,
-                          image: member.image,
-                          name: member.name,
-                          number: member.number,
-                          studentAmount: member.students,
-                          contentTotal: member.content,
-                          rating: member.rating,
+                      if ((selectedTab == 'Lecturer' &&
+                              member.isLecturer == true) ||
+                          (selectedTab == 'ContentDev' &&
+                              member.isContentDev == true) ||
+                          (selectedTab == 'Facilitators' &&
+                              member.isFacilitator == true))
+                        SizedBox(
+                          height: 300,
+                          width: 250,
+                          child: MemberContainers(
+                            isLecturer: member.isLecturer,
+                            isContentDev: member.isContentDev,
+                            isFacilitator: member.isFacilitator,
+                            image: member.image,
+                            name: member.name,
+                            number: member.number,
+                            studentAmount: member.students,
+                            contentTotal: member.content,
+                            rating: member.rating,
+                          ),
                         ),
-                      ),
                   ],
                 ),
               ),

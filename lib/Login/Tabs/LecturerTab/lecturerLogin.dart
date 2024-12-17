@@ -24,7 +24,6 @@ class _LecturerLoginState extends State<LecturerLogin> {
         // Display either the login or sign-up form based on `isSignUp`
         Expanded(
           child: isSignUp ? const LecturerSignUp() : const LecturerLoginView(),
-          child: isSignUp ? const LecturerSignUp() : const LecturerLoginView(),
         ),
 
         // Footer section: This stays consistent for both views

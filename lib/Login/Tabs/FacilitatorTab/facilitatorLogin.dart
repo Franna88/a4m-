@@ -1,27 +1,22 @@
 import 'package:a4m/Login/Tabs/FacilitatorTab/facilitatorSignUp.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import '../../../CommonComponents/buttons/CustomButton.dart';
 import '../../../CommonComponents/inputFields/myTextFields.dart';
-import '../../../Themes/Constants/myColors.dart';
 
 class FacilitatorLogin extends StatefulWidget {
   const FacilitatorLogin({super.key});
-
   @override
   State<FacilitatorLogin> createState() => _FacilitatorLoginState();
 }
 
 class _FacilitatorLoginState extends State<FacilitatorLogin> {
   bool isSignUp = false;
-  bool isSignUp = false;
-
   @override
   Widget build(BuildContext context) {
-    return Column(
     return Column(
       children: [
         // Display either the login or sign-up form based on `isSignUp`
@@ -29,11 +24,7 @@ class _FacilitatorLoginState extends State<FacilitatorLogin> {
           child: isSignUp
               ? const FacilitatorSignUp()
               : const FacilitatorLoginView(),
-          child: isSignUp
-              ? const FacilitatorSignUp()
-              : const FacilitatorLoginView(),
         ),
-
         // Footer section: This stays consistent for both views
         Container(
           height: 180,
@@ -71,7 +62,6 @@ class _FacilitatorLoginState extends State<FacilitatorLogin> {
 
 class FacilitatorLoginView extends StatefulWidget {
   const FacilitatorLoginView({super.key});
-
   @override
   State<FacilitatorLoginView> createState() => _FacilitatorLoginViewState();
 }
@@ -80,19 +70,15 @@ class _FacilitatorLoginViewState extends State<FacilitatorLoginView> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final facilitatorCodeController = TextEditingController();
-
   bool isLoading = false;
-
   Future<void> _loginFacilitator() async {
     setState(() {
       isLoading = true;
     });
-
     try {
       String email = emailController.text.trim();
       String password = passwordController.text.trim();
       String facilitatorCode = facilitatorCodeController.text.trim();
-
       if (email.isEmpty || password.isEmpty) {
         _showErrorDialog('Please fill in all required fields.');
         setState(() {
@@ -100,19 +86,15 @@ class _FacilitatorLoginViewState extends State<FacilitatorLoginView> {
         });
         return;
       }
-
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
-
       // Print a successful login
       print('Login successful for user: ${userCredential.user!.email}');
-
       if (facilitatorCode.isNotEmpty) {
         final userDoc = await FirebaseFirestore.instance
             .collection('Users')
             .doc(userCredential.user!.uid)
             .get();
-
         if (userDoc.exists && userDoc['facilitatorCode'] != facilitatorCode) {
           _showErrorDialog('Invalid Facilitator Code.');
           setState(() {
@@ -256,4 +238,3 @@ class _FacilitatorLoginViewState extends State<FacilitatorLoginView> {
     );
   }
 }
-

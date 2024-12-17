@@ -2,17 +2,20 @@ import 'package:a4m/CommonComponents/inputFields/contentDevTextfields.dart';
 import 'package:a4m/ContentDev/ModuleAssessments/module_list_item_reusables.dart';
 import 'package:flutter/material.dart';
 import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
-import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Themes/text_style.dart';
 import 'package:a4m/myutility.dart';
+import 'package:provider/provider.dart';
+import 'package:a4m/ContentDev/ModuleAssessments/CourseModel.dart';
 
 class AddModuleQuestions extends StatefulWidget {
-  final Function(int) changePageIndex;
+  final Function(int, {int? moduleIndex}) changePageIndex;
+  final int moduleIndex;
 
   AddModuleQuestions({
     super.key,
     required this.changePageIndex,
+    required this.moduleIndex,
   });
 
   @override
@@ -23,7 +26,9 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
   late TextEditingController _trueFalseQuestionController;
   late TextEditingController _trueFalseAnswerController;
   List<String> _answers = [];
+  List<bool> _correctAnswers = [];
   String? _selectedQuestionType;
+  String _trueFalseAnswer = '';
 
   @override
   void initState() {
@@ -35,6 +40,7 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
   @override
   void dispose() {
     _trueFalseQuestionController.dispose();
+    _trueFalseAnswerController.dispose();
     super.dispose();
   }
 
@@ -43,7 +49,9 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
     if (answer.isNotEmpty) {
       setState(() {
         _answers.add(answer);
-        _trueFalseAnswerController.clear(); // Clear the answer text field only
+        _correctAnswers
+            .add(false); // Add a corresponding 'false' for correctness
+        _trueFalseAnswerController.clear();
       });
     }
   }
@@ -51,7 +59,77 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
   void _removeAnswerField(int index) {
     setState(() {
       _answers.removeAt(index);
+      _correctAnswers.removeAt(index);
     });
+  }
+
+  void _setCorrectAnswer(int index) {
+    setState(() {
+      for (int i = 0; i < _correctAnswers.length; i++) {
+        _correctAnswers[i] = i == index;
+      }
+    });
+  }
+
+  void _saveQuestion() {
+    final courseModel = Provider.of<CourseModel>(context, listen: false);
+
+    if (widget.moduleIndex < 0 ||
+        widget.moduleIndex >= courseModel.modules.length) {
+      print('Invalid module index');
+      return;
+    }
+
+    Module module = courseModel.modules[widget.moduleIndex];
+
+    if (_selectedQuestionType == 'true_false') {
+      if (_trueFalseQuestionController.text.isNotEmpty &&
+          _trueFalseAnswer.isNotEmpty) {
+        print(
+            'Saving True/False question: ${_trueFalseQuestionController.text}');
+        final question = Question(
+          questionText: _trueFalseQuestionController.text,
+          questionType: 'true_false',
+          correctAnswer: _trueFalseAnswer,
+        );
+
+        module.addQuestion(question);
+        courseModel.updateModule(widget.moduleIndex, module);
+
+        _trueFalseQuestionController.clear();
+        _trueFalseAnswer = '';
+
+        widget.changePageIndex(5, moduleIndex: widget.moduleIndex);
+      }
+    } else if (_selectedQuestionType == 'multiple_choice') {
+      if (_trueFalseQuestionController.text.isNotEmpty && _answers.isNotEmpty) {
+        final correctAnswerIndex = _correctAnswers.indexOf(true);
+        if (correctAnswerIndex == -1) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Please select the correct answer.')),
+          );
+          return;
+        }
+
+        print(
+            'Saving Multiple Choice question: ${_trueFalseQuestionController.text}');
+        final question = Question(
+          questionText: _trueFalseQuestionController.text,
+          questionType: 'multiple_choice',
+          options: _answers,
+          correctAnswer: _answers[correctAnswerIndex],
+        );
+
+        module.addQuestion(question);
+        courseModel.updateModule(widget.moduleIndex, module);
+
+        _trueFalseQuestionController.clear();
+        _answers.clear();
+        _correctAnswers.clear();
+
+        widget.changePageIndex(5, moduleIndex: widget.moduleIndex);
+      }
+    }
   }
 
   @override
@@ -66,7 +144,6 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                // Header
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: Container(
@@ -84,11 +161,9 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
                     ),
                   ),
                 ),
-                // Content
                 ConstrainedBox(
                   constraints: BoxConstraints(
-                    minHeight:
-                        MyUtility(context).height * 0.78, // Minimum height
+                    minHeight: MyUtility(context).height * 0.78,
                   ),
                   child: Container(
                     color: Colors.white,
@@ -98,7 +173,6 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Dropdown for Question Type
                           Text(
                             'Question Type',
                             style: MyTextStyles(context).smallBlack,
@@ -125,7 +199,8 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
                               onChanged: (value) {
                                 setState(() {
                                   _selectedQuestionType = value;
-                                  _answers.clear(); // Clear previous answers
+                                  _answers.clear();
+                                  _correctAnswers.clear();
                                 });
                               },
                               hint: Text('Select Assessment Type'),
@@ -152,8 +227,14 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
                               children: [
                                 SlimButtons(
                                   buttonText: 'True',
-                                  buttonColor: Mycolors().blue,
-                                  onPressed: () {},
+                                  buttonColor: _trueFalseAnswer == 'True'
+                                      ? Mycolors().darkTeal
+                                      : Mycolors().blue,
+                                  onPressed: () {
+                                    setState(() {
+                                      _trueFalseAnswer = 'True';
+                                    });
+                                  },
                                   customWidth: 75,
                                   customHeight: 30,
                                   textColor: Colors.white,
@@ -161,8 +242,14 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
                                 SizedBox(width: 10),
                                 SlimButtons(
                                   buttonText: 'False',
-                                  buttonColor: Mycolors().red,
-                                  onPressed: () {},
+                                  buttonColor: _trueFalseAnswer == 'False'
+                                      ? Mycolors().darkTeal
+                                      : Mycolors().red,
+                                  onPressed: () {
+                                    setState(() {
+                                      _trueFalseAnswer = 'False';
+                                    });
+                                  },
                                   customWidth: 75,
                                   customHeight: 30,
                                   textColor: Colors.white,
@@ -170,23 +257,10 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
                               ],
                             ),
                             SizedBox(height: 20),
-                            SlimButtons(
-                              buttonText: 'Save',
-                              buttonColor: Colors.white,
-                              onPressed: () {
-                                widget.changePageIndex(5);
-                              },
-                              customWidth: 160,
-                              customHeight: 40,
-                              borderColor: Mycolors().darkGrey,
-                              textColor: Mycolors().darkGrey,
-                            ),
                           ],
-
-                          SizedBox(height: MyUtility(context).height * 0.02),
                           if (_selectedQuestionType == 'multiple_choice') ...[
                             Text(
-                              'Questions',
+                              'Question',
                               style: MyTextStyles(context).smallBlack,
                             ),
                             SizedBox(height: 10),
@@ -220,40 +294,39 @@ class _AddModuleQuestionsState extends State<AddModuleQuestions> {
                               ],
                             ),
                             SizedBox(height: 10),
-                            // List of Answers
                             Column(
                               children: [
                                 for (int i = 0; i < _answers.length; i++)
-                                  AddModuleListItem(
-                                    text: 'Question Title',
-                                    onEdit: () {},
-                                    onDelete: () => _removeAnswerField(i),
-                                    showCheckbox:
-                                        true, // Ensure the checkbox is displayed
-                                    checkboxValue:
-                                        false, // Initial checkbox state
-                                    onCheckboxChanged: (bool? value) {
-                                      setState(() {
-                                        // Update checkbox logic if needed
-                                      });
-                                    },
+                                  Row(
+                                    children: [
+                                      Checkbox(
+                                        value: _correctAnswers[i],
+                                        onChanged: (value) {
+                                          _setCorrectAnswer(i);
+                                        },
+                                      ),
+                                      Expanded(
+                                        child: AddModuleListItem(
+                                          text: _answers[i],
+                                          onEdit: () {},
+                                          onDelete: () => _removeAnswerField(i),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                               ],
                             ),
-
                             SizedBox(height: 20),
-                            SlimButtons(
-                              buttonText: 'Save',
-                              buttonColor: Colors.white,
-                              onPressed: () {
-                                widget.changePageIndex(5);
-                              },
-                              customWidth: 160,
-                              customHeight: 40,
-                              borderColor: Mycolors().darkGrey,
-                              textColor: Mycolors().darkGrey,
-                            ),
                           ],
+                          SlimButtons(
+                            buttonText: 'Save Question',
+                            buttonColor: Colors.white,
+                            onPressed: _saveQuestion,
+                            customWidth: 160,
+                            customHeight: 40,
+                            borderColor: Mycolors().darkGrey,
+                            textColor: Mycolors().darkGrey,
+                          ),
                         ],
                       ),
                     ),

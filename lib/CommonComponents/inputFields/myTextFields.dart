@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class MyTextFields extends StatelessWidget {
@@ -10,7 +9,6 @@ class MyTextFields extends StatelessWidget {
   final TextEditingController inputController;
   final bool? isOptional;
   final bool? isNumberField;
-
   const MyTextFields({
     Key? key,
     required this.inputController,
@@ -20,7 +18,6 @@ class MyTextFields extends StatelessWidget {
     this.isOptional,
     this.isNumberField,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color.fromRGBO(203, 210, 224, 1);
@@ -40,11 +37,6 @@ class MyTextFields extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: Colors.black,
               ),
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
             ),
             Visibility(
               visible: isOptional == true,
@@ -55,16 +47,10 @@ class MyTextFields extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                   fontSize: 14,
                 ),
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
               ),
-            ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
         const SizedBox(height: 8),
         Container(
           height: 50,
@@ -75,22 +61,9 @@ class MyTextFields extends StatelessWidget {
               spreadRadius: 0,
               color: Colors.grey.withOpacity(.1),
             ),
-              offset: const Offset(12, 26),
-              blurRadius: 50,
-              spreadRadius: 0,
-              color: Colors.grey.withOpacity(.1),
-            ),
           ]),
           child: TextField(
             controller: inputController,
-            keyboardType: isNumberField == true
-                ? TextInputType.number
-                : keyboardType == 'email'
-                    ? TextInputType.emailAddress
-                    : TextInputType.text,
-            inputFormatters: isNumberField == true
-                ? [FilteringTextInputFormatter.digitsOnly]
-                : [],
             keyboardType: isNumberField == true
                 ? TextInputType.number
                 : keyboardType == 'email'

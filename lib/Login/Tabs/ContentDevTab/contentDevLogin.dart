@@ -1,26 +1,25 @@
 import 'package:a4m/CommonComponents/buttons/CustomButton.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
-import 'package:a4m/Themes/Constants/myColors.dart';
+import 'package:a4m/ContentDev/ModuleAssessments/CourseModel.dart';
+import 'package:a4m/ContentDev/content_dev_landing.dart';
 import 'package:a4m/Login/Tabs/ContentDevTab/contentDevSignUp.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 class ContentDevLogin extends StatefulWidget {
   const ContentDevLogin({super.key});
-
   @override
   State<ContentDevLogin> createState() => _ContentDevLoginState();
 }
 
 class _ContentDevLoginState extends State<ContentDevLogin> {
   bool isSignUp = false;
-  bool isSignUp = false;
-
   @override
   Widget build(BuildContext context) {
-    return Column(
     return Column(
       children: [
         // Display either the login or sign-up form based on `isSignUp`
@@ -28,7 +27,6 @@ class _ContentDevLoginState extends State<ContentDevLogin> {
           child:
               isSignUp ? const ContentDevSignUp() : const ContentDevLoginView(),
         ),
-
         // Footer section: This stays consistent for both views
         Container(
           height: 180,
@@ -66,58 +64,58 @@ class _ContentDevLoginState extends State<ContentDevLogin> {
 
 class ContentDevLoginView extends StatefulWidget {
   const ContentDevLoginView({super.key});
-
   @override
   State<ContentDevLoginView> createState() => _ContentDevLoginViewState();
 }
 
 class _ContentDevLoginViewState extends State<ContentDevLoginView> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  final emailController = TextEditingController(text: "contentdev@gmai.com");
+  final passwordController = TextEditingController(text: "test123");
   final contentDevCodeController = TextEditingController();
-
   bool isLoading = false;
-
   Future<void> _loginContentDev() async {
     setState(() {
       isLoading = true;
     });
-
     try {
       String email = emailController.text.trim();
       String password = passwordController.text.trim();
       String contentDevCode = contentDevCodeController.text.trim();
-
-      if (email.isEmpty || password.isEmpty || contentDevCode.isEmpty) {
+      if (email.isEmpty || password.isEmpty) {
         _showErrorDialog('Please fill in all required fields.');
         setState(() {
           isLoading = false;
         });
         return;
       }
-
       // Authenticate user with Firebase
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
-
       // getting the USerDetails for conformation and login
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('Users')
           .doc(userCredential.user!.uid)
           .get();
-
       if (userDoc.exists) {
         var userData = userDoc.data() as Map<String, dynamic>;
         String userType = userData['userType'] ?? '';
         String status = userData['status'] ?? '';
         String storedContentDevCode = userData['contentDevCode'] ?? '';
-
         // Check if user is a content developer and approved
         if (userType == 'contentDev' &&
             status == 'approved' &&
             storedContentDevCode == contentDevCode) {
           //Connect Navigation Logic here
-          Navigator.pushReplacementNamed(context, '/contentDevDashboard');
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChangeNotifierProvider(
+                create: (context) =>
+                    CourseModel(), // Provide the CourseModel state when navigating to ContentDevHome
+                child: ContentDevHome(),
+              ),
+            ),
+          );
         } else if (status == 'pending') {
           _showErrorDialog(
               'Your account is still pending approval. Please wait for admin verification.');
@@ -191,6 +189,8 @@ class _ContentDevLoginViewState extends State<ContentDevLoginView> {
           const SizedBox(
             height: 25,
           ),
+
+          // remember to remove logins from textfield
           SizedBox(
             width: 380,
             child: MyTextFields(
@@ -247,7 +247,7 @@ class _ContentDevLoginViewState extends State<ContentDevLoginView> {
               buttonText: 'Login',
               buttonColor: Mycolors().green,
               onPressed: () {
-                //TO DO
+                _loginContentDev();
               },
               width: 100),
           const SizedBox(
@@ -259,4 +259,3 @@ class _ContentDevLoginViewState extends State<ContentDevLoginView> {
     );
   }
 }
-

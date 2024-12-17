@@ -1,17 +1,20 @@
 import 'package:a4m/ContentDev/ModuleAssessments/module_list_item_reusables.dart';
 import 'package:flutter/material.dart';
 import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
-import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Themes/text_style.dart';
 import 'package:a4m/myutility.dart';
+import 'package:provider/provider.dart';
+import 'package:a4m/ContentDev/ModuleAssessments/CourseModel.dart';
 
 class ModuleContent extends StatefulWidget {
-  final Function(int) changePageIndex;
+  final Function(int, {int? moduleIndex}) changePageIndex;
+  final int moduleIndex;
 
   ModuleContent({
     super.key,
     required this.changePageIndex,
+    required this.moduleIndex,
   });
 
   @override
@@ -19,6 +22,46 @@ class ModuleContent extends StatefulWidget {
 }
 
 class _ModuleContentState extends State<ModuleContent> {
+  late int _currentModuleIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentModuleIndex = widget.moduleIndex;
+    print('Initial moduleIndex: $_currentModuleIndex');
+  }
+
+  @override
+  void didUpdateWidget(covariant ModuleContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.moduleIndex != oldWidget.moduleIndex) {
+      setState(() {
+        _currentModuleIndex = widget.moduleIndex;
+        print('Updated moduleIndex: $_currentModuleIndex');
+      });
+    }
+  }
+
+  void _navigateToNextModule() {
+    final courseModel = Provider.of<CourseModel>(context, listen: false);
+    if (_currentModuleIndex < courseModel.modules.length - 1) {
+      setState(() {
+        _currentModuleIndex++;
+        print('Navigating to next module, moduleIndex: $_currentModuleIndex');
+      });
+    }
+  }
+
+  void _navigateToPreviousModule() {
+    if (_currentModuleIndex > 0) {
+      setState(() {
+        _currentModuleIndex--;
+        print(
+            'Navigating to previous module, moduleIndex: $_currentModuleIndex');
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -43,7 +86,7 @@ class _ModuleContentState extends State<ModuleContent> {
                     width: MyUtility(context).width,
                     child: Center(
                       child: Text(
-                        'Module Assessments',
+                        'Module Assessments (Module ${_currentModuleIndex + 1})',
                         style: MyTextStyles(context).headerWhite,
                       ),
                     ),
@@ -62,11 +105,36 @@ class _ModuleContentState extends State<ModuleContent> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
+                          // Module Navigation Buttons
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SlimButtons(
+                                buttonText: 'Previous Module',
+                                buttonColor: Colors.white,
+                                borderColor: Mycolors().darkGrey,
+                                textColor: Mycolors().darkGrey,
+                                onPressed: _navigateToPreviousModule,
+                                customWidth: 150,
+                                customHeight: 40,
+                              ),
+                              SlimButtons(
+                                buttonText: 'Next Module',
+                                buttonColor: Colors.white,
+                                borderColor: Mycolors().darkGrey,
+                                textColor: Mycolors().darkGrey,
+                                onPressed: _navigateToNextModule,
+                                customWidth: 150,
+                                customHeight: 40,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 20),
+                          // Tests Section
                           Column(
                             children: [
                               Row(
                                 children: [
-                                  // Dropdown for Question Type
                                   Text(
                                     'Tests',
                                     style: MyTextStyles(context).mediumBlack,
@@ -76,7 +144,10 @@ class _ModuleContentState extends State<ModuleContent> {
                                     buttonText: 'Add Question',
                                     buttonColor: Colors.white,
                                     onPressed: () {
-                                      widget.changePageIndex(4);
+                                      print(
+                                          'Navigating to add question for module index: $_currentModuleIndex');
+                                      widget.changePageIndex(4,
+                                          moduleIndex: _currentModuleIndex);
                                     },
                                     customWidth: 160,
                                     customHeight: 40,
@@ -86,28 +157,48 @@ class _ModuleContentState extends State<ModuleContent> {
                                 ],
                               ),
                               SizedBox(height: 20),
-                              Container(
-                                decoration: BoxDecoration(
-                                  // border: Border.all(
-                                  //   color: Mycolors().darkGrey,
-                                  //   width: 1.0,
-                                  // ),
-                                  borderRadius: BorderRadius.circular(3.0),
-                                ),
-                                child: AddModuleListItem(
-                                  text: 'Question Title',
-                                  onEdit: () {},
-                                  onDelete: () {},
-                                ),
+                              // Display the questions for the module
+                              Consumer<CourseModel>(
+                                builder: (context, courseModel, child) {
+                                  Module module =
+                                      courseModel.modules[_currentModuleIndex];
+                                  print(
+                                      'Displaying questions for module index: $_currentModuleIndex');
+                                  return Column(
+                                    children: module.questions.map((question) {
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(3.0),
+                                        ),
+                                        child: AddModuleListItem(
+                                          text: question.questionText,
+                                          onEdit: () {
+                                            // Logic to edit the question
+                                          },
+                                          onDelete: () {
+                                            setState(() {
+                                              module.removeQuestion(module
+                                                  .questions
+                                                  .indexOf(question));
+                                              courseModel.updateModule(
+                                                  _currentModuleIndex, module);
+                                            });
+                                          },
+                                        ),
+                                      );
+                                    }).toList(),
+                                  );
+                                },
                               ),
                             ],
                           ),
                           SizedBox(height: 20),
+                          // Tasks Section
                           Column(
                             children: [
                               Row(
                                 children: [
-                                  // Dropdown for Question Type
                                   Text(
                                     'Task/Activities',
                                     style: MyTextStyles(context).mediumBlack,
@@ -117,7 +208,10 @@ class _ModuleContentState extends State<ModuleContent> {
                                     buttonText: 'Add Task',
                                     buttonColor: Colors.white,
                                     onPressed: () {
-                                      widget.changePageIndex(6);
+                                      print(
+                                          'Navigating to add task for module index: $_currentModuleIndex');
+                                      widget.changePageIndex(6,
+                                          moduleIndex: _currentModuleIndex);
                                     },
                                     customWidth: 160,
                                     customHeight: 40,
@@ -127,28 +221,42 @@ class _ModuleContentState extends State<ModuleContent> {
                                 ],
                               ),
                               SizedBox(height: 20),
-                              Container(
-                                decoration: BoxDecoration(
-                                  // border: Border.all(
-                                  //   color: Mycolors().darkGrey,
-                                  //   width: 1.0,
-                                  // ),
-                                  borderRadius: BorderRadius.circular(3.0),
-                                ),
-                                child: AddModuleListItem(
-                                  text: 'Question Title',
-                                  onEdit: () {},
-                                  onDelete: () {},
-                                ),
+                              Consumer<CourseModel>(
+                                builder: (context, courseModel, child) {
+                                  Module module =
+                                      courseModel.modules[_currentModuleIndex];
+                                  return Column(
+                                    children: module.tasks.map((task) {
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(3.0),
+                                        ),
+                                        child: AddModuleListItem(
+                                          text: task.title,
+                                          onEdit: () {},
+                                          onDelete: () {
+                                            setState(() {
+                                              module.removeTask(
+                                                  module.tasks.indexOf(task));
+                                              courseModel.updateModule(
+                                                  _currentModuleIndex, module);
+                                            });
+                                          },
+                                        ),
+                                      );
+                                    }).toList(),
+                                  );
+                                },
                               ),
                             ],
                           ),
                           SizedBox(height: 20),
+                          // Assignments Section
                           Column(
                             children: [
                               Row(
                                 children: [
-                                  // Dropdown for Question Type
                                   Text(
                                     'Assignments',
                                     style: MyTextStyles(context).mediumBlack,
@@ -158,7 +266,10 @@ class _ModuleContentState extends State<ModuleContent> {
                                     buttonText: 'Add Assessment',
                                     buttonColor: Colors.white,
                                     onPressed: () {
-                                      widget.changePageIndex(7);
+                                      print(
+                                          'Navigating to add assignment for module index: $_currentModuleIndex');
+                                      widget.changePageIndex(7,
+                                          moduleIndex: _currentModuleIndex);
                                     },
                                     customWidth: 160,
                                     customHeight: 40,
@@ -168,22 +279,59 @@ class _ModuleContentState extends State<ModuleContent> {
                                 ],
                               ),
                               SizedBox(height: 20),
-                              Container(
-                                decoration: BoxDecoration(
-                                  // border: Border.all(
-                                  //   color: Mycolors().darkGrey,
-                                  //   width: 1.0,
-                                  // ),
-                                  borderRadius: BorderRadius.circular(3.0),
-                                ),
-                                child: AddModuleListItem(
-                                  text: 'Question Title',
-                                  onEdit: () {},
-                                  onDelete: () {},
-                                ),
+                              Consumer<CourseModel>(
+                                builder: (context, courseModel, child) {
+                                  Module module =
+                                      courseModel.modules[_currentModuleIndex];
+                                  return Column(
+                                    children:
+                                        module.assignments.map((assignment) {
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(3.0),
+                                        ),
+                                        child: AddModuleListItem(
+                                          text: assignment.title,
+                                          onEdit: () {},
+                                          onDelete: () {
+                                            setState(() {
+                                              module.removeAssignment(module
+                                                  .assignments
+                                                  .indexOf(assignment));
+                                              courseModel.updateModule(
+                                                  _currentModuleIndex, module);
+                                            });
+                                          },
+                                        ),
+                                      );
+                                    }).toList(),
+                                  );
+                                },
                               ),
                             ],
-                          )
+                          ),
+                          SizedBox(height: 30),
+                          // Save Button
+                          SlimButtons(
+                            buttonText: 'Save & Return',
+                            buttonColor: Mycolors().green,
+                            borderColor: Mycolors().green,
+                            textColor: Colors.white,
+                            onPressed: () {
+                              final courseModel = Provider.of<CourseModel>(
+                                  context,
+                                  listen: false);
+                              courseModel.updateModule(_currentModuleIndex,
+                                  courseModel.modules[_currentModuleIndex]);
+                              print(
+                                  'Navigating back from module index: $_currentModuleIndex');
+                              widget.changePageIndex(3,
+                                  moduleIndex: _currentModuleIndex);
+                            },
+                            customWidth: 180,
+                            customHeight: 50,
+                          ),
                         ],
                       ),
                     ),
