@@ -1,4 +1,4 @@
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:flutter/material.dart';
 
 class OnHoverSignUpButton extends StatefulWidget {
@@ -33,12 +33,13 @@ class _OnHoverSignUpButtonState extends State<OnHoverSignUpButton> {
           decoration: BoxDecoration(
             color: isHovered ? Mycolors().green : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
-            border: isHovered ? null : Border.all(color: Colors.white, width: 2),
+            border:
+                isHovered ? null : Border.all(color: Colors.white, width: 2),
             boxShadow: isHovered
                 ? [
                     BoxShadow(
                       color: Colors.black26,
-                      offset: Offset(2, 4), 
+                      offset: Offset(2, 4),
                       blurRadius: 6,
                     ),
                   ]

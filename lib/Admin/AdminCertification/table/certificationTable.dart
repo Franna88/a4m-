@@ -1,7 +1,7 @@
 import 'package:a4m/Admin/AdminCertification/ui/statusIndicators.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/TableWidgets/tableStructure.dart';
 
 import '../../../CommonComponents/buttons/slimButtons.dart';
@@ -156,11 +156,9 @@ class _CertificationTableState extends State<CertificationTable> {
                 ),
               ),
               TableStructure(
-                child: TableCell(
-                  child: StatusIndicators(isApproved: true)
-                ),
+                child: TableCell(child: StatusIndicators(isApproved: true)),
               ),
-               TableStructure(
+              TableStructure(
                 child: TableCell(
                   child: SizedBox(
                     width: 80,

@@ -1,6 +1,6 @@
 import 'package:a4m/CommonComponents/buttons/CustomButton.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Login/Tabs/StudentTab/studentSignUp.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,6 +27,7 @@ class _StudentLoginTabState extends State<StudentLoginTab> {
       children: [
         // Display either the login or sign-up form based on `isSignUp`
         Expanded(
+          child: isSignUp ? const StudentSignUp() : const StudentLoginView(),
           child: isSignUp ? const StudentSignUp() : const StudentLoginView(),
         ),
 

@@ -1,5 +1,5 @@
 import 'package:a4m/CommonComponents/displayCardIcons.dart';
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -110,14 +110,15 @@ class _CourseContainersState extends State<CourseContainers> {
                 color: const Color.fromARGB(255, 189, 189, 189),
               ),
             ),
-            Row(mainAxisAlignment: MainAxisAlignment.end,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Padding(
                   padding: const EdgeInsets.all(15),
                   child: Row(
                     children: [
                       DisplayCardIcons(
-                          icon: Icons.format_list_numbered ,
+                          icon: Icons.format_list_numbered,
                           count: '7',
                           tooltipText: 'Assessments'),
                     ],

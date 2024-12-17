@@ -1,6 +1,6 @@
 import 'package:a4m/CommonComponents/buttons/CustomButton.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Login/Tabs/ContentDevTab/contentDevSignUp.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -16,9 +16,11 @@ class ContentDevLogin extends StatefulWidget {
 
 class _ContentDevLoginState extends State<ContentDevLogin> {
   bool isSignUp = false;
+  bool isSignUp = false;
 
   @override
   Widget build(BuildContext context) {
+    return Column(
     return Column(
       children: [
         // Display either the login or sign-up form based on `isSignUp`
@@ -257,3 +259,4 @@ class _ContentDevLoginViewState extends State<ContentDevLoginView> {
     );
   }
 }
+

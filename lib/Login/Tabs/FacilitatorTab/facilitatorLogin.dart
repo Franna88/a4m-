@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../CommonComponents/buttons/CustomButton.dart';
 import '../../../CommonComponents/inputFields/myTextFields.dart';
-import '../../../Constants/myColors.dart';
+import '../../../Themes/Constants/myColors.dart';
 
 class FacilitatorLogin extends StatefulWidget {
   const FacilitatorLogin({super.key});
@@ -17,13 +17,18 @@ class FacilitatorLogin extends StatefulWidget {
 
 class _FacilitatorLoginState extends State<FacilitatorLogin> {
   bool isSignUp = false;
+  bool isSignUp = false;
 
   @override
   Widget build(BuildContext context) {
     return Column(
+    return Column(
       children: [
         // Display either the login or sign-up form based on `isSignUp`
         Expanded(
+          child: isSignUp
+              ? const FacilitatorSignUp()
+              : const FacilitatorLoginView(),
           child: isSignUp
               ? const FacilitatorSignUp()
               : const FacilitatorLoginView(),
@@ -251,3 +256,4 @@ class _FacilitatorLoginViewState extends State<FacilitatorLoginView> {
     );
   }
 }
+

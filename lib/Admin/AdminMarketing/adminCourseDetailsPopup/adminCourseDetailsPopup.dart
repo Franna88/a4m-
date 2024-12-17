@@ -4,7 +4,7 @@ import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../Constants/myColors.dart';
+import '../../../Themes/Constants/myColors.dart';
 
 class AdminCourseDetailsPopup extends StatefulWidget {
   const AdminCourseDetailsPopup({super.key});

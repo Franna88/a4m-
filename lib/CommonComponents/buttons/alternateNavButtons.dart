@@ -1,4 +1,4 @@
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -6,15 +6,17 @@ class AlternateNavButtons extends StatefulWidget {
   final String buttonText;
   final Function() onTap;
   final bool isActive;
-  const AlternateNavButtons({super.key, required this.buttonText, required this.onTap, required this.isActive});
+  const AlternateNavButtons(
+      {super.key,
+      required this.buttonText,
+      required this.onTap,
+      required this.isActive});
 
   @override
   State<AlternateNavButtons> createState() => _AlternateNavButtonsState();
 }
 
 class _AlternateNavButtonsState extends State<AlternateNavButtons> {
-  
-
   @override
   Widget build(BuildContext context) {
     return InkWell(

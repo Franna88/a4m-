@@ -1,6 +1,6 @@
 import 'package:a4m/CommonComponents/buttons/CustomButton.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Login/Tabs/LecturerTab/lecturerSignUp.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,6 +23,7 @@ class _LecturerLoginState extends State<LecturerLogin> {
       children: [
         // Display either the login or sign-up form based on `isSignUp`
         Expanded(
+          child: isSignUp ? const LecturerSignUp() : const LecturerLoginView(),
           child: isSignUp ? const LecturerSignUp() : const LecturerLoginView(),
         ),
 

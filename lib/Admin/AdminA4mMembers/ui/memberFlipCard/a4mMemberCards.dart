@@ -1,5 +1,5 @@
 import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -18,7 +18,7 @@ class _A4mMembersCardState extends State<A4mMembersCard> {
       child: Container(
         width: 330,
         height: 560,
-       color: Colors.white,
+        color: Colors.white,
         child: Stack(
           children: [
             Column(
@@ -45,13 +45,8 @@ class _A4mMembersCardState extends State<A4mMembersCard> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child:
-                            
-                             InkWell(
-                              onTap: () {
-                                
-                              },
-                              child: Icon(Icons.double_arrow)),
+                            child: InkWell(
+                                onTap: () {}, child: Icon(Icons.double_arrow)),
                           ),
                           Padding(
                             padding: const EdgeInsets.only(top: 10, right: 15),

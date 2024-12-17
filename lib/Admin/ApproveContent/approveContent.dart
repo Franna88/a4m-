@@ -1,4 +1,4 @@
-import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:flutter/material.dart';
 import 'package:a4m/Admin/AdminCourses/Table/courseTable.dart';
 import 'package:a4m/Admin/ApproveContent/Table/reviewMarksTable.dart';
@@ -46,13 +46,15 @@ class _ApproveContentState extends State<ApproveContent> {
                   Tab(
                     child: Text(
                       'Approve New Content',
-                      style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+                      style:
+                          GoogleFonts.montserrat(fontWeight: FontWeight.bold),
                     ),
                   ),
                   Tab(
                     child: Text(
                       'Review Marks',
-                      style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+                      style:
+                          GoogleFonts.montserrat(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
