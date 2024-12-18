@@ -1,5 +1,6 @@
 import 'package:a4m/CommonComponents/buttons/CustomButton.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
+import 'package:a4m/Lecturers/lecture_home_page.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Login/Tabs/LecturerTab/lecturerSignUp.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -69,8 +70,8 @@ class LecturerLoginView extends StatefulWidget {
 }
 
 class _LecturerLoginViewState extends State<LecturerLoginView> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  final emailController = TextEditingController(text: 'lecture@gmail.com');
+  final passwordController = TextEditingController(text: 'test123');
   final lecturerCodeController = TextEditingController();
 
   bool isLoading = false;
@@ -114,7 +115,13 @@ class _LecturerLoginViewState extends State<LecturerLoginView> {
             status == 'approved' &&
             storedLecturerCode == lecturerCode) {
           // Navigate to lecturer's dashboard
-          Navigator.pushReplacementNamed(context, '/lecturerDashboard');
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => LectureHomePage(
+                      lecturerId: userCredential.user!.uid,
+                    )),
+          );
         } else if (status == 'pending') {
           _showErrorDialog(
               'Your account is still pending approval. Please wait for admin verification.');
@@ -241,12 +248,13 @@ class _LecturerLoginViewState extends State<LecturerLoginView> {
             height: 25,
           ),
           CustomButton(
-              buttonText: 'Login',
-              buttonColor: Mycolors().green,
-              onPressed: () {
-                //TO DO
-              },
-              width: 100),
+            buttonText: 'Login',
+            buttonColor: Mycolors().green,
+            onPressed: () {
+              _loginLecturer();
+            },
+            width: 100,
+          ),
           const SizedBox(
             height: 25,
           ),
