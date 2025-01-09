@@ -12,6 +12,7 @@ import 'package:a4m/ContentDev/create_course.dart';
 import 'package:a4m/LandingPage/CourseListPage/courseListPage.dart';
 import 'package:a4m/LandingPage/landingPageMain.dart';
 import 'package:a4m/Login/loginPopup.dart';
+import 'package:a4m/Student/student_home_page.dart';
 import 'package:a4m/adminHome.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -33,11 +34,12 @@ void main() async {
     print("Error initializing Firebase: $e");
   }
   runApp(
-    const MaterialApp(
+    MaterialApp(
       home: Scaffold(
           body: //ContentDevHome(),
               //CourseListPage()
-              LandingPageMain()
+              // LandingPageMain()
+              StudentHomePage(lecturerId: '')
           // AdminHome()
           // LoginPopup(),),
           ),
