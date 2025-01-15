@@ -1,3 +1,8 @@
+import 'package:a4m/CommonComponents/buttons/CustomButton.dart';
+import 'package:a4m/CommonComponents/displayCardIcons.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../Themes/Constants/myColors.dart';
+
 import 'package:flutter/material.dart';
 import 'package:a4m/myutility.dart';
 
@@ -16,8 +21,8 @@ class ReusableCourseContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 600, // Smaller width for the container
-      height: 300, // Smaller height for the container
+      width: 800, // Smaller width for the container
+      height: 200, // Smaller height for the container
       margin: const EdgeInsets.all(8.0), // Add spacing between containers
       padding: const EdgeInsets.all(8.0), // Internal padding
       decoration: BoxDecoration(
@@ -31,6 +36,7 @@ class ReusableCourseContainer extends StatelessWidget {
           ),
         ],
       ),
+      
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -43,6 +49,7 @@ class ReusableCourseContainer extends StatelessWidget {
               fit: BoxFit.cover,
             ),
           ),
+          const SizedBox(width:20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,6 +71,12 @@ class ReusableCourseContainer extends StatelessWidget {
                   overflow: TextOverflow.ellipsis, // Add ellipsis for overflow
                   style: const TextStyle(fontSize: 14.0),
                 ),
+                CustomButton(buttonText: "Continue", buttonColor: const Color.fromARGB(255, 212, 208, 208), onPressed: (){}, width: 90),
+                DisplayCardIcons(
+                    icon: Icons.library_books_outlined,
+                        count: widget.contentTotal ?? '',
+                        tooltipText: 'Courses'),
+                )
               ],
             ),
       ),

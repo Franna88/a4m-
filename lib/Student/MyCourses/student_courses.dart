@@ -56,11 +56,7 @@ class _StudentCoursesState extends State<StudentCourses>{
               children: [
                ReusableCourseContainer(imagePath: 'images/course5.png',courseName: "Production Technology", courseDescription: "Lorem ipsum dolor sit amet. Non dolorem optio quo aperiam obcaecati est nihil velit sit nemo quisquam ut culpa esse aut corporis amet et numquam galisum? Quo rerum consequatur aut optio velit vel iste rerum non atque quaerat est rerum dicta. Est voluptatem debitis qui autem maiores eum facilis nostrum eos enim accusamus rem possimus dicta?"),
                ReusableCourseContainer(imagePath: 'images/course5.png',courseName: "Production Technology", courseDescription: "Lorem ipsum dolor sit amet. Non dolorem optio quo aperiam obcaecati est nihil velit sit nemo quisquam ut culpa esse aut corporis amet et numquam galisum? Quo rerum consequatur aut optio velit vel iste rerum non atque quaerat est rerum dicta. Est voluptatem debitis qui autem maiores eum facilis nostrum eos enim accusamus rem possimus dicta?"),
-               ReusableCourseContainer(imagePath: 'images/course5.png',courseName: "Production Technology", courseDescription: "Lorem ipsum dolor sit amet. Non dolorem optio quo aperiam obcaecati est nihil velit sit nemo quisquam ut culpa esse aut corporis amet et numquam galisum? Quo rerum consequatur aut optio velit vel iste rerum non atque quaerat est rerum dicta. Est voluptatem debitis qui autem maiores eum facilis nostrum eos enim accusamus rem possimus dicta?")
-
-
-                  
-                
+               ReusableCourseContainer(imagePath: 'images/course5.png',courseName: "Production Technology", courseDescription: "Lorem ipsum dolor sit amet. Non dolorem optio quo aperiam obcaecati est nihil velit sit nemo quisquam ut culpa esse aut corporis amet et numquam galisum? Quo rerum consequatur aut optio velit vel iste rerum non atque quaerat est rerum dicta. Est voluptatem debitis qui autem maiores eum facilis nostrum eos enim accusamus rem possimus dicta?"),
               ],
             ),
           ),

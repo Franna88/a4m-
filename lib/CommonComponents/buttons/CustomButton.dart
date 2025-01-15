@@ -17,7 +17,7 @@ class CustomButton extends StatelessWidget {
     return InkWell(
       onTap: onPressed,
       child: Container(
-        height: 60,
+        height: 40,
         width: width,
         decoration: BoxDecoration(
           color: buttonColor,
@@ -26,7 +26,7 @@ class CustomButton extends StatelessWidget {
         child: Center(
           child: Text(
             buttonText,
-            style: GoogleFonts.inter(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+            style: GoogleFonts.inter(color: const Color.fromARGB(255, 10, 10, 10), fontSize: 18, fontWeight: FontWeight.w600),
           ),
         ),
       ),
