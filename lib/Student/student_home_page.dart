@@ -15,7 +15,7 @@ import 'package:a4m/Lecturers/LectureDashboard/lecture_dashboard.dart';
 import 'package:a4m/Lecturers/LectureMessages/lecture_messages.dart';
 import 'package:a4m/Lecturers/LecturePresentations/lecture_presentations.dart';
 import 'package:a4m/Lecturers/LectureStudents/lecture_students.dart';
-import 'package:a4m/Lecturers/lecture_navbar.dart';
+import 'package:a4m/Student/MyCourses/student_courses.dart';
 import 'package:a4m/Student/student_navbar.dart';
 import 'package:flutter/material.dart';
 
@@ -57,7 +57,7 @@ class _StudentHomePageState extends State<StudentHomePage> {
           changePage(newPage, courseId: courseId); // Pass the courseId
         },
       ),
-      LectureCourses(
+      StudentCourses(
         changePageWithCourseId: (int newPage, String courseId) {
           changePage(newPage, courseId: courseId); // Pass the courseId
         },

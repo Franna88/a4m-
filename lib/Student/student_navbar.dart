@@ -54,40 +54,40 @@ class _StudentNavbarState extends State<StudentNavbar> {
                 ),
                 NavButtons(
                   buttonText: 'My Courses',
-                  onTap: () => _handleItemClick(0),
-                  isActive: activeIndex == 0,
+                  onTap: () => _handleItemClick(1),
+                  isActive: activeIndex == 1,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
                   buttonText: 'Browse Courses',
-                  onTap: () => _handleItemClick(1),
-                  isActive: activeIndex == 1,
+                  onTap: () => _handleItemClick(3),
+                  isActive: activeIndex == 3,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
                   buttonText: 'Assessments',
-                  onTap: () => _handleItemClick(1),
-                  isActive: activeIndex == 1,
+                  onTap: () => _handleItemClick(2),
+                  isActive: activeIndex == 2,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
                   buttonText: 'Review Assessments',
-                  onTap: () => _handleItemClick(1),
-                  isActive: activeIndex == 1,
+                  onTap: () => _handleItemClick(3),
+                  isActive: activeIndex == 3,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
                   buttonText: 'My Certificates',
-                  onTap: () => _handleItemClick(2),
-                  isActive: activeIndex == 2,
+                  onTap: () => _handleItemClick(4),
+                  isActive: activeIndex == 4,
                 ),
                 const Spacer(),
                 Container(
@@ -100,16 +100,16 @@ class _StudentNavbarState extends State<StudentNavbar> {
                 ),
                 NavButtons(
                   buttonText: 'Presentation',
-                  onTap: () => _handleItemClick(3),
-                  isActive: activeIndex == 3,
+                  onTap: () => _handleItemClick(5),
+                  isActive: activeIndex == 5,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
                   buttonText: 'Messages',
-                  onTap: () => _handleItemClick(4),
-                  isActive: activeIndex == 4,
+                  onTap: () => _handleItemClick(6),
+                  isActive: activeIndex == 6,
                 ),
                 const SizedBox(
                   height: 25,
