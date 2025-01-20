@@ -39,7 +39,7 @@ class CategoryNameStack extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
                   child: Text(
                     text,
                     style: GoogleFonts.inter(
