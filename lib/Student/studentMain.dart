@@ -1,4 +1,5 @@
 import 'package:a4m/Student/MyCourses/myCoursesMain.dart';
+import 'package:a4m/Student/MyCourses/studentViewCourse.dart';
 import 'package:a4m/Student/commonUi/studentNavBar.dart';
 import 'package:flutter/material.dart';
 
@@ -20,6 +21,7 @@ class _StudentMainState extends State<StudentMain> {
   }
 
    List<Widget> pages = [
+    StudentViewCourse(),
     MyCoursesMain()
    ];
 
