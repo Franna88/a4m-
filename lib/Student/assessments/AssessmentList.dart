@@ -1,15 +1,16 @@
+import 'package:a4m/Student/assessments/assessmentsContainer.dart';
 import 'package:a4m/Student/commonUi/studentCourseItem.dart';
 import 'package:a4m/Student/dummyList/studentCourseListModel.dart';
 import 'package:flutter/material.dart';
 
-class AllStudentCourses extends StatefulWidget {
-  const AllStudentCourses({super.key});
+class AssessmentCourses extends StatefulWidget {
+  const AssessmentCourses({super.key});
 
   @override
-  State<AllStudentCourses> createState() => _AllStudentCoursesState();
+  State<AssessmentCourses> createState() => _AssessmentCoursesState();
 }
 
-class _AllStudentCoursesState extends State<AllStudentCourses> {
+class _AssessmentCoursesState extends State<AssessmentCourses> {
   @override
   Widget build(BuildContext context) {
     return Expanded(
@@ -18,7 +19,7 @@ class _AllStudentCoursesState extends State<AllStudentCourses> {
         itemBuilder: (context, index) {
           return Padding(
             padding: const EdgeInsets.only(top: 10),
-            child: StudentCourseItem(
+            child: AssessmentsContainer(
               courseName: dummyStudentCourseList[index].courseName,
               courseImage: dummyStudentCourseList[index].courseImage,
               courseDescription:

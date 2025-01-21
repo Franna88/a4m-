@@ -1,5 +1,6 @@
 import 'package:a4m/CommonComponents/buttons/CustomButton.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
+import 'package:a4m/Student/studentMain.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Login/Tabs/StudentTab/studentSignUp.dart';
 import 'package:flutter/material.dart';
@@ -76,8 +77,8 @@ class StudentLoginView extends StatefulWidget {
 class _StudentLoginViewState extends State<StudentLoginView> {
   @override
   Widget build(BuildContext context) {
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
+    final emailController = TextEditingController(text: 'student@gmail.com');
+    final passwordController = TextEditingController(text: 'test123');
     final studentCodeController = TextEditingController();
 
     return SingleChildScrollView(
@@ -153,7 +154,24 @@ class _StudentLoginViewState extends State<StudentLoginView> {
               buttonText: 'Login',
               buttonColor: Mycolors().green,
               onPressed: () {
-                // TO DO: Handle login action
+                // Validate user credentials (you can add actual validation logic here)
+                if (emailController.text.isNotEmpty &&
+                    passwordController.text.isNotEmpty) {
+                  // Navigate to the StudentMain page upon successful login
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => StudentMain(),
+                    ),
+                  );
+                } else {
+                  // Show an error message if any field is empty
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please fill all fields'),
+                    ),
+                  );
+                }
               },
               width: 100,
             ),

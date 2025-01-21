@@ -88,10 +88,14 @@ class _AssessmentsContainerState extends State<AssessmentsContainer> {
                         padding: const EdgeInsets.all(15),
                         child: Row(
                           children: [
-                            DisplayCardIcons(
-                                icon: Icons.library_books,
-                                count: widget.moduleCount,
-                                tooltipText: 'Modules'),
+                            Text(
+                              'Score Available 100',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
                         ),
                       ),

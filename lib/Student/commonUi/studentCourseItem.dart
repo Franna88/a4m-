@@ -18,7 +18,8 @@ class StudentCourseItem extends StatelessWidget {
       required this.courseImage,
       required this.courseDescription,
       required this.moduleCount,
-      required this.assessmentCount, required this.onTap});
+      required this.assessmentCount,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,9 @@ class StudentCourseItem extends StatelessWidget {
       width: MyUtility(context).width - 360,
       height: 200,
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(5), border: Border.all(width: 2), color: Colors.white),
+          borderRadius: BorderRadius.circular(5),
+          border: Border.all(width: 2),
+          color: Colors.white),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
@@ -48,7 +51,8 @@ class StudentCourseItem extends StatelessWidget {
                 children: [
                   Text(
                     courseName,
-                    style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 18),
+                    style: GoogleFonts.montserrat(
+                        fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(
                     height: 6,
@@ -57,8 +61,8 @@ class StudentCourseItem extends StatelessWidget {
                     width: MyUtility(context).width - 584,
                     child: Text(
                       courseDescription,
-                      style:
-                          GoogleFonts.montserrat(fontWeight: FontWeight.w400, fontSize: 14),
+                      style: GoogleFonts.montserrat(
+                          fontWeight: FontWeight.w400, fontSize: 14),
                     ),
                   ),
                   const Spacer(),

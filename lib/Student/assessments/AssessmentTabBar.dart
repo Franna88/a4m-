@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-class CustomTabBar extends StatelessWidget {
+class AssessmentTabBar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onTabSelected;
 
-  const CustomTabBar({
+  const AssessmentTabBar({
     required this.selectedIndex,
     required this.onTabSelected,
   });
@@ -20,8 +20,7 @@ class CustomTabBar extends StatelessWidget {
       child: Row(
         children: [
           _buildTab('All', 0),
-          _buildTab('Active', 1),
-          _buildTab('Completed', 2),
+          _buildTab('Completed', 1),
         ],
       ),
     );

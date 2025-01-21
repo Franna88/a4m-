@@ -1,4 +1,6 @@
 import 'package:a4m/LandingPage/CourseListPage/ui/categoryNameStack.dart';
+import 'package:a4m/Student/assessments/AssessmentList.dart';
+import 'package:a4m/Student/assessments/AssessmentTabBar.dart';
 import 'package:a4m/Student/commonUi/customTabBar.dart';
 import 'package:a4m/Student/commonUi/studentCourseItem.dart';
 import 'package:a4m/Student/dummyList/allStudentCourses.dart';
@@ -16,7 +18,7 @@ class _AssessmentsMainState extends State<AssessmentsMain> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    Center(child: AllStudentCourses()),
+    Center(child: AssessmentCourses()),
     Center(child: Text('Active Page', style: TextStyle(fontSize: 24))),
     Center(child: Text('Completed Page', style: TextStyle(fontSize: 24))),
   ];
@@ -28,14 +30,14 @@ class _AssessmentsMainState extends State<AssessmentsMain> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CategoryNameStack(text: 'Ássessments'),
+          CategoryNameStack(text: 'Assessments'),
           const SizedBox(
             height: 15,
           ),
           SizedBox(
             height: 50,
             width: 500,
-            child: CustomTabBar(
+            child: AssessmentTabBar(
               selectedIndex: _selectedIndex,
               onTabSelected: (index) {
                 setState(() {
