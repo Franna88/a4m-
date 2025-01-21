@@ -1,5 +1,6 @@
 import 'package:a4m/Student/MyCourses/myCoursesMain.dart';
 import 'package:a4m/Student/MyCourses/studentViewCourse.dart';
+import 'package:a4m/Student/assessments/assessments.dart';
 import 'package:a4m/Student/commonUi/studentNavBar.dart';
 import 'package:flutter/material.dart';
 
@@ -11,7 +12,6 @@ class StudentMain extends StatefulWidget {
 }
 
 class _StudentMainState extends State<StudentMain> {
-
   var pageIndex = 0;
 
   void changePage(int value) {
@@ -20,14 +20,14 @@ class _StudentMainState extends State<StudentMain> {
     });
   }
 
-   List<Widget> pages = [
+  List<Widget> pages = [
     StudentViewCourse(),
-    MyCoursesMain()
-   ];
-
+    MyCoursesMain(),
+    AssessmentsMain()
+  ];
 
   @override
   Widget build(BuildContext context) {
-    return  StudentNavBar(child: pages[pageIndex], changePage: changePage);
+    return StudentNavBar(child: pages[pageIndex], changePage: changePage);
   }
 }

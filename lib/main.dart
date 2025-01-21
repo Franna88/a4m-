@@ -35,11 +35,10 @@ void main() async {
   }
   runApp(
     const MaterialApp(
-      home: Scaffold(
-          body: StudentMain()
+      home: Scaffold(body: StudentMain()
           //ContentDevHome(),
-              //CourseListPage()
-              //LandingPageMain()
+          //CourseListPage()
+          //LandingPageMain()
           // AdminHome()
           // LoginPopup(),),
           ),

@@ -20,8 +20,7 @@ class CustomTabBar extends StatelessWidget {
       child: Row(
         children: [
           _buildTab('All', 0),
-          _buildTab('Active', 1),
-          _buildTab('Completed', 2),
+          _buildTab('Completed', 1),
         ],
       ),
     );
@@ -33,7 +32,8 @@ class CustomTabBar extends StatelessWidget {
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          onTabSelected(index); // Call the callback to update the selected index
+          onTabSelected(
+              index); // Call the callback to update the selected index
         },
         child: AnimatedContainer(
           duration: Duration(milliseconds: 200),
@@ -41,13 +41,17 @@ class CustomTabBar extends StatelessWidget {
           alignment: Alignment.center,
           padding: EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? Color(0xFF1A8CF0) : Colors.transparent, // Tab background color
-            borderRadius: BorderRadius.circular(8), // Rounded corners for the tab
+            color: isSelected
+                ? Color(0xFF1A8CF0)
+                : Colors.transparent, // Tab background color
+            borderRadius:
+                BorderRadius.circular(8), // Rounded corners for the tab
           ),
           child: Text(
             title,
             style: TextStyle(
-              color: isSelected ? Colors.white : Color(0xFF002A6A), // Text color
+              color:
+                  isSelected ? Colors.white : Color(0xFF002A6A), // Text color
               fontWeight: FontWeight.w600, // Bold text for better visibility
             ),
           ),
