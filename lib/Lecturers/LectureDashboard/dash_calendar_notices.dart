@@ -44,7 +44,14 @@ class _DashCalendarNoticesState extends State<DashCalendarNotices> {
               formatButtonVisible: false,
             ),
           ),
-          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Divider(
+              thickness: 5,
+              color: Mycolors().offWhite,
+            ),
+          ),
+          
           Row(
             children: [
               Spacer(),
@@ -62,13 +69,7 @@ class _DashCalendarNoticesState extends State<DashCalendarNotices> {
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Divider(
-              thickness: 5,
-              color: Mycolors().offWhite,
-            ),
-          ),
+          
           Expanded(
             child: ListView(
               children: (_reminders[_selectedDay] ?? []).map((reminder) {
