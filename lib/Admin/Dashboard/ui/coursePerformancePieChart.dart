@@ -36,7 +36,7 @@ class _CoursePerformanceChartState extends State<CoursePerformanceChart> {
             Row(
               children: [
                 Container(
-                  height: MyUtility(context).width < 1500 ? 170 : 270 ,
+                  height: MyUtility(context).width < 1500 ? 170 : 270,
                   width: MyUtility(context).width < 1500 ? 170 : 270,
                   child: PieChart(
                     PieChartData(
@@ -56,7 +56,7 @@ class _CoursePerformanceChartState extends State<CoursePerformanceChart> {
                           value: 35,
                           color: Colors.blue.shade700,
                           title: '35%',
-                          radius:MyUtility(context).width < 1500 ? 80 : 110,
+                          radius: MyUtility(context).width < 1500 ? 80 : 110,
                           titleStyle: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,

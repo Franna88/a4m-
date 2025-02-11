@@ -112,7 +112,7 @@ class _NewlySubmitedModulesState extends State<NewlySubmitedModules> {
     return Center(
       child: Container(
         width: MyUtility(context).width * 0.52,
-        height: MyUtility(context).height * 0.32,
+        height: MyUtility(context).height * 0.31,
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
           color: Colors.white,

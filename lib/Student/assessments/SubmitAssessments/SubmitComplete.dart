@@ -6,21 +6,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:a4m/TableWidgets/tableStructure.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ModuleCompleteList extends StatefulWidget {
+class SubmitComplete extends StatefulWidget {
   final String courseId;
   final String moduleId; // Added moduleId parameter
 
-  const ModuleCompleteList({
+  const SubmitComplete({
     super.key,
     required this.courseId,
     required this.moduleId,
   });
 
   @override
-  State<ModuleCompleteList> createState() => _ModuleCompleteListState();
+  State<SubmitComplete> createState() => _SubmitCompleteState();
 }
 
-class _ModuleCompleteListState extends State<ModuleCompleteList> {
+class _SubmitCompleteState extends State<SubmitComplete> {
   List<Map<String, dynamic>> submissions = [];
   String courseName = '';
   String moduleName = '';
@@ -36,7 +36,7 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
 
       courseName = courseDoc.data()?['courseName'] ?? 'No Course Name';
 
-      // Fetch module details
+      // Fetch specific module using moduleId
       var moduleDoc = await FirebaseFirestore.instance
           .collection('courses')
           .doc(widget.courseId)
@@ -44,48 +44,44 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
           .doc(widget.moduleId)
           .get();
 
-      moduleName = moduleDoc.data()?['moduleName'] ?? 'No Module Name';
+      if (moduleDoc.exists) {
+        final moduleData = moduleDoc.data() as Map<String, dynamic>;
+        moduleName = moduleData['moduleName'] ?? 'No Module Name';
 
-      // Fetch submissions from the `submissions` subcollection
-      var submissionsSnapshot = await FirebaseFirestore.instance
-          .collection('courses')
-          .doc(widget.courseId)
-          .collection('modules')
-          .doc(widget.moduleId)
-          .collection('submissions')
-          .get();
+        // Safely handle studentAssessment data
+        final studentAssessments =
+            moduleData['studentAssessment'] as List<dynamic>?;
 
-      List<Map<String, dynamic>> tempSubmissions = [];
+        List<Map<String, dynamic>> tempSubmissions = [];
 
-      for (var doc in submissionsSnapshot.docs) {
-        final submissionData = doc.data();
-
-        String studentName = submissionData['studentName'] ?? 'Unknown Student';
-        Timestamp submittedDate =
-            submissionData['submitted'] ?? Timestamp.now();
-
-        List<dynamic> submittedAssessments =
-            submissionData['submittedAssessments'] ?? [];
-
-        for (var assessment in submittedAssessments) {
-          tempSubmissions.add({
-            'student': studentName,
-            'date': submittedDate.toDate().toString().split(' ')[0],
-            'course': courseName,
-            'module': moduleName,
-            'assessment': assessment['assessmentName'] ?? '',
-            'fileUrl': assessment['fileUrl'] ?? '',
-            'mark': assessment['mark'] ?? '',
-            'comment': assessment['comment'] ?? '',
-            'submissionDocId': doc.id, // Reference to submission doc
-          });
+        if (studentAssessments != null) {
+          for (var submission in studentAssessments) {
+            tempSubmissions.add({
+              'student': submission['name']?.toString() ?? 'Unknown Student',
+              'date': submission['submitted'] != null &&
+                      submission['submitted'] is Timestamp
+                  ? (submission['submitted'] as Timestamp)
+                      .toDate()
+                      .toString()
+                      .split(' ')[0]
+                  : 'Unknown Date',
+              'course': courseName,
+              'module': moduleName,
+              'assessment': submission['assessment']?.toString() ?? '',
+              'mark': submission['mark']?.toString() ?? '',
+              'comment': submission['comment']?.toString() ?? '',
+            });
+          }
         }
-      }
 
-      setState(() {
-        submissions = tempSubmissions;
-        isLoading = false;
-      });
+        setState(() {
+          submissions = tempSubmissions;
+          isLoading = false;
+        });
+      } else {
+        print("Module not found for ID: ${widget.moduleId}");
+        setState(() => isLoading = false);
+      }
     } catch (e) {
       print("Error fetching submissions: $e");
       setState(() {
@@ -94,7 +90,7 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
     }
   }
 
-  void _openGradeDialog(Map<String, dynamic> submission) {
+  void _openGradeDialog(Map<String, dynamic> submission, int index) {
     final TextEditingController markController =
         TextEditingController(text: submission['mark']);
     final TextEditingController commentController =
@@ -150,8 +146,8 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
                 if (!isReadOnly)
                   TextButton(
                     onPressed: () async {
-                      await _updateGrade(submission, markController.text,
-                          commentController.text);
+                      await _updateGrade(
+                          index, markController.text, commentController.text);
                       Navigator.pop(context);
                     },
                     child: const Text('Submit'),
@@ -164,44 +160,27 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
     );
   }
 
-  Future<void> _updateGrade(
-      Map<String, dynamic> submission, String mark, String comment) async {
+  Future<void> _updateGrade(int index, String mark, String comment) async {
     try {
-      final submissionRef = FirebaseFirestore.instance
+      final moduleRef = FirebaseFirestore.instance
           .collection('courses')
           .doc(widget.courseId)
           .collection('modules')
-          .doc(widget.moduleId)
-          .collection('submissions')
-          .doc(submission['submissionDocId']);
+          .doc(widget.moduleId);
 
-      DocumentSnapshot doc = await submissionRef.get();
-      if (!doc.exists) {
-        print("Submission document not found.");
-        return;
-      }
+      final moduleDoc = await moduleRef.get();
+      final moduleData = moduleDoc.data() as Map<String, dynamic>;
+      final studentAssessments =
+          List<Map<String, dynamic>>.from(moduleData['studentAssessment']);
 
-      List<dynamic> submittedAssessments = doc['submittedAssessments'] ?? [];
+      studentAssessments[index]['mark'] = mark;
+      studentAssessments[index]['comment'] = comment;
 
-      for (var assessment in submittedAssessments) {
-        if (assessment['assessmentName'] == submission['assessment']) {
-          assessment['mark'] = mark;
-          assessment['comment'] = comment;
-        }
-      }
-
-      await submissionRef.update({
-        'submittedAssessments': submittedAssessments,
-      });
+      await moduleRef.update({'studentAssessment': studentAssessments});
 
       setState(() {
-        submissions = submissions.map((s) {
-          if (s['assessment'] == submission['assessment'] &&
-              s['student'] == submission['student']) {
-            return {...s, 'mark': mark, 'comment': comment};
-          }
-          return s;
-        }).toList();
+        submissions[index]['mark'] = mark;
+        submissions[index]['comment'] = comment;
       });
 
       print("Grade updated successfully!");
@@ -223,6 +202,7 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
         : Table(
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
             children: [
+              // Table Header
               TableRow(
                 decoration: BoxDecoration(
                   color: Mycolors().green,
@@ -237,8 +217,18 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
                   _buildHeaderCell('Grade'),
                 ],
               ),
-              ...submissions.map((submission) {
+              // Table Rows
+              ...List.generate(submissions.length, (index) {
+                final submission = submissions[index];
                 return TableRow(
+                  decoration: BoxDecoration(
+                    color: index % 2 == 0
+                        ? Colors.white
+                        : const Color.fromRGBO(209, 210, 146, 0.50),
+                    border: const Border(
+                      bottom: BorderSide(width: 1, color: Colors.black),
+                    ),
+                  ),
                   children: [
                     _buildCell(submission['student']),
                     _buildCell(submission['date']),
@@ -247,16 +237,16 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
                     _buildButtonCell(
                       icon: Icons.download_sharp,
                       color: Colors.blue.shade700,
-                      onPressed: () => _downloadFile(submission['fileUrl']),
+                      onPressed: () => _downloadFile(submission['assessment']),
                     ),
                     _buildButtonCell(
                       icon: Icons.grade,
                       color: Colors.green.shade700,
-                      onPressed: () => _openGradeDialog(submission),
+                      onPressed: () => _openGradeDialog(submission, index),
                     ),
                   ],
                 );
-              }).toList(),
+              }),
             ],
           );
   }
@@ -309,8 +299,8 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
   }
 
   Future<void> _downloadFile(String url) async {
-    if (url.isNotEmpty && await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url));
+    if (url.isNotEmpty && await canLaunch(url)) {
+      await launch(url);
     } else {
       print("Failed to launch URL: $url");
     }
