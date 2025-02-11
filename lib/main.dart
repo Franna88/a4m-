@@ -36,7 +36,9 @@ void main() async {
   runApp(
     const MaterialApp(
       home: Scaffold(
-          body: //StudentMain()
+          body: /*StudentMain(
+        studentId: '',
+      )*/
               //ContentDevHome(),
               //CourseListPage()
               LandingPageMain()

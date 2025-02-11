@@ -1,14 +1,18 @@
 import 'package:a4m/LandingPage/CourseListPage/ui/categoryNameStack.dart';
 import 'package:a4m/Student/assessments/AssessmentList.dart';
 import 'package:a4m/Student/assessments/AssessmentTabBar.dart';
-import 'package:a4m/Student/commonUi/customTabBar.dart';
-import 'package:a4m/Student/commonUi/studentCourseItem.dart';
-import 'package:a4m/Student/dummyList/allStudentCourses.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 
 class AssessmentsMain extends StatefulWidget {
-  const AssessmentsMain({super.key});
+  final void Function(int newPage, String courseId) changePageWithCourseId;
+  final String studentId;
+
+  const AssessmentsMain({
+    Key? key,
+    required this.changePageWithCourseId,
+    required this.studentId,
+  }) : super(key: key);
 
   @override
   State<AssessmentsMain> createState() => _AssessmentsMainState();
@@ -16,12 +20,6 @@ class AssessmentsMain extends StatefulWidget {
 
 class _AssessmentsMainState extends State<AssessmentsMain> {
   int _selectedIndex = 0;
-
-  final List<Widget> _pages = [
-    Center(child: AssessmentCourses()),
-    Center(child: Text('Active Page', style: TextStyle(fontSize: 24))),
-    Center(child: Text('Completed Page', style: TextStyle(fontSize: 24))),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -31,9 +29,7 @@ class _AssessmentsMainState extends State<AssessmentsMain> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CategoryNameStack(text: 'Assessments'),
-          const SizedBox(
-            height: 15,
-          ),
+          const SizedBox(height: 15),
           SizedBox(
             height: 50,
             width: 500,
@@ -41,17 +37,42 @@ class _AssessmentsMainState extends State<AssessmentsMain> {
               selectedIndex: _selectedIndex,
               onTabSelected: (index) {
                 setState(() {
-                  _selectedIndex = index; // Update the selected index
+                  _selectedIndex = index;
                 });
               },
             ),
           ),
-          // Expanded widget to display the selected page
           SizedBox(
             width: MyUtility(context).width - 360,
             height: MyUtility(context).height - 205,
-            child: _pages[
-                _selectedIndex], // Show the page corresponding to the selected tab
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: [
+                // 🔹 All Courses
+                AssessmentCourses(
+                  studentId: widget.studentId,
+                  onTap: (courseId) {
+                    widget.changePageWithCourseId(8, courseId);
+                  },
+                ),
+                // 🔹 Active Courses (Incomplete)
+                AssessmentCourses(
+                  studentId: widget.studentId,
+                  filterByCompletion: false, // 🔹 Show only active courses
+                  onTap: (courseId) {
+                    widget.changePageWithCourseId(8, courseId);
+                  },
+                ),
+                // 🔹 Completed Courses
+                AssessmentCourses(
+                  studentId: widget.studentId,
+                  filterByCompletion: true, // 🔹 Show only completed courses
+                  onTap: (courseId) {
+                    widget.changePageWithCourseId(8, courseId);
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),

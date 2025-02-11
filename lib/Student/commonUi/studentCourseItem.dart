@@ -2,7 +2,7 @@ import 'package:a4m/CommonComponents/buttons/onHoverButton.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:image_network/image_network.dart'; // ImageNetwork import
 import '../../CommonComponents/displayCardIcons.dart';
 
 class StudentCourseItem extends StatelessWidget {
@@ -12,14 +12,16 @@ class StudentCourseItem extends StatelessWidget {
   final String moduleCount;
   final String assessmentCount;
   final Function() onTap;
-  const StudentCourseItem(
-      {super.key,
-      required this.courseName,
-      required this.courseImage,
-      required this.courseDescription,
-      required this.moduleCount,
-      required this.assessmentCount,
-      required this.onTap});
+
+  const StudentCourseItem({
+    super.key,
+    required this.courseName,
+    required this.courseImage,
+    required this.courseDescription,
+    required this.moduleCount,
+    required this.assessmentCount,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,18 +29,32 @@ class StudentCourseItem extends StatelessWidget {
       width: MyUtility(context).width - 360,
       height: 200,
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(width: 2),
-          color: Colors.white),
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(width: 2),
+        color: Colors.white,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
+          // ImageNetwork for Course Image
           Container(
             height: 200,
             width: 200,
             decoration: BoxDecoration(
-              image: DecorationImage(
-                  image: AssetImage(courseImage), fit: BoxFit.fill),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(5),
+                bottomLeft: Radius.circular(5),
+              ),
+            ),
+            child: ImageNetwork(
+              image: courseImage,
+              height: 200,
+              width: 200,
+              fitAndroidIos: BoxFit.cover,
+              fitWeb: BoxFitWeb.cover,
+              onLoading: const CircularProgressIndicator(), // Loading widget
+              onError:
+                  const Icon(Icons.error, color: Colors.red), // Error widget
             ),
           ),
           Container(
@@ -73,9 +89,10 @@ class StudentCourseItem extends StatelessWidget {
                         child: Row(
                           children: [
                             DisplayCardIcons(
-                                icon: Icons.format_list_numbered,
-                                count: assessmentCount,
-                                tooltipText: 'Assessments'),
+                              icon: Icons.format_list_numbered,
+                              count: assessmentCount,
+                              tooltipText: 'Assessments',
+                            ),
                           ],
                         ),
                       ),
@@ -84,17 +101,18 @@ class StudentCourseItem extends StatelessWidget {
                         child: Row(
                           children: [
                             DisplayCardIcons(
-                                icon: Icons.library_books,
-                                count: moduleCount,
-                                tooltipText: 'Modules'),
+                              icon: Icons.library_books,
+                              count: moduleCount,
+                              tooltipText: 'Modules',
+                            ),
                           ],
                         ),
                       ),
                       const Spacer(),
                       OnHoverButton(
-                        onTap: () {},
+                        onTap: onTap,
                         buttonText: 'Continue',
-                      )
+                      ),
                     ],
                   )
                 ],

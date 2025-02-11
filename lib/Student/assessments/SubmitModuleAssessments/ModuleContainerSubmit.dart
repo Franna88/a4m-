@@ -1,29 +1,31 @@
 import 'package:a4m/CommonComponents/buttons/onHoverButton.dart';
+import 'package:a4m/CommonComponents/displayCardIcons.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_network/image_network.dart';
 
-import '../../../CommonComponents/displayCardIcons.dart';
-
-class ReviewAssessmentsItem extends StatelessWidget {
-  final String moduleName;
-  final String moduleImage;
-  final String moduleDescription;
+class ModuleContainerSubmit extends StatefulWidget {
+  final String courseName;
+  final String courseImage;
+  final String courseDescription;
   final String moduleCount;
   final String assessmentCount;
   final Function() onTap;
-  final bool isPassed;
-  const ReviewAssessmentsItem(
+  const ModuleContainerSubmit(
       {super.key,
-      required this.moduleName,
-      required this.moduleImage,
-      required this.moduleDescription,
+      required this.courseName,
+      required this.courseImage,
+      required this.courseDescription,
       required this.moduleCount,
       required this.assessmentCount,
-      required this.onTap,
-      required this.isPassed});
+      required this.onTap});
 
+  @override
+  State<ModuleContainerSubmit> createState() => _ModuleContainerSubmitState();
+}
+
+class _ModuleContainerSubmitState extends State<ModuleContainerSubmit> {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -46,7 +48,7 @@ class ReviewAssessmentsItem extends StatelessWidget {
               ),
             ),
             child: ImageNetwork(
-              image: moduleImage,
+              image: widget.courseImage,
               height: 200,
               width: 200,
               fitAndroidIos: BoxFit.cover,
@@ -65,7 +67,7 @@ class ReviewAssessmentsItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    moduleName,
+                    widget.courseName,
                     style: GoogleFonts.montserrat(
                         fontWeight: FontWeight.bold, fontSize: 18),
                   ),
@@ -75,14 +77,13 @@ class ReviewAssessmentsItem extends StatelessWidget {
                   Container(
                     width: MyUtility(context).width - 584,
                     child: Text(
-                      moduleDescription,
+                      widget.courseDescription,
                       style: GoogleFonts.montserrat(
                           fontWeight: FontWeight.w400, fontSize: 14),
                     ),
                   ),
                   const Spacer(),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Padding(
                         padding: const EdgeInsets.all(15),
@@ -90,22 +91,30 @@ class ReviewAssessmentsItem extends StatelessWidget {
                           children: [
                             DisplayCardIcons(
                                 icon: Icons.format_list_numbered,
-                                count: assessmentCount,
+                                count: widget.assessmentCount,
                                 tooltipText: 'Assessments'),
                           ],
                         ),
                       ),
-                      Text(
-                        isPassed ? 'Module Passed' : 'In Progress',
-                        style: GoogleFonts.inter(
-                            color: isPassed
-                                ? Color.fromRGBO(7, 165, 55, 1)
-                                : Colors.grey,
-                            fontWeight: FontWeight.w600),
+                      Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Score Available 100',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      const Spacer(),
                       OnHoverButton(
-                        onTap: onTap,
-                        buttonText: 'Review Assessments',
+                        onTap: widget.onTap,
+                        buttonText: 'Continue',
                       )
                     ],
                   )

@@ -3,6 +3,8 @@ import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
 import 'package:a4m/Student/studentMain.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Login/Tabs/StudentTab/studentSignUp.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -75,12 +77,104 @@ class StudentLoginView extends StatefulWidget {
 }
 
 class _StudentLoginViewState extends State<StudentLoginView> {
+  final emailController = TextEditingController(text: 'student1@gmail.com');
+  final passwordController = TextEditingController(text: 'test123');
+  final studentCodeController = TextEditingController();
+  bool isLoading = false;
+
+  Future<void> _loginStudent() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      String email = emailController.text.trim();
+      String password = passwordController.text.trim();
+      String studentCode = studentCodeController.text.trim();
+
+      if (email.isEmpty || password.isEmpty) {
+        _showErrorDialog('Please fill in all required fields.');
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      // Authenticate user with Firebase
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      // Retrieve user details from Firestore
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (userDoc.exists) {
+        var userData = userDoc.data() as Map<String, dynamic>;
+        String userType = userData['userType'] ?? '';
+        String status = userData['status'] ?? '';
+        String storedStudentCode = userData['studentCode'] ?? '';
+
+        // Check if user is a student and status is approved
+        if (userType == 'student') {
+          // Navigate to student's main page
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => StudentMain(
+                      studentId: userCredential.user!.uid,
+                    )),
+          );
+        } else if (status == 'pending') {
+          _showErrorDialog(
+              'Your account is still pending approval. Please wait for admin verification.');
+        } else {
+          _showErrorDialog(
+              'Invalid credentials or your account is not verified.');
+        }
+      } else {
+        _showErrorDialog('User not found.');
+      }
+    } on FirebaseAuthException catch (e) {
+      String errorMessage;
+      if (e.code == 'user-not-found') {
+        errorMessage = 'No user found for that email.';
+      } else if (e.code == 'wrong-password') {
+        errorMessage = 'Wrong password provided.';
+      } else {
+        errorMessage = 'An error occurred. Please try again.';
+      }
+      _showErrorDialog(errorMessage);
+    } catch (e) {
+      _showErrorDialog('An unexpected error occurred. Please try again.');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Login Failed'),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Okay'),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final emailController = TextEditingController(text: 'student@gmail.com');
-    final passwordController = TextEditingController(text: 'test123');
-    final studentCodeController = TextEditingController();
-
     return SingleChildScrollView(
       child: SizedBox(
         height: 500,
@@ -154,24 +248,7 @@ class _StudentLoginViewState extends State<StudentLoginView> {
               buttonText: 'Login',
               buttonColor: Mycolors().green,
               onPressed: () {
-                // Validate user credentials (you can add actual validation logic here)
-                if (emailController.text.isNotEmpty &&
-                    passwordController.text.isNotEmpty) {
-                  // Navigate to the StudentMain page upon successful login
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => StudentMain(),
-                    ),
-                  );
-                } else {
-                  // Show an error message if any field is empty
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please fill all fields'),
-                    ),
-                  );
-                }
+                _loginStudent();
               },
               width: 100,
             ),

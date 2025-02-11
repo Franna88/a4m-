@@ -2,6 +2,7 @@ import 'package:a4m/CommonComponents/buttons/onHoverButton.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_network/image_network.dart';
 
 import '../../CommonComponents/displayCardIcons.dart';
 
@@ -42,8 +43,20 @@ class _AssessmentsContainerState extends State<AssessmentsContainer> {
             height: 200,
             width: 200,
             decoration: BoxDecoration(
-              image: DecorationImage(
-                  image: AssetImage(widget.courseImage), fit: BoxFit.fill),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(5),
+                bottomLeft: Radius.circular(5),
+              ),
+            ),
+            child: ImageNetwork(
+              image: widget.courseImage,
+              height: 200,
+              width: 200,
+              fitAndroidIos: BoxFit.cover,
+              fitWeb: BoxFitWeb.cover,
+              onLoading: const CircularProgressIndicator(), // Loading widget
+              onError:
+                  const Icon(Icons.error, color: Colors.red), // Error widget
             ),
           ),
           Container(
@@ -101,7 +114,7 @@ class _AssessmentsContainerState extends State<AssessmentsContainer> {
                       ),
                       const Spacer(),
                       OnHoverButton(
-                        onTap: () {},
+                        onTap: widget.onTap,
                         buttonText: 'Continue',
                       )
                     ],

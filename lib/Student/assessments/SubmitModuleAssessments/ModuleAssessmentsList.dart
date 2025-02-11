@@ -1,32 +1,34 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:a4m/Student/ReviewAssessments/ui/reviewAssessmentsItem.dart';
+import 'package:a4m/Student/assessments/SubmitModuleAssessments/ModuleContainerSubmit.dart';
 
-class ReviewAssessmentsList extends StatefulWidget {
+class ModuleAssessmentList extends StatefulWidget {
+  final String courseId;
+  final String studentId;
   final void Function(String moduleId) onTap;
-  final String courseId; // 🔹 Ensure we get the course ID
 
-  const ReviewAssessmentsList({
+  const ModuleAssessmentList({
     super.key,
+    required this.courseId,
+    required this.studentId,
     required this.onTap,
-    required this.courseId, // Receive courseId
   });
 
   @override
-  State<ReviewAssessmentsList> createState() => _ReviewAssessmentsListState();
+  State<ModuleAssessmentList> createState() => _ModuleAssessmentListState();
 }
 
-class _ReviewAssessmentsListState extends State<ReviewAssessmentsList> {
+class _ModuleAssessmentListState extends State<ModuleAssessmentList> {
   late Future<List<Map<String, dynamic>>> _modulesFuture;
 
   @override
   void initState() {
     super.initState();
-    _modulesFuture = fetchModulesForCourse();
+    _modulesFuture = fetchModules();
   }
 
-  /// 🔹 Fetch modules and their assessment details for the selected course
-  Future<List<Map<String, dynamic>>> fetchModulesForCourse() async {
+  // 🔹 Fetch modules for the selected course and calculate assessments/submissions
+  Future<List<Map<String, dynamic>>> fetchModules() async {
     try {
       QuerySnapshot moduleSnapshot = await FirebaseFirestore.instance
           .collection('courses')
@@ -40,8 +42,9 @@ class _ReviewAssessmentsListState extends State<ReviewAssessmentsList> {
         final moduleData = module.data() as Map<String, dynamic>;
 
         int totalAssessments = 0;
-        bool isPassed = false;
+        int submittedAssessments = 0;
 
+        // Count `assessmentsPdfUrl` and `testSheetPdfUrl`
         if (moduleData['assessmentsPdfUrl'] != null &&
             moduleData['assessmentsPdfUrl'].isNotEmpty) {
           totalAssessments++;
@@ -52,36 +55,37 @@ class _ReviewAssessmentsListState extends State<ReviewAssessmentsList> {
           totalAssessments++;
         }
 
-        // Fetch review status (if module is passed/failed)
-        DocumentSnapshot reviewDoc = await FirebaseFirestore.instance
+        // Fetch submissions for this module and student
+        DocumentSnapshot submissionDoc = await FirebaseFirestore.instance
             .collection('courses')
             .doc(widget.courseId)
             .collection('modules')
             .doc(module.id)
-            .collection('reviews')
-            .doc(widget
-                .courseId) // Assuming reviews are stored per course/module
+            .collection('submissions')
+            .doc(widget.studentId)
             .get();
 
-        if (reviewDoc.exists) {
-          isPassed = reviewDoc['isPassed'] ?? false;
+        if (submissionDoc.exists) {
+          List<dynamic> submittedFiles =
+              submissionDoc['submittedAssessments'] ?? [];
+          submittedAssessments = submittedFiles.length;
         }
 
         modules.add({
           'id': module.id,
           'moduleName': moduleData['moduleName'] ?? 'No Name',
           'moduleImageUrl':
-              moduleData['moduleImageUrl'] ?? 'https://via.placeholder.com/200',
+              moduleData['moduleImageUrl'] ?? 'https://via.placeholder.com/320',
           'moduleDescription':
               moduleData['moduleDescription'] ?? 'No Description',
           'totalAssessments': totalAssessments,
-          'isPassed': isPassed,
+          'submittedAssessments': submittedAssessments,
         });
       }
 
       return modules;
     } catch (e) {
-      debugPrint('❌ Error fetching modules: $e');
+      debugPrint('Error fetching modules: $e');
       return [];
     }
   }
@@ -94,9 +98,9 @@ class _ReviewAssessmentsListState extends State<ReviewAssessmentsList> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
-          return Center(child: Text('❌ Error: ${snapshot.error}'));
+          return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('⚠️ No modules found.'));
+          return const Center(child: Text('No modules found.'));
         }
 
         final modules = snapshot.data!;
@@ -109,15 +113,17 @@ class _ReviewAssessmentsListState extends State<ReviewAssessmentsList> {
 
               return Padding(
                 padding: const EdgeInsets.only(top: 10),
-                child: ReviewAssessmentsItem(
-                  moduleName: module['moduleName'],
-                  moduleImage: module['moduleImageUrl'],
-                  moduleDescription: module['moduleDescription'],
+                child: ModuleContainerSubmit(
+                  courseName: module['moduleName'],
+                  courseImage: module['moduleImageUrl'],
+                  courseDescription: module['moduleDescription'],
+
                   moduleCount: "1", // Each module is 1
-                  assessmentCount: module['totalAssessments'].toString(),
-                  isPassed: module['isPassed'],
+                  assessmentCount:
+                      "${module['submittedAssessments']} / ${module['totalAssessments']}",
+
                   onTap: () {
-                    widget.onTap(module['id']); // Pass moduleId to navigate
+                    widget.onTap(module['id']); // Pass moduleId to next page
                   },
                 ),
               );
