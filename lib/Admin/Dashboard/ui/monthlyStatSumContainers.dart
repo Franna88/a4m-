@@ -27,7 +27,7 @@ class _MonthlyStatSumContainersState extends State<MonthlyStatSumContainers> {
           ? EdgeInsets.symmetric(vertical: 10, horizontal: 8)
           : EdgeInsets.symmetric(vertical: 5, horizontal: 15),
       child: Container(
-        width: MyUtility(context).width < 1500 ? 290 : 380,
+        width: MyUtility(context).width < 1500 ? 290 : 350,
         height: MyUtility(context).width < 1500 ? 270 : 380,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
