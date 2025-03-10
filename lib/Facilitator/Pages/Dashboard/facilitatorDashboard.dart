@@ -13,9 +13,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 class FacilitatorDashboard extends StatefulWidget {
   final String reminder;
+  final String facilitatorId;
   const FacilitatorDashboard({
     super.key,
     this.reminder = 'Reminder',
+    required this.facilitatorId,
   });
 
   @override
@@ -38,14 +40,18 @@ class _FacilitatorDashboardState extends State<FacilitatorDashboard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  FacilitatorStudentProgressList(),
+                  FacilitatorStudentProgressList(
+                    facilitatorId: widget.facilitatorId,
+                  ),
                   const SizedBox(
                     height: 15,
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      FacilitatorStudentPassRate(percentage: 50,),
+                      FacilitatorStudentPassRate(
+                        percentage: 50,
+                      ),
                       const SizedBox(
                         width: 15,
                       ),

@@ -1,11 +1,11 @@
 import 'package:a4m/Admin/AdminMarketing/adminCourseDetailsPopup/adminCourseDetailsPopup.dart';
-import 'package:a4m/Admin/AdminMarketing/dummyData/adminCourseDummyData.dart';
 import 'package:a4m/Admin/AdminMarketing/ui/adminCourseContainers.dart';
 import 'package:a4m/CommonComponents/inputFields/myDropDownMenu.dart';
 import 'package:a4m/CommonComponents/inputFields/mySearchBar.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AdminMarketing extends StatefulWidget {
   const AdminMarketing({super.key});
@@ -15,25 +15,92 @@ class AdminMarketing extends StatefulWidget {
 }
 
 class _AdminMarketingState extends State<AdminMarketing> {
+  List<Map<String, dynamic>> courses = [];
+  bool isLoading = true;
 
-  Future openCourseDetailsPopup() => showDialog(
+  @override
+  void initState() {
+    super.initState();
+    _fetchAllCourses();
+  }
+
+  Future<void> _fetchAllCourses() async {
+    try {
+      FirebaseFirestore firestore = FirebaseFirestore.instance;
+      QuerySnapshot coursesSnapshot =
+          await firestore.collection('courses').get();
+
+      List<Map<String, dynamic>> fetchedCourses = [];
+
+      for (var doc in coursesSnapshot.docs) {
+        final courseData = doc.data() as Map<String, dynamic>;
+
+        // Filter only approved courses
+        if (courseData['status'] != 'approved') continue;
+
+        // Get student count
+        int studentCount =
+            (courseData['students'] as List<dynamic>? ?? []).length;
+
+        // Get modules count
+        QuerySnapshot moduleSnapshot = await firestore
+            .collection('courses')
+            .doc(doc.id)
+            .collection('modules')
+            .get();
+        int moduleCount = moduleSnapshot.docs.length;
+
+        // Get assessment count
+        int assessmentCount = 0;
+        for (var module in moduleSnapshot.docs) {
+          final moduleData = module.data() as Map<String, dynamic>;
+          if (moduleData['assessmentsPdfUrl'] != null &&
+              moduleData['assessmentsPdfUrl'].isNotEmpty) {
+            assessmentCount++;
+          }
+        }
+
+        fetchedCourses.add({
+          ...courseData,
+          'courseId': doc.id,
+          'studentCount': studentCount,
+          'moduleCount': moduleCount,
+          'assessmentCount': assessmentCount,
+        });
+      }
+
+      setState(() {
+        courses = fetchedCourses;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("Error fetching courses: $e");
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> openCourseDetailsPopup(Map<String, dynamic> course) async {
+    bool? shouldRefresh = await showDialog(
       context: context,
       builder: (context) {
         return Dialog(
-          child: AdminCourseDetailsPopup(),
+          child: AdminCourseDetailsPopup(course: course),
         );
-      });
+      },
+    );
 
+    if (shouldRefresh == true) {
+      _fetchAllCourses(); // Re-fetch course data
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final courseSearch = TextEditingController();
     final courseCategorySelect = TextEditingController();
 
-    // Calculate the number of columns based on the screen width
     double screenWidth = MediaQuery.of(context).size.width;
-    int crossAxisCount =
-        (screenWidth ~/ 400).clamp(1, 6); // Minimum 1, maximum 4
+    int crossAxisCount = (screenWidth ~/ 400).clamp(1, 6);
 
     return Container(
       width: MyUtility(context).width - 320,
@@ -43,7 +110,6 @@ class _AdminMarketingState extends State<AdminMarketing> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search bar and dropdown
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisAlignment: MainAxisAlignment.start,
@@ -66,40 +132,46 @@ class _AdminMarketingState extends State<AdminMarketing> {
               ],
             ),
             const SizedBox(height: 30),
-
-            // Scrollable grid layout
             Expanded(
-              child: SingleChildScrollView(
-                child: LayoutGrid(
-                  columnSizes: List.generate(
-                    crossAxisCount,
-                    (_) => FlexibleTrackSize(1), // Use FlexibleTrackSize
-                  ),
-                  rowSizes: List.generate(
-                    (adminCourseDummy.length / crossAxisCount).ceil(),
-                    (_) => auto, // Auto height for each row
-                  ),
-                  rowGap: 20, // Space between rows
-                  columnGap: 20, // Space between columns
-                  children: [
-                    for (var course in adminCourseDummy)
-                      SizedBox(
-                        width: 320, // Fixed width
-                        height: 340, // Fixed height
-                        child: AdminCourseContainers(
-                          courseName: course.courseName,
-                          price: course.price,
-                          courseDescription: course.courseDescription,
-                          totalStudents: course.totalStudents,
-                          moduleAmount: course.moduleAmount,
-                          assessmentAmount: course.assessmentAmount,
-                          courseImage: course.courseImage,
-                          onTap: openCourseDetailsPopup,
+              child: isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      child: LayoutGrid(
+                        columnSizes: List.generate(
+                          crossAxisCount,
+                          (_) => FlexibleTrackSize(1),
                         ),
+                        rowSizes: List.generate(
+                          (courses.length / crossAxisCount).ceil(),
+                          (_) => auto,
+                        ),
+                        rowGap: 20,
+                        columnGap: 20,
+                        children: [
+                          for (var course in courses)
+                            SizedBox(
+                              width: 320,
+                              height: 340,
+                              child: AdminCourseContainers(
+                                courseName: course['courseName'] ?? 'Unknown',
+                                price: course['coursePrice']?.toString() ?? '0',
+                                courseDescription:
+                                    course['courseDescription'] ?? '',
+                                totalStudents:
+                                    course['studentCount']?.toString() ?? '0',
+                                moduleAmount:
+                                    course['moduleCount']?.toString() ?? '0',
+                                assessmentAmount:
+                                    course['assessmentCount']?.toString() ??
+                                        '0',
+                                courseImage: course['courseImageUrl'] ??
+                                    'https://via.placeholder.com/150',
+                                onTap: () => openCourseDetailsPopup(course),
+                              ),
+                            ),
+                        ],
                       ),
-                  ],
-                ),
-              ),
+                    ),
             ),
           ],
         ),

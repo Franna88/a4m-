@@ -1,36 +1,47 @@
+import 'package:a4m/Admin/ApproveContent/approveContent.dart';
 import 'package:a4m/CommonComponents/displayCardIcons.dart';
-import 'package:a4m/Themes/Constants/myColors.dart';
+import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Lecturers/LectureCourses/view_modules_complete.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-import 'package:flutter/foundation.dart';
 import 'package:image_network/image_network.dart';
 
-class AdminCourseContainers extends StatefulWidget {
+class DevelopedCourseEdit extends StatefulWidget {
   final String courseName;
-  final String price;
+  final String modulesComplete;
   final String courseDescription;
   final String totalStudents;
   final String moduleAmount;
   final String assessmentAmount;
   final String courseImage;
   final Function() onTap;
-  const AdminCourseContainers(
+  final Function(int) changePage;
+  const DevelopedCourseEdit(
       {super.key,
       required this.courseName,
-      required this.price,
+      required this.modulesComplete,
       required this.courseDescription,
       required this.totalStudents,
       required this.moduleAmount,
       required this.assessmentAmount,
       required this.courseImage,
-      required this.onTap});
+      required this.onTap,
+      required this.changePage});
 
   @override
-  State<AdminCourseContainers> createState() => _AdminCourseContainersState();
+  State<DevelopedCourseEdit> createState() => _DevelopedCourseEditState();
 }
 
-class _AdminCourseContainersState extends State<AdminCourseContainers> {
+class _DevelopedCourseEditState extends State<DevelopedCourseEdit> {
+  var pageIndex = 0;
+
+  void changePage(int index) {
+    setState(() {
+      pageIndex = index;
+    });
+    changePage(5);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -62,18 +73,24 @@ class _AdminCourseContainersState extends State<AdminCourseContainers> {
                 ),
                 child: Stack(
                   children: [
+                    // Background Image using ImageNetwork
                     Positioned.fill(
                       child: ImageNetwork(
-                        image: widget.courseImage,
-                        fitWeb: BoxFitWeb.cover,
-                        fitAndroidIos: BoxFit.cover,
-                        onLoading: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                        width: 320,
+                        image: widget
+                            .courseImage, // Firebase URL for the course image
+                        fitWeb: BoxFitWeb.cover, // Adjust for web compatibility
+                        fitAndroidIos: BoxFit.cover, // Adjust for mobile
                         height: 180,
+                        width: 320,
+                        duration: 500,
+
+                        onLoading: const Center(
+                          child:
+                              CircularProgressIndicator(), // Loading indicator
+                        ),
                       ),
                     ),
+                    // Gradient Overlay
                     Align(
                       alignment: Alignment.bottomCenter,
                       child: Container(
@@ -81,66 +98,44 @@ class _AdminCourseContainersState extends State<AdminCourseContainers> {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              const Color.fromARGB(0, 255, 255,
-                                  255), // Transparent color at the top
-                              Mycolors().green, // Green color at the bottom
+                              Mycolors().green,
+                              const Color.fromARGB(0, 255, 255, 255),
                             ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
                           ),
                         ),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 10),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 10),
-                                  child: Container(
-                                    height: 30,
-                                    width: 80,
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(5),
-                                        color: Mycolors().darkTeal),
-                                    child: Center(
-                                      child: Text(
-                                        widget.price,
-                                        style: GoogleFonts.montserrat(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                widget
+                                    .changePage(5); // Navigate to modules page
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: Container(
+                                  height: 45,
+                                  width: 45,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Mycolors().darkTeal,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      widget.modulesComplete,
+                                      style: GoogleFonts.montserrat(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
                                       ),
                                     ),
                                   ),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 10),
-                                  child: InkWell(
-                                    onTap: widget.onTap,
-                                    child: Container(
-                                      height: 30,
-                                      width: 80,
-                                      decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(5),
-                                          color: Mycolors().peach),
-                                      child: Center(
-                                        child: Text(
-                                          'EDIT',
-                                          style: GoogleFonts.montserrat(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 12),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
                     ),

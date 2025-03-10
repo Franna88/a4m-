@@ -2,6 +2,7 @@ import 'package:a4m/CommonComponents/buttons/navButtons.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
+import 'package:a4m/LandingPage/LandingPageMain.dart';
 
 class ContentDevNavBar extends StatefulWidget {
   final Function(int) changePage;
@@ -21,6 +22,12 @@ class _AdminMainNavBarState extends State<ContentDevNavBar> {
       activeIndex = index;
     });
     widget.changePage(index); // Notify the parent widget to change the page
+  }
+
+  void _logout() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => LandingPageMain()),
+    );
   }
 
   @override
@@ -78,15 +85,14 @@ class _AdminMainNavBarState extends State<ContentDevNavBar> {
                   padding: const EdgeInsets.only(bottom: 50.0),
                   child: NavButtons(
                     buttonText: 'Messages',
-                    onTap: () => _handleItemClick(1),
-                    isActive: activeIndex == 1,
+                    onTap: () => _handleItemClick(8),
+                    isActive: activeIndex == 8,
                   ),
                 ),
               ],
             ),
           ),
           Column(
-            // crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 color: Mycolors().darkGrey,
@@ -99,9 +105,22 @@ class _AdminMainNavBarState extends State<ContentDevNavBar> {
                     const SizedBox(
                       width: 30,
                     ),
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Colors.grey,
+                    PopupMenuButton(
+                      icon: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.grey,
+                      ),
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'logout',
+                          child: Text('Logout'),
+                        ),
+                      ],
+                      onSelected: (value) {
+                        if (value == 'logout') {
+                          _logout();
+                        }
+                      },
                     ),
                     const SizedBox(
                       width: 30,

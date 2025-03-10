@@ -15,12 +15,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 class CreateModule extends StatefulWidget {
   final Function(int, {int? moduleIndex}) changePageIndex;
   final int? moduleIndex;
+  final String? courseId;
 
-  CreateModule({
-    super.key,
-    required this.changePageIndex,
-    this.moduleIndex,
-  });
+  CreateModule(
+      {super.key,
+      required this.changePageIndex,
+      this.moduleIndex,
+      required this.courseId});
 
   @override
   State<CreateModule> createState() => _CreateModuleState();
@@ -49,6 +50,7 @@ class _CreateModuleState extends State<CreateModule> {
   String? _testSheetPdfName;
 
   bool _isLoading = false;
+  bool _isSubmittedForReview = false;
 
   @override
   void initState() {
@@ -86,11 +88,13 @@ class _CreateModuleState extends State<CreateModule> {
     super.dispose();
   }
 
-  void _loadModuleData() {
+  void _loadModuleData() async {
     final courseModel = Provider.of<CourseModel>(context, listen: false);
+
     if (_currentModuleIndex != null &&
         _currentModuleIndex! < courseModel.modules.length) {
       final existingModule = courseModel.modules[_currentModuleIndex!];
+
       setState(() {
         _moduleNameController.text = existingModule.moduleName;
         _moduleDescriptionController.text = existingModule.moduleDescription;
@@ -98,7 +102,7 @@ class _CreateModuleState extends State<CreateModule> {
         _selectedPdf = existingModule.modulePdf;
         _selectedPdfName = existingModule.modulePdfName;
 
-        // Load additional PDFs for the module
+        // Load additional PDFs for editing
         _studentGuidePdf = existingModule.studentGuidePdf;
         _studentGuidePdfName = existingModule.studentGuidePdfName;
         _facilitatorGuidePdf = existingModule.facilitatorGuidePdf;
@@ -112,8 +116,71 @@ class _CreateModuleState extends State<CreateModule> {
         _testSheetPdf = existingModule.testSheetPdf;
         _testSheetPdfName = existingModule.testSheetPdfName;
       });
+
+      print(
+          "📝 Editing module: ${existingModule.moduleName} (Index: $_currentModuleIndex)");
+    }
+    // 🔥 **Fetch from Firestore if editing an existing course**
+    else if (widget.courseId != null) {
+      print("📡 Fetching modules for Course ID: ${widget.courseId}");
+
+      try {
+        QuerySnapshot moduleDocs = await FirebaseFirestore.instance
+            .collection('courses')
+            .doc(widget.courseId)
+            .collection('modules')
+            .get();
+
+        if (moduleDocs.docs.isEmpty) {
+          print("⚠️ No modules found for this course.");
+          return;
+        }
+
+        List<Module> fetchedModules = moduleDocs.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return Module(
+            moduleName: data['moduleName'] ?? '',
+            moduleDescription: data['moduleDescription'] ?? '',
+            modulePdfName: data['modulePdfName'],
+            modulePdf: null, // Firestore stores PDFs as URLs, not raw data
+            studentGuidePdfName: data['studentGuidePdfName'],
+            facilitatorGuidePdfName: data['facilitatorGuidePdfName'],
+            answerSheetPdfName: data['answerSheetPdfName'],
+            activitiesPdfName: data['activitiesPdfName'],
+            assessmentsPdfName: data['assessmentsPdfName'],
+            testSheetPdfName: data['testSheetPdfName'],
+          );
+        }).toList();
+
+        // 🔄 **Sync with `CourseModel` only if empty**
+        if (courseModel.modules.isEmpty) {
+          courseModel.modules = fetchedModules;
+        }
+
+        setState(() {
+          _currentModuleIndex = 0; // Ensure index is within bounds
+          _moduleNameController.text = fetchedModules[0].moduleName;
+          _moduleDescriptionController.text =
+              fetchedModules[0].moduleDescription;
+          _selectedPdfName = fetchedModules[0].modulePdfName;
+
+          // Load additional PDFs
+          _studentGuidePdfName = fetchedModules[0].studentGuidePdfName;
+          _facilitatorGuidePdfName = fetchedModules[0].facilitatorGuidePdfName;
+          _answerSheetPdfName = fetchedModules[0].answerSheetPdfName;
+          _activitiesPdfName = fetchedModules[0].activitiesPdfName;
+          _assessmentsPdfName = fetchedModules[0].assessmentsPdfName;
+          _testSheetPdfName = fetchedModules[0].testSheetPdfName;
+        });
+
+        print(
+            "✅ Loaded modules from Firestore. Current Module: ${fetchedModules[0].moduleName}");
+      } catch (e) {
+        print("❌ Error fetching module data: $e");
+      }
     } else {
       _clearInputs();
+      print("🆕 Creating a new module.");
     }
   }
 
@@ -192,6 +259,7 @@ class _CreateModuleState extends State<CreateModule> {
 
       if (_currentModuleIndex != null &&
           _currentModuleIndex! < courseModel.modules.length) {
+        // ✅ Update existing module (Editing Mode)
         final existingModule = courseModel.modules[_currentModuleIndex!];
         existingModule.moduleName = _moduleNameController.text;
         existingModule.moduleDescription = _moduleDescriptionController.text;
@@ -214,7 +282,9 @@ class _CreateModuleState extends State<CreateModule> {
         existingModule.testSheetPdfName = _testSheetPdfName;
 
         courseModel.updateModule(_currentModuleIndex!, existingModule);
+        print("✅ Module updated at index: $_currentModuleIndex");
       } else {
+        // ✅ Create new module (Creation Mode)
         final newModule = Module(
           moduleName: _moduleNameController.text,
           moduleDescription: _moduleDescriptionController.text,
@@ -236,14 +306,18 @@ class _CreateModuleState extends State<CreateModule> {
         );
 
         courseModel.addModule(newModule);
-        _currentModuleIndex = courseModel.modules.length - 1;
+
+        setState(() {
+          _currentModuleIndex = courseModel.modules.length -
+              1; // ✅ Keep the last added module displayed
+        });
+
+        print(
+            "🆕 New module added: ${newModule.moduleName} (Index: $_currentModuleIndex)");
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              'Module set successfully! You can now add assessments or proceed to add another module.'),
-        ),
+        SnackBar(content: Text('Module saved successfully!')),
       );
     }
   }
@@ -289,6 +363,14 @@ class _CreateModuleState extends State<CreateModule> {
 
   Future<void> _saveToFirebase() async {
     if (!_validateInputs()) {
+      return;
+    }
+
+    if (_isSubmittedForReview) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Module has already been submitted for review.')),
+      );
       return;
     }
 
@@ -402,8 +484,9 @@ class _CreateModuleState extends State<CreateModule> {
         await courseRef.collection('modules').add(moduleData);
       }
 
+      _isSubmittedForReview = true;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Course and modules uploaded for review!')),
+        SnackBar(content: Text('Module submitted for review!')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -493,7 +576,7 @@ class _CreateModuleState extends State<CreateModule> {
                             ),
                             Spacer(),
                             SlimButtons(
-                              buttonText: 'Set Module',
+                              buttonText: 'Save Module',
                               textColor: Mycolors().darkGrey,
                               buttonColor: Colors.white,
                               borderColor: Mycolors().darkGrey,
@@ -502,28 +585,28 @@ class _CreateModuleState extends State<CreateModule> {
                               customHeight: 40,
                             ),
                             SizedBox(width: 30),
-                            SlimButtons(
-                              buttonText: 'Assessments',
-                              textColor: Mycolors().darkGrey,
-                              buttonColor: Colors.white,
-                              borderColor: Mycolors().darkGrey,
-                              onPressed: () {
-                                if (_currentModuleIndex != null) {
-                                  print(
-                                      'Navigating to assessments for module index: $_currentModuleIndex');
-                                  widget.changePageIndex(5,
-                                      moduleIndex: _currentModuleIndex);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content: Text(
-                                            'Please set a module before adding assessments.')),
-                                  );
-                                }
-                              },
-                              customWidth: 125,
-                              customHeight: 40,
-                            ),
+                            // SlimButtons(
+//                              buttonText: 'Assessments',
+//                              textColor: Mycolors().darkGrey,
+//                              buttonColor: Colors.white,
+//                              borderColor: Mycolors().darkGrey,
+//                              onPressed: () {
+//                                if (_currentModuleIndex != null) {
+//                                  print(
+//                                      'Navigating to assessments for module index: $_currentModuleIndex');
+//                                  widget.changePageIndex(5,
+//                                      moduleIndex: _currentModuleIndex);
+//                                } else {
+//                                  ScaffoldMessenger.of(context).showSnackBar(
+//                                    SnackBar(
+//                                        content: Text(
+//                                            'Please set a module before adding assessments.')),
+//                                  );
+//                                }
+//                              },
+//                              customWidth: 125,
+//                              customHeight: 40,
+//                            ),
                             SizedBox(width: 30),
                             SlimButtons(
                               buttonText: 'Add New Module',

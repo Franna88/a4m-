@@ -8,12 +8,12 @@ import 'package:intl/intl.dart';
 
 class ApproveNewContentTable extends StatefulWidget {
   final Function(int, [Map<String, dynamic>?]) changePage;
-  final String status; // Added to filter courses by status
+  final String status;
 
   const ApproveNewContentTable({
     super.key,
     required this.changePage,
-    required this.status, // Pass the status to filter by
+    required this.status,
   });
 
   @override
@@ -26,7 +26,7 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('courses')
-          .where('status', isEqualTo: widget.status) // Filter by status
+          .where('status', isEqualTo: widget.status)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -45,7 +45,6 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
         return Table(
           defaultVerticalAlignment: TableCellVerticalAlignment.middle,
           children: [
-            // Table header
             TableRow(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.only(
@@ -58,8 +57,8 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                 ),
               ),
               children: [
-                TableStructure(
-                  child: TableCell(
+                TableCell(
+                  child: TableStructure(
                     child: Text(
                       'Course/Module Name',
                       style: GoogleFonts.montserrat(
@@ -69,8 +68,8 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                     ),
                   ),
                 ),
-                TableStructure(
-                  child: TableCell(
+                TableCell(
+                  child: TableStructure(
                     child: Text(
                       'Date',
                       style: GoogleFonts.montserrat(
@@ -80,8 +79,8 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                     ),
                   ),
                 ),
-                TableStructure(
-                  child: TableCell(
+                TableCell(
+                  child: TableStructure(
                     child: Text(
                       'Review',
                       style: GoogleFonts.montserrat(
@@ -91,8 +90,8 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                     ),
                   ),
                 ),
-                TableStructure(
-                  child: TableCell(
+                TableCell(
+                  child: TableStructure(
                     child: Text(
                       'Approve',
                       style: GoogleFonts.montserrat(
@@ -104,7 +103,6 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                 ),
               ],
             ),
-            // Course rows
             ...courses.map((course) {
               final courseName = course['courseName'] ?? 'Unknown';
               final createdAt = course['createdAt'] != null
@@ -122,8 +120,8 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                   ),
                 ),
                 children: [
-                  TableStructure(
-                    child: TableCell(
+                  TableCell(
+                    child: TableStructure(
                       child: Text(
                         courseName,
                         style: GoogleFonts.montserrat(
@@ -134,8 +132,8 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                       ),
                     ),
                   ),
-                  TableStructure(
-                    child: TableCell(
+                  TableCell(
+                    child: TableStructure(
                       child: Text(
                         createdAt,
                         style: GoogleFonts.montserrat(
@@ -146,32 +144,27 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                       ),
                     ),
                   ),
-                  TableStructure(
-                    child: TableCell(
+                  TableCell(
+                    child: TableStructure(
                       child: SizedBox(
                         width: 80,
                         child: SlimButtons(
                           buttonText: 'View',
                           buttonColor: Mycolors().peach,
                           onPressed: () {
-                            // Debugging statement to check the courseId value
-                            print(
-                                'ApproveNewContentTable: Navigating with courseId: ${course.id}');
-
-                            widget.changePage(9, {
-                              'courseId': course.id // Pass courseId to navigate
-                            });
+                            print('Navigating with courseId: ${course.id}');
+                            widget.changePage(9, {'courseId': course.id});
                           },
                           customWidth: 100,
                         ),
                       ),
                     ),
                   ),
-                  TableStructure(
-                    child: TableCell(
+                  TableCell(
+                    child: TableStructure(
                       child: Container(
                         constraints: BoxConstraints(
-                          minWidth: 350, // Minimum width to fit both buttons
+                          minWidth: 350,
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -189,9 +182,7 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                                 ),
                               ),
                             if (widget.status == 'pending_approval')
-                              const SizedBox(
-                                width: 8,
-                              ),
+                              const SizedBox(width: 8),
                             if (widget.status == 'pending_approval')
                               SizedBox(
                                 width: 100,
@@ -225,12 +216,10 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
           .doc(courseId)
           .update({'status': 'approved'});
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Course approved successfully!')),
-      );
+          SnackBar(content: Text('Course approved successfully!')));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to approve course: $e')),
-      );
+          SnackBar(content: Text('Failed to approve course: $e')));
     }
   }
 
@@ -241,12 +230,10 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
           .doc(courseId)
           .update({'status': 'declined'});
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Course declined successfully!')),
-      );
+          SnackBar(content: Text('Course declined successfully!')));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to decline course: $e')),
-      );
+          SnackBar(content: Text('Failed to decline course: $e')));
     }
   }
 }

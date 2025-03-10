@@ -61,7 +61,17 @@ class CourseModel with ChangeNotifier {
     }
   }
 
-  // Convert the CourseModel to a Map for Firebase
+  void clearCourseData() {
+    courseName = '';
+    coursePrice = '';
+    courseCategory = '';
+    courseDescription = '';
+    courseImage = null;
+    modules.clear(); // 🛠️ Clears all existing modules
+    notifyListeners();
+  }
+
+  // Convert the  to a Map for Firebase
   Map<String, dynamic> toMap() {
     return {
       'courseName': courseName,
