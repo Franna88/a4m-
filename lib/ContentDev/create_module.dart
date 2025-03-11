@@ -263,23 +263,47 @@ class _CreateModuleState extends State<CreateModule> {
         final existingModule = courseModel.modules[_currentModuleIndex!];
         existingModule.moduleName = _moduleNameController.text;
         existingModule.moduleDescription = _moduleDescriptionController.text;
-        existingModule.moduleImage = _selectedImage;
-        existingModule.modulePdf = _selectedPdf;
-        existingModule.modulePdfName = _selectedPdfName;
 
-        // Set additional PDFs for the existing module
-        existingModule.studentGuidePdf = _studentGuidePdf;
-        existingModule.studentGuidePdfName = _studentGuidePdfName;
-        existingModule.facilitatorGuidePdf = _facilitatorGuidePdf;
-        existingModule.facilitatorGuidePdfName = _facilitatorGuidePdfName;
-        existingModule.answerSheetPdf = _answerSheetPdf;
-        existingModule.answerSheetPdfName = _answerSheetPdfName;
-        existingModule.activitiesPdf = _activitiesPdf;
-        existingModule.activitiesPdfName = _activitiesPdfName;
-        existingModule.assessmentsPdf = _assessmentsPdf;
-        existingModule.assessmentsPdfName = _assessmentsPdfName;
-        existingModule.testSheetPdf = _testSheetPdf;
-        existingModule.testSheetPdfName = _testSheetPdfName;
+        // Only update image if a new one is selected
+        if (_selectedImage != null) {
+          existingModule.moduleImage = _selectedImage;
+        }
+
+        // Only update PDFs if new ones are uploaded, else retain old ones
+        if (_selectedPdf != null) {
+          existingModule.modulePdf = _selectedPdf;
+          existingModule.modulePdfName = _selectedPdfName;
+        }
+
+        if (_studentGuidePdf != null) {
+          existingModule.studentGuidePdf = _studentGuidePdf;
+          existingModule.studentGuidePdfName = _studentGuidePdfName;
+        }
+
+        if (_facilitatorGuidePdf != null) {
+          existingModule.facilitatorGuidePdf = _facilitatorGuidePdf;
+          existingModule.facilitatorGuidePdfName = _facilitatorGuidePdfName;
+        }
+
+        if (_answerSheetPdf != null) {
+          existingModule.answerSheetPdf = _answerSheetPdf;
+          existingModule.answerSheetPdfName = _answerSheetPdfName;
+        }
+
+        if (_activitiesPdf != null) {
+          existingModule.activitiesPdf = _activitiesPdf;
+          existingModule.activitiesPdfName = _activitiesPdfName;
+        }
+
+        if (_assessmentsPdf != null) {
+          existingModule.assessmentsPdf = _assessmentsPdf;
+          existingModule.assessmentsPdfName = _assessmentsPdfName;
+        }
+
+        if (_testSheetPdf != null) {
+          existingModule.testSheetPdf = _testSheetPdf;
+          existingModule.testSheetPdfName = _testSheetPdfName;
+        }
 
         courseModel.updateModule(_currentModuleIndex!, existingModule);
         print("✅ Module updated at index: $_currentModuleIndex");
@@ -308,8 +332,7 @@ class _CreateModuleState extends State<CreateModule> {
         courseModel.addModule(newModule);
 
         setState(() {
-          _currentModuleIndex = courseModel.modules.length -
-              1; // ✅ Keep the last added module displayed
+          _currentModuleIndex = courseModel.modules.length - 1;
         });
 
         print(
