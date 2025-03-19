@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_network/image_network.dart';
 import 'package:provider/provider.dart';
 import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
 import 'package:a4m/CommonComponents/inputFields/contentDevTextfields.dart';
@@ -49,6 +50,22 @@ class _CreateModuleState extends State<CreateModule> {
   Uint8List? _testSheetPdf;
   String? _testSheetPdfName;
 
+  String? _selectedImageUrl;
+
+  String? _selectedPdfUrl;
+
+  String? _studentGuidePdfUrl;
+
+  String? _facilitatorGuidePdfUrl;
+
+  String? _answerSheetPdfUrl;
+
+  String? _activitiesPdfUrl;
+
+  String? _assessmentsPdfUrl;
+
+  String? _testSheetPdfUrl;
+
   bool _isLoading = false;
   bool _isSubmittedForReview = false;
 
@@ -91,39 +108,46 @@ class _CreateModuleState extends State<CreateModule> {
   void _loadModuleData() async {
     final courseModel = Provider.of<CourseModel>(context, listen: false);
 
-    if (_currentModuleIndex != null &&
+    // If modules have already been loaded, simply use the current module index.
+    if (courseModel.modules.isNotEmpty &&
+        _currentModuleIndex != null &&
         _currentModuleIndex! < courseModel.modules.length) {
       final existingModule = courseModel.modules[_currentModuleIndex!];
-
       setState(() {
         _moduleNameController.text = existingModule.moduleName;
         _moduleDescriptionController.text = existingModule.moduleDescription;
-        _selectedImage = existingModule.moduleImage;
-        _selectedPdf = existingModule.modulePdf;
-        _selectedPdfName = existingModule.modulePdfName;
+        _selectedImageUrl = existingModule.moduleImageUrl;
+        _selectedPdfUrl = existingModule.modulePdfUrl;
 
-        // Load additional PDFs for editing
-        _studentGuidePdf = existingModule.studentGuidePdf;
-        _studentGuidePdfName = existingModule.studentGuidePdfName;
-        _facilitatorGuidePdf = existingModule.facilitatorGuidePdf;
-        _facilitatorGuidePdfName = existingModule.facilitatorGuidePdfName;
-        _answerSheetPdf = existingModule.answerSheetPdf;
-        _answerSheetPdfName = existingModule.answerSheetPdfName;
-        _activitiesPdf = existingModule.activitiesPdf;
-        _activitiesPdfName = existingModule.activitiesPdfName;
-        _assessmentsPdf = existingModule.assessmentsPdf;
-        _assessmentsPdfName = existingModule.assessmentsPdfName;
-        _testSheetPdf = existingModule.testSheetPdf;
-        _testSheetPdfName = existingModule.testSheetPdfName;
+        _studentGuidePdfUrl = existingModule.studentGuidePdfUrl;
+        _facilitatorGuidePdfUrl = existingModule.facilitatorGuidePdfUrl;
+        _answerSheetPdfUrl = existingModule.answerSheetPdfUrl;
+        _activitiesPdfUrl = existingModule.activitiesPdfUrl;
+        _assessmentsPdfUrl = existingModule.assessmentsPdfUrl;
+        _testSheetPdfUrl = existingModule.testSheetPdfUrl;
+
+        _selectedPdfName = existingModule.modulePdfName ?? "Existing PDF";
+        _studentGuidePdfName =
+            existingModule.studentGuidePdfName ?? "Existing Student Guide";
+        _facilitatorGuidePdfName = existingModule.facilitatorGuidePdfName ??
+            "Existing Facilitator Guide";
+        _answerSheetPdfName =
+            existingModule.answerSheetPdfName ?? "Existing Answer Sheet";
+        _activitiesPdfName =
+            existingModule.activitiesPdfName ?? "Existing Activities";
+        _assessmentsPdfName =
+            existingModule.assessmentsPdfName ?? "Existing Assessments";
+        _testSheetPdfName =
+            existingModule.testSheetPdfName ?? "Existing Test Sheet";
+
+        // Clear the local image so that the widget uses the URL image for the current module
+        _selectedImage = null;
       });
-
       print(
-          "📝 Editing module: ${existingModule.moduleName} (Index: $_currentModuleIndex)");
+          "✅ Loaded module: ${existingModule.moduleName} (Index: $_currentModuleIndex)");
     }
-    // 🔥 **Fetch from Firestore if editing an existing course**
+    // If the modules list is empty and courseId is provided, fetch the modules.
     else if (widget.courseId != null) {
-      print("📡 Fetching modules for Course ID: ${widget.courseId}");
-
       try {
         QuerySnapshot moduleDocs = await FirebaseFirestore.instance
             .collection('courses')
@@ -139,10 +163,18 @@ class _CreateModuleState extends State<CreateModule> {
         List<Module> fetchedModules = moduleDocs.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
           return Module(
+            id: doc.id,
             moduleName: data['moduleName'] ?? '',
             moduleDescription: data['moduleDescription'] ?? '',
+            modulePdfUrl: data['modulePdfUrl'],
+            moduleImageUrl: data['moduleImageUrl'],
+            studentGuidePdfUrl: data['studentGuidePdfUrl'],
+            facilitatorGuidePdfUrl: data['facilitatorGuidePdfUrl'],
+            answerSheetPdfUrl: data['answerSheetPdfUrl'],
+            activitiesPdfUrl: data['activitiesPdfUrl'],
+            assessmentsPdfUrl: data['assessmentsPdfUrl'],
+            testSheetPdfUrl: data['testSheetPdfUrl'],
             modulePdfName: data['modulePdfName'],
-            modulePdf: null, // Firestore stores PDFs as URLs, not raw data
             studentGuidePdfName: data['studentGuidePdfName'],
             facilitatorGuidePdfName: data['facilitatorGuidePdfName'],
             answerSheetPdfName: data['answerSheetPdfName'],
@@ -152,29 +184,60 @@ class _CreateModuleState extends State<CreateModule> {
           );
         }).toList();
 
-        // 🔄 **Sync with `CourseModel` only if empty**
+        // Update CourseModel only if it's empty.
         if (courseModel.modules.isEmpty) {
           courseModel.modules = fetchedModules;
         }
 
+        // Only reset _currentModuleIndex to 0 if it’s null or out-of-bounds.
+        if (_currentModuleIndex == null ||
+            _currentModuleIndex! >= fetchedModules.length) {
+          _currentModuleIndex = 0;
+        }
+
         setState(() {
-          _currentModuleIndex = 0; // Ensure index is within bounds
-          _moduleNameController.text = fetchedModules[0].moduleName;
+          _moduleNameController.text =
+              courseModel.modules[_currentModuleIndex!].moduleName;
           _moduleDescriptionController.text =
-              fetchedModules[0].moduleDescription;
-          _selectedPdfName = fetchedModules[0].modulePdfName;
+              courseModel.modules[_currentModuleIndex!].moduleDescription;
+          _selectedImageUrl =
+              courseModel.modules[_currentModuleIndex!].moduleImageUrl;
+          _selectedPdfUrl =
+              courseModel.modules[_currentModuleIndex!].modulePdfUrl;
 
-          // Load additional PDFs
-          _studentGuidePdfName = fetchedModules[0].studentGuidePdfName;
-          _facilitatorGuidePdfName = fetchedModules[0].facilitatorGuidePdfName;
-          _answerSheetPdfName = fetchedModules[0].answerSheetPdfName;
-          _activitiesPdfName = fetchedModules[0].activitiesPdfName;
-          _assessmentsPdfName = fetchedModules[0].assessmentsPdfName;
-          _testSheetPdfName = fetchedModules[0].testSheetPdfName;
+          _studentGuidePdfUrl =
+              courseModel.modules[_currentModuleIndex!].studentGuidePdfUrl;
+          _facilitatorGuidePdfUrl =
+              courseModel.modules[_currentModuleIndex!].facilitatorGuidePdfUrl;
+          _answerSheetPdfUrl =
+              courseModel.modules[_currentModuleIndex!].answerSheetPdfUrl;
+          _activitiesPdfUrl =
+              courseModel.modules[_currentModuleIndex!].activitiesPdfUrl;
+          _assessmentsPdfUrl =
+              courseModel.modules[_currentModuleIndex!].assessmentsPdfUrl;
+          _testSheetPdfUrl =
+              courseModel.modules[_currentModuleIndex!].testSheetPdfUrl;
+
+          _selectedPdfName =
+              courseModel.modules[_currentModuleIndex!].modulePdfName;
+          _studentGuidePdfName =
+              courseModel.modules[_currentModuleIndex!].studentGuidePdfName;
+          _facilitatorGuidePdfName =
+              courseModel.modules[_currentModuleIndex!].facilitatorGuidePdfName;
+          _answerSheetPdfName =
+              courseModel.modules[_currentModuleIndex!].answerSheetPdfName;
+          _activitiesPdfName =
+              courseModel.modules[_currentModuleIndex!].activitiesPdfName;
+          _assessmentsPdfName =
+              courseModel.modules[_currentModuleIndex!].assessmentsPdfName;
+          _testSheetPdfName =
+              courseModel.modules[_currentModuleIndex!].testSheetPdfName;
+
+          // Clear the local image state here as well
+          _selectedImage = null;
         });
-
         print(
-            "✅ Loaded modules from Firestore. Current Module: ${fetchedModules[0].moduleName}");
+            "✅ Loaded modules from Firestore. Current Module: ${courseModel.modules[_currentModuleIndex!].moduleName}");
       } catch (e) {
         print("❌ Error fetching module data: $e");
       }
@@ -188,17 +251,23 @@ class _CreateModuleState extends State<CreateModule> {
     html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
     uploadInput.accept = 'image/*';
     uploadInput.click();
-
-    uploadInput.onChange.listen((e) async {
+    uploadInput.onChange.first.then((_) {
       final files = uploadInput.files;
       if (files != null && files.isNotEmpty) {
         final reader = html.FileReader();
         reader.readAsArrayBuffer(files[0]);
-        reader.onLoadEnd.listen((e) {
+        reader.onLoadEnd.first.then((_) {
+          // Create a temporary URL for preview
+          final blob = html.Blob([reader.result as Uint8List]);
+          final url = html.Url.createObjectUrlFromBlob(blob);
           setState(() {
             _selectedImage = reader.result as Uint8List;
+            _selectedImageUrl = url;
           });
+          print("New image selected.");
         });
+      } else {
+        print("No image selected.");
       }
     });
   }
@@ -253,21 +322,27 @@ class _CreateModuleState extends State<CreateModule> {
     });
   }
 
+  /// Updates or creates a module based on the input fields.
+  /// If the `currentModuleIndex` is valid, it updates the existing module.
+  /// Otherwise, it creates a new module and adds it to the course.
+  /// The method also updates the local state and displays a success message.
   void _setModule() {
     if (_validateInputs()) {
       final courseModel = Provider.of<CourseModel>(context, listen: false);
 
       if (_currentModuleIndex != null &&
           _currentModuleIndex! < courseModel.modules.length) {
-        // ✅ Update existing module (Editing Mode)
+        // Update existing module (Editing Mode)
         final existingModule = courseModel.modules[_currentModuleIndex!];
         existingModule.moduleName = _moduleNameController.text;
         existingModule.moduleDescription = _moduleDescriptionController.text;
         existingModule.moduleImage = _selectedImage;
+        existingModule.moduleImageUrl =
+            _selectedImageUrl; // <-- Update the image URL here
         existingModule.modulePdf = _selectedPdf;
         existingModule.modulePdfName = _selectedPdfName;
 
-        // Set additional PDFs for the existing module
+        // Update additional PDFs
         existingModule.studentGuidePdf = _studentGuidePdf;
         existingModule.studentGuidePdfName = _studentGuidePdfName;
         existingModule.facilitatorGuidePdf = _facilitatorGuidePdf;
@@ -284,11 +359,14 @@ class _CreateModuleState extends State<CreateModule> {
         courseModel.updateModule(_currentModuleIndex!, existingModule);
         print("✅ Module updated at index: $_currentModuleIndex");
       } else {
-        // ✅ Create new module (Creation Mode)
+        // Create new module (Creation Mode)
         final newModule = Module(
+          id: FirebaseFirestore.instance.collection('modules').doc().id,
           moduleName: _moduleNameController.text,
           moduleDescription: _moduleDescriptionController.text,
           moduleImage: _selectedImage,
+          moduleImageUrl:
+              _selectedImageUrl, // <-- Assign the module image URL here too
           modulePdf: _selectedPdf,
           modulePdfName: _selectedPdfName,
           studentGuidePdf: _studentGuidePdf,
@@ -306,12 +384,9 @@ class _CreateModuleState extends State<CreateModule> {
         );
 
         courseModel.addModule(newModule);
-
         setState(() {
-          _currentModuleIndex = courseModel.modules.length -
-              1; // ✅ Keep the last added module displayed
+          _currentModuleIndex = courseModel.modules.length - 1;
         });
-
         print(
             "🆕 New module added: ${newModule.moduleName} (Index: $_currentModuleIndex)");
       }
@@ -327,6 +402,7 @@ class _CreateModuleState extends State<CreateModule> {
       _moduleNameController.clear();
       _moduleDescriptionController.clear();
       _selectedImage = null;
+      _selectedImageUrl = null; // Clear the module image URL
       _selectedPdf = null;
       _selectedPdfName = null;
 
@@ -349,8 +425,12 @@ class _CreateModuleState extends State<CreateModule> {
   bool _validateInputs() {
     if (_moduleNameController.text.isEmpty ||
         _moduleDescriptionController.text.isEmpty ||
-        _selectedImage == null ||
-        _selectedPdf == null) {
+        (_selectedImage == null &&
+            (_selectedImageUrl == null ||
+                _selectedImageUrl!.isEmpty)) || // ✅ Allow existing image URL
+        (_selectedPdf == null &&
+            (_selectedPdfUrl == null || _selectedPdfUrl!.isEmpty))) {
+      // ✅ Allow existing PDF URL
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
@@ -362,145 +442,327 @@ class _CreateModuleState extends State<CreateModule> {
   }
 
   Future<void> _saveToFirebase() async {
-    if (!_validateInputs()) {
-      return;
-    }
-
-    if (_isSubmittedForReview) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Module has already been submitted for review.')),
-      );
-      return;
-    }
+    if (!_validateInputs()) return;
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final courseModel = Provider.of<CourseModel>(context, listen: false);
-      final firebase_storage.FirebaseStorage storage =
-          firebase_storage.FirebaseStorage.instance;
+      final firestore = FirebaseFirestore.instance;
+      final storage = firebase_storage.FirebaseStorage.instance;
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        throw Exception('No user logged in');
+
+      if (user == null) throw Exception('No user logged in');
+
+      final courseModel = Provider.of<CourseModel>(context, listen: false);
+
+      // Fetch live course data for comparison
+      DocumentSnapshot liveDoc =
+          await firestore.collection('courses').doc(widget.courseId).get();
+      Map<String, dynamic> liveData =
+          liveDoc.exists ? liveDoc.data() as Map<String, dynamic> : {};
+
+      List<String> courseChangeList = [];
+      List<Map<String, dynamic>> moduleChanges = [];
+
+      // Track course field changes
+      if (courseModel.courseName.trim() !=
+          (liveData['courseName'] ?? '').trim()) {
+        courseChangeList.add("Updated Course Name: ${courseModel.courseName}");
+      }
+      if (courseModel.coursePrice.trim() !=
+          (liveData['coursePrice'] ?? '').trim()) {
+        courseChangeList
+            .add("Updated Course Price: ${courseModel.coursePrice}");
+      }
+      if (courseModel.courseCategory.trim() !=
+          (liveData['courseCategory'] ?? '').trim()) {
+        courseChangeList
+            .add("Updated Course Category: ${courseModel.courseCategory}");
+      }
+      if (courseModel.courseDescription.trim() !=
+          (liveData['courseDescription'] ?? '').trim()) {
+        courseChangeList.add("Updated Course Description");
       }
 
-      // Upload the course image to Firebase Storage
-      String? courseImageUrl;
-      if (courseModel.courseImage != null) {
-        firebase_storage.Reference ref = storage
+      // Handle course image
+      String newImageUrl =
+          _selectedImageUrl ?? courseModel.courseImageUrl ?? '';
+
+      if (_selectedImage != null) {
+        firebase_storage.Reference imageRef = storage
             .ref()
             .child('courses/${DateTime.now().millisecondsSinceEpoch}.png');
-        firebase_storage.UploadTask uploadTask =
-            ref.putData(courseModel.courseImage!);
-        firebase_storage.TaskSnapshot snapshot = await uploadTask;
-        courseImageUrl = await snapshot.ref.getDownloadURL();
+
+        firebase_storage.TaskSnapshot snapshot =
+            await imageRef.putData(_selectedImage!);
+        newImageUrl = await snapshot.ref.getDownloadURL();
+
+        // Update the course model with the new image URL
+        courseModel.setCourseImageUrl(newImageUrl);
+        courseChangeList.add("Updated Course Image");
       }
 
-      // Prepare data for Firestore
-      final courseData = {
+      // --- Save Pending Course Data ---
+      DocumentReference pendingCourseRef =
+          firestore.collection('pendingCourses').doc(widget.courseId);
+
+      await pendingCourseRef.set({
         'courseName': courseModel.courseName,
         'coursePrice': courseModel.coursePrice,
         'courseCategory': courseModel.courseCategory,
         'courseDescription': courseModel.courseDescription,
-        'courseImageUrl': courseImageUrl,
-        'createdBy': user.uid,
-        'status': 'pending_approval', // Approval status
-        'createdAt': FieldValue.serverTimestamp(),
-      };
+        'courseImageUrl': newImageUrl,
+        'status': 'pending',
+        'editedAt': FieldValue.serverTimestamp(),
+        'changes': courseChangeList.isNotEmpty
+            ? courseChangeList
+            : ["No Course Changes"],
+      }, SetOptions(merge: true));
 
-      // Add the course document to Firestore
-      DocumentReference courseRef = await FirebaseFirestore.instance
-          .collection('courses')
-          .add(courseData);
+      // --- Save Pending Module Data ---
+      // --- Save Pending Module Data ---
+      // --- Save Pending Module Data ---
+      for (int i = 0; i < courseModel.modules.length; i++) {
+        Module module = courseModel.modules[i]; // Get the current module
+        String moduleId = module.id; // Ensure this is unique per module
 
-      // Upload modules to a subcollection under the course document
-      for (var module in courseModel.modules) {
-        // Upload module image
-        String? moduleImageUrl;
-        if (module.moduleImage != null) {
-          firebase_storage.Reference ref = storage.ref().child(
-              'modules/${DateTime.now().millisecondsSinceEpoch}_module.png');
-          firebase_storage.UploadTask uploadTask =
-              ref.putData(module.moduleImage!);
-          firebase_storage.TaskSnapshot snapshot = await uploadTask;
-          moduleImageUrl = await snapshot.ref.getDownloadURL();
+        print("Processing Module: ${module.moduleName} (ID: $moduleId)");
+
+        DocumentReference pendingModuleRef =
+            pendingCourseRef.collection('modules').doc(moduleId);
+
+        // Prevent Overwriting: Check if the module already exists
+        DocumentSnapshot existingModule = await pendingModuleRef.get();
+        Map<String, dynamic>? existingModuleData = existingModule.exists
+            ? existingModule.data() as Map<String, dynamic>
+            : null;
+
+        if (existingModuleData != null &&
+            existingModuleData['moduleName'] == module.moduleName) {
+          print("Skipping duplicate module: ${module.moduleName}");
+          continue; // Skip saving if this module is already stored
         }
 
-        // Upload module PDF
-        String? modulePdfUrl;
-        if (module.modulePdf != null) {
-          firebase_storage.Reference ref = storage.ref().child(
-              'modules/${DateTime.now().millisecondsSinceEpoch}_module.pdf');
-          firebase_storage.UploadTask uploadTask =
-              ref.putData(module.modulePdf!);
-          firebase_storage.TaskSnapshot snapshot = await uploadTask;
-          modulePdfUrl = await snapshot.ref.getDownloadURL();
-        }
+        // Track module changes
+        List<String> moduleChangeList = [];
 
-        // Upload additional PDFs for each module
-        Future<String?> uploadPdf(Uint8List? pdfData, String fileName) async {
-          if (pdfData == null) return null;
-          firebase_storage.Reference ref = storage.ref().child(
-              'pdfs/${DateTime.now().millisecondsSinceEpoch}_$fileName.pdf');
-          firebase_storage.UploadTask uploadTask = ref.putData(pdfData);
-          firebase_storage.TaskSnapshot snapshot = await uploadTask;
-          return await snapshot.ref.getDownloadURL();
-        }
-
-        String? studentGuidePdfUrl =
-            await uploadPdf(module.studentGuidePdf, 'student_guide');
-        String? facilitatorGuidePdfUrl =
-            await uploadPdf(module.facilitatorGuidePdf, 'facilitator_guide');
-        String? answerSheetPdfUrl =
-            await uploadPdf(module.answerSheetPdf, 'answer_sheet');
-        String? activitiesPdfUrl =
-            await uploadPdf(module.activitiesPdf, 'activities');
-        String? assessmentsPdfUrl =
-            await uploadPdf(module.assessmentsPdf, 'assessments');
-        String? testSheetPdfUrl =
-            await uploadPdf(module.testSheetPdf, 'test_sheet');
-
-        // Prepare module data with additional PDFs
-        final moduleData = {
+        // Use the module’s own values instead of controller values
+        Map<String, dynamic> pendingData = {
           'moduleName': module.moduleName,
           'moduleDescription': module.moduleDescription,
-          'moduleImageUrl': moduleImageUrl,
-          'modulePdfUrl': modulePdfUrl,
-          'modulePdfName': module.modulePdfName,
-          'studentGuidePdfUrl': studentGuidePdfUrl,
-          'facilitatorGuidePdfUrl': facilitatorGuidePdfUrl,
-          'answerSheetPdfUrl': answerSheetPdfUrl,
-          'activitiesPdfUrl': activitiesPdfUrl,
-          'assessmentsPdfUrl': assessmentsPdfUrl,
-          'testSheetPdfUrl': testSheetPdfUrl,
-          'questions': module.questions.map((q) => q.toMap()).toList(),
-          'tasks': module.tasks.map((t) => t.toMap()).toList(),
-          'assignments': module.assignments.map((a) => a.toMap()).toList(),
+          'moduleImageUrl': module.moduleImageUrl ?? '',
+          'modulePdfUrl': module.modulePdfUrl ?? '',
+          'studentGuidePdfUrl': module.studentGuidePdfUrl ?? '',
+          'facilitatorGuidePdfUrl': module.facilitatorGuidePdfUrl ?? '',
+          'answerSheetPdfUrl': module.answerSheetPdfUrl ?? '',
+          'activitiesPdfUrl': module.activitiesPdfUrl ?? '',
+          'assessmentsPdfUrl': module.assessmentsPdfUrl ?? '',
+          'testSheetPdfUrl': module.testSheetPdfUrl ?? '',
+          'status': 'pending',
+          'editedAt': FieldValue.serverTimestamp(),
         };
 
-        await courseRef.collection('modules').add(moduleData);
+        // Detect changes in module fields by comparing **module values**, not controller text
+        if (module.moduleName.trim() !=
+            (existingModuleData?['moduleName'] ?? '').trim()) {
+          moduleChangeList.add("Updated Module Name: ${module.moduleName}");
+        }
+        if (module.moduleDescription.trim() !=
+            (existingModuleData?['moduleDescription'] ?? '').trim()) {
+          moduleChangeList.add("Updated Module Description");
+        }
+
+        // Save the module only if it hasn’t been duplicated
+        await pendingModuleRef.set(pendingData, SetOptions(merge: true));
+        print("✅ Saved Module: ${module.moduleName} (ID: $moduleId)");
+
+        // --- Handle Module Image ---
+        if (_selectedImage != null) {
+          firebase_storage.Reference imageRef = storage
+              .ref()
+              .child('modules/${DateTime.now().millisecondsSinceEpoch}.png');
+          firebase_storage.TaskSnapshot imageSnapshot =
+              await imageRef.putData(_selectedImage!);
+          String newImgUrl = await imageSnapshot.ref.getDownloadURL();
+          pendingData['moduleImageUrl'] = newImgUrl;
+          moduleChangeList.add("Updated Module Image");
+        } else {
+          pendingData['moduleImageUrl'] =
+              _selectedImageUrl ?? module.moduleImageUrl ?? '';
+        }
+
+        // --- Handle PDF Uploads ---
+        Future<String> uploadPdf(
+            Uint8List? pdfData, String? existingUrl, String fileName) async {
+          if (pdfData != null) {
+            firebase_storage.Reference pdfRef = storage.ref().child(
+                'module_pdfs/${DateTime.now().millisecondsSinceEpoch}_$fileName.pdf');
+
+            firebase_storage.SettableMetadata metadata =
+                firebase_storage.SettableMetadata(
+                    contentType: 'application/pdf');
+
+            firebase_storage.TaskSnapshot pdfSnapshot =
+                await pdfRef.putData(pdfData, metadata);
+
+            return await pdfSnapshot.ref.getDownloadURL();
+          }
+          return existingUrl ?? '';
+        }
+
+        // Upload & track changes for each PDF type
+        Map<String, Uint8List?> pdfFiles = {
+          "Module PDF": _selectedPdf,
+          "Student Guide": _studentGuidePdf,
+          "Facilitator Guide": _facilitatorGuidePdf,
+          "Answer Sheet": _answerSheetPdf,
+          "Activities": _activitiesPdf,
+          "Assessments": _assessmentsPdf,
+          "Test Sheet": _testSheetPdf
+        };
+
+        Map<String, String?> existingUrls = {
+          "Module PDF": module.modulePdfUrl,
+          "Student Guide": module.studentGuidePdfUrl,
+          "Facilitator Guide": module.facilitatorGuidePdfUrl,
+          "Answer Sheet": module.answerSheetPdfUrl,
+          "Activities": module.activitiesPdfUrl,
+          "Assessments": module.assessmentsPdfUrl,
+          "Test Sheet": module.testSheetPdfUrl
+        };
+
+        for (String key in pdfFiles.keys) {
+          String pdfKey = key.replaceAll(" ", "").toLowerCase() + "Url";
+          Uint8List? pdfFile = pdfFiles[key];
+
+          String newPdfUrl = await uploadPdf(
+              pdfFile, existingUrls[key], key.replaceAll(" ", "_"));
+          if (pdfFile != null) {
+            pendingData[pdfKey] = newPdfUrl;
+            moduleChangeList.add("Updated $key");
+          }
+        }
+
+        pendingData['changes'] = moduleChangeList.isNotEmpty
+            ? moduleChangeList
+            : ["No Module Changes"];
+
+        // Save or update the pending module document
+        await pendingModuleRef.set(pendingData);
+
+        // Store module changes at course level
+        if (moduleChangeList.isNotEmpty) {
+          moduleChanges.add({
+            'moduleId': moduleId,
+            'moduleName': module.moduleName,
+            'changes': moduleChangeList
+          });
+        }
       }
 
-      _isSubmittedForReview = true;
+      // Store module changes in the pendingCourses document
+      await pendingCourseRef.set({
+        'moduleChanges': moduleChanges,
+      }, SetOptions(merge: true));
+
+      print("✅ Course & all module edits submitted for review.");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Module submitted for review!')),
-      );
+          SnackBar(content: Text('Course & Modules submitted for review!')));
     } catch (e) {
+      print("❌ Error submitting pending changes: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to upload data: $e')),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+          SnackBar(content: Text('Failed to submit for review.')));
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  void _saveCurrentModuleChanges() {
+    final courseModel = Provider.of<CourseModel>(context, listen: false);
+
+    if (_currentModuleIndex != null &&
+        _currentModuleIndex! < courseModel.modules.length) {
+      // Get the current module
+      Module existingModule = courseModel.modules[_currentModuleIndex!];
+
+      // Track changes in a list
+      List<String> moduleChangeList = [];
+
+      // Compare and detect changes
+      if (_moduleNameController.text.trim() !=
+          existingModule.moduleName.trim()) {
+        moduleChangeList
+            .add("Updated Module Name: ${_moduleNameController.text}");
+      }
+      if (_moduleDescriptionController.text.trim() !=
+          existingModule.moduleDescription.trim()) {
+        moduleChangeList.add("Updated Module Description");
+      }
+
+      // Handle Module Image
+      if (_selectedImage != null) {
+        moduleChangeList.add("Updated Module Image");
+      }
+
+      // Handle PDF uploads tracking
+      Map<String, Uint8List?> pdfFiles = {
+        "Module PDF": _selectedPdf,
+        "Student Guide": _studentGuidePdf,
+        "Facilitator Guide": _facilitatorGuidePdf,
+        "Answer Sheet": _answerSheetPdf,
+        "Activities": _activitiesPdf,
+        "Assessments": _assessmentsPdf,
+        "Test Sheet": _testSheetPdf
+      };
+
+      for (String key in pdfFiles.keys) {
+        if (pdfFiles[key] != null) {
+          moduleChangeList.add("Updated $key");
+        }
+      }
+
+      // Store changes in the module itself
+      existingModule.moduleName = _moduleNameController.text;
+      existingModule.moduleDescription = _moduleDescriptionController.text;
+      existingModule.moduleImage = _selectedImage;
+      existingModule.moduleImageUrl = _selectedImageUrl;
+      existingModule.modulePdf = _selectedPdf;
+      existingModule.modulePdfName = _selectedPdfName;
+
+      existingModule.studentGuidePdf = _studentGuidePdf;
+      existingModule.studentGuidePdfName = _studentGuidePdfName;
+      existingModule.facilitatorGuidePdf = _facilitatorGuidePdf;
+      existingModule.facilitatorGuidePdfName = _facilitatorGuidePdfName;
+      existingModule.answerSheetPdf = _answerSheetPdf;
+      existingModule.answerSheetPdfName = _answerSheetPdfName;
+      existingModule.activitiesPdf = _activitiesPdf;
+      existingModule.activitiesPdfName = _activitiesPdfName;
+      existingModule.assessmentsPdf = _assessmentsPdf;
+      existingModule.assessmentsPdfName = _assessmentsPdfName;
+      existingModule.testSheetPdf = _testSheetPdf;
+      existingModule.testSheetPdfName = _testSheetPdfName;
+
+      // **Attach changes to module**
+      existingModule.changes = moduleChangeList;
+
+      // **Save changes inside CourseModel**
+      courseModel.updateModule(_currentModuleIndex!, existingModule);
+
+      print(
+          "✅ Auto-saved module changes at index: $_currentModuleIndex with changes: $moduleChangeList");
     }
   }
 
   void _navigateToNextModule() {
     final courseModel = Provider.of<CourseModel>(context, listen: false);
+
+    // Save the current module before navigating
+    _saveCurrentModuleChanges();
+
     if (_currentModuleIndex != null &&
         _currentModuleIndex! < courseModel.modules.length - 1) {
       setState(() {
@@ -511,6 +773,11 @@ class _CreateModuleState extends State<CreateModule> {
   }
 
   void _navigateToPreviousModule() {
+    final courseModel = Provider.of<CourseModel>(context, listen: false);
+
+    // Save the current module before navigating
+    _saveCurrentModuleChanges();
+
     if (_currentModuleIndex != null && _currentModuleIndex! > 0) {
       setState(() {
         _currentModuleIndex = _currentModuleIndex! - 1;
@@ -622,6 +889,7 @@ class _CreateModuleState extends State<CreateModule> {
                                 courseModel.addModule(Module(
                                   moduleName: '',
                                   moduleDescription: '',
+                                  id: '',
                                 ));
                               },
                               customWidth: 150,
@@ -641,22 +909,40 @@ class _CreateModuleState extends State<CreateModule> {
                               decoration: BoxDecoration(
                                 color: Mycolors().offWhite,
                                 borderRadius: BorderRadius.circular(10),
-                                image: _selectedImage != null
-                                    ? DecorationImage(
-                                        image: MemoryImage(_selectedImage!),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : null,
                               ),
-                              child: _selectedImage == null
-                                  ? Center(
-                                      child: Icon(
-                                        Icons.image,
-                                        size: 50,
-                                        color: Mycolors().darkGrey,
-                                      ),
+                              child: _selectedImage != null
+                                  ? Image.memory(
+                                      _selectedImage!,
+                                      fit: BoxFit.cover,
                                     )
-                                  : null,
+                                  : (_selectedImageUrl != null &&
+                                          _selectedImageUrl!.isNotEmpty)
+                                      ? ImageNetwork(
+                                          key: ValueKey(_selectedImageUrl),
+                                          image: _selectedImageUrl!,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.3,
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.3,
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          fitWeb: BoxFitWeb.cover,
+                                          fitAndroidIos: BoxFit.cover,
+                                          onLoading: Center(
+                                              child:
+                                                  CircularProgressIndicator()),
+                                        )
+                                      : Center(
+                                          child: Icon(
+                                            Icons.image,
+                                            size: 50,
+                                            color: Mycolors().darkGrey,
+                                          ),
+                                        ),
                             ),
                           ),
                           Spacer(),

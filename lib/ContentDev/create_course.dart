@@ -8,6 +8,7 @@ import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Themes/text_style.dart';
 import 'package:a4m/myutility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_network/image_network.dart';
 import 'dart:typed_data';
@@ -59,6 +60,34 @@ class _CreateCourseState extends State<CreateCourse> {
     });
 
     try {
+      // Check if there's a pending edit first
+      DocumentSnapshot pendingDoc = await FirebaseFirestore.instance
+          .collection('pendingCourses')
+          .doc(widget.courseId)
+          .get();
+
+      if (pendingDoc.exists) {
+        var pendingData = pendingDoc.data() as Map<String, dynamic>;
+
+        setState(() {
+          _courseNameController.text = pendingData['courseName'] ?? '';
+          _coursePriceController.text = pendingData['coursePrice'] ?? '';
+          _courseCategoryController.text = pendingData['courseCategory'] ?? '';
+          _courseDescriptionController.text =
+              pendingData['courseDescription'] ?? '';
+          _selectedImageUrl =
+              pendingData['courseImageUrl'] ?? _selectedImageUrl;
+
+          print("⚠️ Loading pending course edits for review.");
+        });
+
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      // If no pending edits, fetch the live course data
       DocumentSnapshot courseDoc = await FirebaseFirestore.instance
           .collection('courses')
           .doc(widget.courseId)
@@ -72,24 +101,127 @@ class _CreateCourseState extends State<CreateCourse> {
           _coursePriceController.text = data['coursePrice'] ?? '';
           _courseCategoryController.text = data['courseCategory'] ?? '';
           _courseDescriptionController.text = data['courseDescription'] ?? '';
-
-          // Load course image if available
           if (data.containsKey('courseImageUrl') &&
               data['courseImageUrl'] != null) {
-            setState(() {
-              _selectedImageUrl = data['courseImageUrl']; // Store the image URL
-            });
-            print("Fetched image URL: $_selectedImageUrl"); // Debugging log
+            _selectedImageUrl = data['courseImageUrl'];
           }
+
+          print("✅ Loaded course data from Firestore.");
         });
       }
     } catch (e) {
-      print("Error fetching course data: $e");
+      print("❌ Error fetching course data: $e");
     }
 
     setState(() {
       isLoading = false;
     });
+  }
+
+  Future<void> _saveCourseEdits() async {
+    if (!_validateInputs()) return;
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final firestore = FirebaseFirestore.instance;
+      DocumentSnapshot liveDoc =
+          await firestore.collection('courses').doc(widget.courseId).get();
+      Map<String, dynamic> liveData =
+          liveDoc.exists ? liveDoc.data() as Map<String, dynamic> : {};
+
+      List<String> changeList = [];
+
+      // Track changes properly
+      if (_courseNameController.text.trim() !=
+          (liveData['courseName'] ?? '').trim()) {
+        changeList.add("Updated Course Name: ${_courseNameController.text}");
+      }
+      if (_coursePriceController.text.trim() !=
+          (liveData['coursePrice'] ?? '').trim()) {
+        changeList.add("Updated Course Price: ${_coursePriceController.text}");
+      }
+      if (_courseCategoryController.text.trim() !=
+          (liveData['courseCategory'] ?? '').trim()) {
+        changeList
+            .add("Updated Course Category: ${_courseCategoryController.text}");
+      }
+      if (_courseDescriptionController.text.trim() !=
+          (liveData['courseDescription'] ?? '').trim()) {
+        changeList.add("Updated Course Description");
+      }
+
+      // Handle the course image.
+      String newImageUrl;
+      if (_selectedImage != null) {
+        final imageRef = FirebaseStorage.instance
+            .ref()
+            .child('courses/${DateTime.now().millisecondsSinceEpoch}.png');
+        final uploadTask = imageRef.putData(_selectedImage!);
+        final snapshot = await uploadTask;
+        newImageUrl = await snapshot.ref.getDownloadURL();
+        changeList.add("Updated Course Image");
+      } else {
+        newImageUrl = _selectedImageUrl ?? liveData['courseImageUrl'] ?? '';
+      }
+
+      // Save to pendingCourses
+      await firestore.collection('pendingCourses').doc(widget.courseId).set({
+        'courseName': _courseNameController.text,
+        'coursePrice': _coursePriceController.text,
+        'courseCategory': _courseCategoryController.text,
+        'courseDescription': _courseDescriptionController.text,
+        'courseImageUrl': newImageUrl,
+        'status': 'pending',
+        'editedAt': FieldValue.serverTimestamp(),
+        'changes': changeList.isNotEmpty ? changeList : ["No changes made"],
+      });
+
+      print("✅ Course edit submitted for review with changes: $changeList");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Edit submitted for review!')),
+      );
+    } catch (e) {
+      print("❌ Error saving course edits: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit edit.')),
+      );
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  Future<void> _flagCourseForReview() async {
+    final firebaseStorage = FirebaseFirestore.instance;
+    DocumentReference pendingCourseRef =
+        firebaseStorage.collection('pendingCourses').doc(widget.courseId);
+
+    DocumentSnapshot pendingCourseDoc = await pendingCourseRef.get();
+    List<String> changeList = [];
+
+    // If pendingCourses exists, get the existing change list
+    if (pendingCourseDoc.exists) {
+      Map<String, dynamic> pendingData =
+          pendingCourseDoc.data() as Map<String, dynamic>;
+      changeList = List<String>.from(pendingData['changes'] ?? []);
+    }
+
+    // Add a module edit change if not already added
+    if (!changeList.contains("Edited Modules")) {
+      changeList.add("Edited Modules");
+    }
+
+    // Update or create pending course entry
+    await pendingCourseRef.set({
+      'status': 'pending',
+      'editedAt': FieldValue.serverTimestamp(),
+      'changes': changeList,
+    }, SetOptions(merge: true));
+
+    print("⚠️ Course flagged for review due to module edits.");
   }
 
   void _loadNetworkImage(String imageUrl) async {
@@ -220,16 +352,19 @@ class _CreateCourseState extends State<CreateCourse> {
                                                     image: _selectedImageUrl!,
                                                     width: MyUtility(context)
                                                             .width *
-                                                        0.3, // ✅ Fixed width
+                                                        0.3, //  Fixed width
                                                     height: MyUtility(context)
                                                             .height *
-                                                        0.38, // ✅ Fixed height
+                                                        0.38, //  Fixed height
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
                                                     fitWeb: BoxFitWeb
-                                                        .cover, // ✅ Ensures correct scaling
+                                                        .cover, //  Ensures correct scaling
                                                     fitAndroidIos: BoxFit.cover,
                                                     onLoading: Center(
                                                         child:
-                                                            CircularProgressIndicator()), // ✅ Shows loader
+                                                            CircularProgressIndicator()), //  Shows loader
                                                   )
                                                 : Center(
                                                     child: Icon(
