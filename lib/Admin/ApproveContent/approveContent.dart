@@ -136,7 +136,7 @@ class _ApproveContentState extends State<ApproveContent>
                       ),
                     ),
 
-                    // Updated Courses Table (Reusing ApproveNewContentTable)
+                    // Updated Courses Table
                     Container(
                       height: MyUtility(context).height * 0.75,
                       width: MyUtility(context).width - 320,
@@ -152,7 +152,7 @@ class _ApproveContentState extends State<ApproveContent>
                       ),
                       child: ApproveNewContentTable(
                         changePage: changePageWrapper,
-                        status: 'updated',
+                        status: 'pending', // <-- Use 'pending' here
                       ),
                     ),
 

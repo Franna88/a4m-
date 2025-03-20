@@ -1,3 +1,4 @@
+import 'package:a4m/Admin/AdminMessaging/adminMessagesMain.dart';
 import 'package:a4m/Student/BrowseCourse/BrowseAvailableContainer.dart';
 import 'package:a4m/Student/MyCourses/myCoursesMain.dart';
 import 'package:a4m/Student/MyCourses/studentViewCourse.dart';
@@ -40,7 +41,9 @@ class _StudentMainState extends State<StudentMain> {
         changePageWithCourseId: changePageWithCourseId,
         studentId: widget.studentId,
       ),
-      BrowseAvailableContainer(),
+      BrowseAvailableContainer(
+        studentId: widget.studentId,
+      ),
       AssessmentsMain(
         changePageWithCourseId: changePageWithCourseId,
         studentId: widget.studentId,
@@ -72,6 +75,7 @@ class _StudentMainState extends State<StudentMain> {
         changePageWithCourseId: changePageWithCourseId,
         courseId: selectedCourseId,
       ),
+      AdminMessagesMain(),
     ];
 
     return StudentNavBar(

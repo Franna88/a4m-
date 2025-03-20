@@ -112,7 +112,7 @@ class _ContentDevLoginViewState extends State<ContentDevLoginView> {
               builder: (context) => ChangeNotifierProvider(
                 create: (context) =>
                     CourseModel(), // Provide the CourseModel state when navigating to ContentDevHome
-                child: ContentDevHome(),
+                child: ContentDevHome(contentDevId: userCredential.user!.uid),
               ),
             ),
           );

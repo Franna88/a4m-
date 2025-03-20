@@ -7,8 +7,8 @@ class ContentDevTextfields extends StatelessWidget {
   final String keyboardType;
   final TextEditingController inputController;
   final bool? isOptional;
-
   final int? maxLines; // New parameter for max lines
+  final bool readOnly; // New parameter for read-only mode
 
   const ContentDevTextfields({
     Key? key,
@@ -17,7 +17,8 @@ class ContentDevTextfields extends StatelessWidget {
     this.headerText,
     required this.keyboardType,
     this.isOptional,
-    this.maxLines, // Add maxLines to the constructor
+    this.maxLines, // Added to the constructor
+    this.readOnly = false, // Added with a default value of false
   }) : super(key: key);
 
   @override
@@ -30,7 +31,7 @@ class ContentDevTextfields extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (headerText != null) // Check if headerText is not null
+        if (headerText != null)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -53,8 +54,7 @@ class ContentDevTextfields extends StatelessWidget {
               )
             ],
           ),
-        if (headerText != null)
-          const SizedBox(height: 8), // Add spacing if headerText is not null
+        if (headerText != null) const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(boxShadow: [
             BoxShadow(
@@ -65,7 +65,8 @@ class ContentDevTextfields extends StatelessWidget {
           ]),
           child: TextField(
             controller: inputController,
-            maxLines: maxLines ?? 1, // Default to 1 line if not provided
+            readOnly: readOnly, // This makes the field read-only when true.
+            maxLines: maxLines ?? 1, // Default to 1 line if not provided.
             keyboardType: keyboardType == 'email'
                 ? TextInputType.emailAddress
                 : keyboardType == 'intType'

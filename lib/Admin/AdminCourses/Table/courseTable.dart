@@ -151,64 +151,56 @@ class _CourseTableState extends State<CourseTable> {
   // Helper to build header cells
   Widget _buildHeaderCell(String text) {
     return TableStructure(
-      child: TableCell(
-        child: Text(
-          text,
-          style: GoogleFonts.montserrat(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
+      child: Text(
+        text,
+        style: GoogleFonts.montserrat(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
   }
 
-  // Helper to build data cells
   Widget _buildDataCell(String text) {
     return TableStructure(
-      child: TableCell(
-        child: Text(
-          text,
-          style: GoogleFonts.montserrat(
-            color: Colors.black,
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
+      child: Text(
+        text,
+        style: GoogleFonts.montserrat(
+          color: Colors.black,
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
         ),
       ),
     );
   }
 
-  // Build "Add Lecturer" button
   Widget _buildAddLecturerButton(String courseId, String courseName) {
     return TableStructure(
-      child: TableCell(
-        child: ElevatedButton(
-          onPressed: () async {
-            final lecturers = await fetchApprovedLecturers();
-            if (lecturers.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('No approved lecturers available')),
-              );
-              return;
-            }
-            showDialog(
-              context: context,
-              builder: (context) => _buildLecturerDialog(
-                lecturers,
-                courseId,
-                courseName,
-              ),
+      child: ElevatedButton(
+        onPressed: () async {
+          final lecturers = await fetchApprovedLecturers();
+          if (lecturers.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('No approved lecturers available')),
             );
-          },
-          style: ElevatedButton.styleFrom(backgroundColor: Mycolors().blue),
-          child: Text(
-            'Add Lecturer',
-            style: GoogleFonts.montserrat(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+            return;
+          }
+          showDialog(
+            context: context,
+            builder: (context) => _buildLecturerDialog(
+              lecturers,
+              courseId,
+              courseName,
             ),
+          );
+        },
+        style: ElevatedButton.styleFrom(backgroundColor: Mycolors().blue),
+        child: Text(
+          'Add Lecturer',
+          style: GoogleFonts.montserrat(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),

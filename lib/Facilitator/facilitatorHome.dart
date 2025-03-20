@@ -1,3 +1,4 @@
+import 'package:a4m/Admin/AdminMessaging/adminMessagesMain.dart';
 import 'package:a4m/Facilitator/Pages/BrowseCourses/facilitatorBrowseCourses.dart';
 import 'package:a4m/Facilitator/Pages/Dashboard/facilitatorDashboard.dart';
 import 'package:a4m/Facilitator/Pages/MyCourses/facilitatorMyCourses.dart';
@@ -14,8 +15,10 @@ import 'package:a4m/Lecturers/lecture_navbar.dart';
 import 'package:flutter/material.dart';
 
 class FacilitatorHome extends StatefulWidget {
+  final String facilitatorId;
   const FacilitatorHome({
     super.key,
+    required this.facilitatorId,
   });
 
   @override
@@ -45,10 +48,17 @@ class _FacilitatorHomeState extends State<FacilitatorHome> {
   @override
   Widget build(BuildContext context) {
     var pages = [
-      FacilitatorDashboard(),
-      FacilitatorMyCourses(),
-      FacilitatorBrowseCourses(),
+      FacilitatorDashboard(
+        facilitatorId: widget.facilitatorId,
+      ),
+      FacilitatorMyCourses(
+        facilitatorId: widget.facilitatorId,
+      ),
+      FacilitatorBrowseCourses(
+        facilitatorId: widget.facilitatorId,
+      ),
       FacilitatorStudents(),
+      AdminMessagesMain(),
     ];
 
     return FacilitatorNavBar(

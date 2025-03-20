@@ -1,4 +1,3 @@
-
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +27,7 @@ class _A4mAppBarState extends State<A4mAppBar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 60, 
+      height: 60,
       width: MyUtility(context).width,
       color: Mycolors().navyBlue.withOpacity(widget.opacity),
       child: Row(

@@ -36,15 +36,25 @@ class StudentProgressListItem extends StatelessWidget {
         child: Row(
           children: [
             const CircleAvatar(backgroundColor: Colors.grey),
+            // ImageNetwork(
+            //     image: imageUrl, // Use the passed image URL
+            //     height: 40,
+            //     width: 40,
+            //     fitWeb: BoxFitWeb.cover,
+            //     onError: const Icon(Icons.error,
+            //         size: 40, color: Colors.grey), // Handle image errors
+            //   ),
             const SizedBox(width: 15),
             Text(
               studentName,
-              style: GoogleFonts.kanit(fontSize: 15, fontWeight: FontWeight.w600),
+              style:
+                  GoogleFonts.kanit(fontSize: 15, fontWeight: FontWeight.w600),
             ),
             const Spacer(),
             Text(
               courseName,
-              style: GoogleFonts.montserrat(fontSize: 13, fontWeight: FontWeight.w400),
+              style: GoogleFonts.montserrat(
+                  fontSize: 13, fontWeight: FontWeight.w400),
             ),
             const Spacer(),
             SizedBox(
