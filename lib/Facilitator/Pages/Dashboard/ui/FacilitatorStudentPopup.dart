@@ -5,75 +5,129 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 void showStudentPopup(BuildContext context, String facilitatorId) {
   TextEditingController nameController = TextEditingController();
+  TextEditingController surnameController = TextEditingController();
+  TextEditingController idNumberController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
+  bool obscurePassword = true;
 
   showDialog(
     context: context,
     builder: (BuildContext context) {
-      return AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        backgroundColor: const Color.fromARGB(255, 247, 247, 247),
-        title: Text(
-          "Add Student",
-          style: GoogleFonts.kanit(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildTextField(nameController, "Student Name"),
-            const SizedBox(height: 10),
-            _buildTextField(emailController, "Student Email"),
-            const SizedBox(height: 10),
-            _buildTextField(passwordController, "Student Password",
-                isPassword: true),
-            const SizedBox(height: 10),
-            _buildTextField(phoneController, "Phone Number"),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              "Cancel",
-              style: GoogleFonts.montserrat(
-                  fontSize: 14, fontWeight: FontWeight.w500),
+      return StatefulBuilder(builder: (context, setState) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          child: Container(
+            width: 450,
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Add New Student",
+                      style: GoogleFonts.montserrat(
+                          fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+                _buildTextField(nameController, "First Name *"),
+                SizedBox(height: 15),
+                _buildTextField(surnameController, "Surname *"),
+                SizedBox(height: 15),
+                _buildTextField(
+                    idNumberController, "ID Number (for certificate)"),
+                SizedBox(height: 15),
+                _buildTextField(emailController, "Email Address *"),
+                SizedBox(height: 15),
+                TextField(
+                  controller: passwordController,
+                  obscureText: obscurePassword,
+                  decoration: InputDecoration(
+                    labelText: "Password *",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          obscurePassword = !obscurePassword;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                SizedBox(height: 15),
+                _buildTextField(phoneController, "Phone Number"),
+                SizedBox(height: 25),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (nameController.text.isEmpty ||
+                          surnameController.text.isEmpty ||
+                          emailController.text.isEmpty ||
+                          passwordController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content:
+                                Text('Please fill in all required fields (*)'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      String fullName =
+                          "${nameController.text.trim()} ${surnameController.text.trim()}";
+                      await _addStudent(
+                        facilitatorId: facilitatorId,
+                        name: fullName,
+                        email: emailController.text.trim(),
+                        password: passwordController.text.trim(),
+                        phoneNumber: phoneController.text.trim(),
+                        idNumber: idNumberController.text.trim(),
+                      );
+                      Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    child: Text(
+                      "Add Student",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              if (facilitatorId.isNotEmpty) {
-                await _addStudent(
-                  facilitatorId: facilitatorId,
-                  name: nameController.text.trim(),
-                  email: emailController.text.trim(),
-                  password: passwordController.text.trim(),
-                  phoneNumber: phoneController.text.trim(),
-                );
-                Navigator.of(context).pop();
-              } else {
-                print("Error: Facilitator ID is empty.");
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-            ),
-            child: Text(
-              "Add",
-              style: GoogleFonts.montserrat(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white),
-            ),
-          ),
-        ],
-      );
+        );
+      });
     },
   );
 }
@@ -84,6 +138,7 @@ Future<void> _addStudent({
   required String email,
   required String password,
   required String phoneNumber,
+  required String idNumber,
 }) async {
   try {
     print("Creating student under facilitator ID: $facilitatorId");
@@ -103,7 +158,10 @@ Future<void> _addStudent({
       'name': name,
       'email': email,
       'phoneNumber': phoneNumber,
+      'idNumber': idNumber,
       'uid': studentUid,
+      'createdAt': FieldValue.serverTimestamp(),
+      'enrolledCourses': [],
     };
 
     // Add student data to the Users collection
@@ -115,7 +173,7 @@ Future<void> _addStudent({
     // Add student data under the correct facilitator's document
     await FirebaseFirestore.instance
         .collection('Users')
-        .doc(facilitatorId) // Ensure it's under the facilitator
+        .doc(facilitatorId)
         .collection('facilitatorStudents')
         .doc(studentUid)
         .set(studentData);
@@ -126,20 +184,13 @@ Future<void> _addStudent({
   }
 }
 
-Widget _buildTextField(TextEditingController controller, String hintText,
-    {bool isPassword = false}) {
+Widget _buildTextField(TextEditingController controller, String labelText) {
   return TextField(
     controller: controller,
-    obscureText: isPassword,
     decoration: InputDecoration(
-      hintText: hintText,
-      hintStyle: GoogleFonts.montserrat(fontSize: 14, color: Colors.grey[600]),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
+      labelText: labelText,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8.0),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(10),
       ),
     ),
   );

@@ -30,8 +30,9 @@ class _FacilitatorBrowseCoursesState extends State<FacilitatorBrowseCourses> {
       'coursePrice': '\$${(index + 1) * 50}',
     },
   );
-  Future<void> _addCourseToFacilitator(Map<String, dynamic> course) async {
-    String facilitatorId = widget.facilitatorId; // Get facilitator ID
+  Future<void> _addCourseToFacilitator(
+      Map<String, dynamic> course, int selectedLicenses) async {
+    String facilitatorId = widget.facilitatorId;
 
     if (facilitatorId.isNotEmpty) {
       FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -46,18 +47,80 @@ class _FacilitatorBrowseCoursesState extends State<FacilitatorBrowseCourses> {
           return;
         }
 
-        // Add the course ID to the facilitatorCourses array
+        // Calculate total price
+        double coursePrice = double.parse(course['coursePrice'].toString());
+        double totalPrice = coursePrice * selectedLicenses;
+
+        // Create license records
+        List<Map<String, dynamic>> licenses = List.generate(
+          selectedLicenses,
+          (index) => {
+            'courseId': course['courseId'],
+            'facilitatorId': facilitatorId,
+            'status': 'available', // available, assigned, expired
+            'purchaseDate': FieldValue.serverTimestamp(),
+            'assignedTo': null,
+            'assignmentDate': null,
+          },
+        );
+
+        // Add licenses to the courseLicenses collection
+        for (var license in licenses) {
+          await firestore.collection('courseLicenses').add(license);
+        }
+
+        // Get current facilitator courses
+        List<dynamic> currentCourses =
+            facilitatorSnapshot['facilitatorCourses'] ?? [];
+
+        // Check if course already exists
+        int existingIndex = currentCourses
+            .indexWhere((c) => c['courseId'] == course['courseId']);
+
+        if (existingIndex >= 0) {
+          // Update existing course with null safety
+          Map<String, dynamic> existingCourse = currentCourses[existingIndex];
+          int currentTotalLicenses =
+              (existingCourse['totalLicenses'] ?? 0) as int;
+          int currentAvailableLicenses =
+              (existingCourse['availableLicenses'] ?? 0) as int;
+
+          currentCourses[existingIndex] = {
+            ...existingCourse,
+            'totalLicenses': currentTotalLicenses + selectedLicenses,
+            'availableLicenses': currentAvailableLicenses + selectedLicenses,
+          };
+        } else {
+          // Add new course with current timestamp
+          currentCourses.add({
+            'courseId': course['courseId'],
+            'totalLicenses': selectedLicenses,
+            'availableLicenses': selectedLicenses,
+            'purchaseDate': DateTime.now().toIso8601String(),
+          });
+        }
+
+        // Update facilitator document with new courses array
         await facilitatorRef.update({
-          'facilitatorCourses': FieldValue.arrayUnion([
-            {
-              'courseId': course['courseId'], // Store the course document ID
-            }
-          ]),
+          'facilitatorCourses': currentCourses,
         });
 
-        print('Course successfully added for facilitator!');
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Successfully purchased $selectedLicenses licenses for ${course['courseName']}'),
+            backgroundColor: Colors.green,
+          ),
+        );
       } catch (e) {
         print('Error adding course to facilitator: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error purchasing licenses: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } else {
       print('Invalid facilitator ID!');
@@ -118,28 +181,61 @@ class _FacilitatorBrowseCoursesState extends State<FacilitatorBrowseCourses> {
   }
 
   void _showAddCourseDialog(Map<String, dynamic> course) {
+    int tempLicenses = 0;
     showDialog(
       context: context,
+      barrierDismissible: false, // Prevent closing by tapping outside
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Add Course'),
-          content: Text(
-              'Do you want to add ${course['courseName']} to your courses?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                _addCourseToFacilitator(course); // Add course to Firestore
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: Text('Add'),
-            ),
-          ],
+        return StatefulBuilder(
+          // Use StatefulBuilder to update dialog state
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Purchase Course Licenses'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('${course['courseName']}'),
+                  SizedBox(height: 10),
+                  Text('Price per license: R ${course['coursePrice']}'),
+                  SizedBox(height: 20),
+                  TextField(
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Number of Licenses',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        tempLicenses = int.tryParse(value) ?? 0;
+                      });
+                    },
+                  ),
+                  if (tempLicenses > 0) ...[
+                    SizedBox(height: 10),
+                    Text(
+                      'Total Price: R ${(tempLicenses * double.parse(course['coursePrice'].toString())).toStringAsFixed(2)}',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (tempLicenses > 0) {
+                      Navigator.pop(context); // Close dialog first
+                      await _addCourseToFacilitator(course, tempLicenses);
+                    }
+                  },
+                  child: Text('Purchase'),
+                ),
+              ],
+            );
+          },
         );
       },
     );

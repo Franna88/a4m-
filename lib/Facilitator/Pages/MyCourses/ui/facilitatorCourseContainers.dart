@@ -41,11 +41,13 @@ class _FacilitatorCourseContainersState
     extends State<FacilitatorCourseContainers> {
   String? selectedStudentId;
   List<Map<String, dynamic>> students = [];
+  Map<String, dynamic>? courseLicenseInfo;
 
   @override
   void initState() {
     super.initState();
     _fetchFacilitatorStudents();
+    _fetchCourseLicenseInfo();
   }
 
   Future<void> _fetchFacilitatorStudents() async {
@@ -71,44 +73,301 @@ class _FacilitatorCourseContainersState
     }
   }
 
-  Future<void> _assignStudentToCourse() async {
-    if (selectedStudentId == null) {
-      print("No student selected.");
+  Future<void> _fetchCourseLicenseInfo() async {
+    try {
+      DocumentSnapshot facilitatorDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(widget.facilitatorId)
+          .get();
+
+      List<dynamic> facilitatorCourses =
+          facilitatorDoc['facilitatorCourses'] ?? [];
+      courseLicenseInfo = facilitatorCourses.firstWhere(
+        (course) => course['courseId'] == widget.courseId,
+        orElse: () => null,
+      );
+
+      setState(() {});
+    } catch (e) {
+      print("Error fetching course license info: $e");
+    }
+  }
+
+  Future<void> _showAssignStudentDialog(BuildContext context) async {
+    if (students.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No students available to assign.')),
+      );
       return;
     }
 
-    try {
-      // Get selected student details
-      Map<String, dynamic>? selectedStudent =
-          students.firstWhere((s) => s['studentId'] == selectedStudentId);
+    // Check available licenses
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    DocumentSnapshot facilitatorDoc =
+        await firestore.collection('Users').doc(widget.facilitatorId).get();
 
-      // Update course document to add student
-      await FirebaseFirestore.instance
-          .collection('courses')
-          .doc(widget.courseId)
-          .update({
-        'students': FieldValue.arrayUnion([
-          {
-            'studentId': selectedStudentId,
-            'name': selectedStudent['name'],
-            'registered': Timestamp.now(), // ✅ Store as Firestore Timestamp
-          }
-        ])
-      });
+    List<dynamic> facilitatorCourses =
+        facilitatorDoc['facilitatorCourses'] ?? [];
+    Map<String, dynamic>? courseInfo = facilitatorCourses.firstWhere(
+      (course) => course['courseId'] == widget.courseId,
+      orElse: () => null,
+    );
 
-      print("Student assigned successfully.");
-      setState(() {
-        selectedStudentId = null; // Reset dropdown after assignment
-      });
-    } catch (e) {
-      print("Error assigning student: $e");
+    if (courseInfo == null || courseInfo['availableLicenses'] <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No available licenses for this course.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
     }
+
+    // Initialize additional fields
+    String fullName = '';
+    String idNumber = '';
+
+    // Get selected student's initial name if one is selected
+    if (selectedStudentId != null) {
+      Map<String, dynamic> selectedStudent = students.firstWhere(
+          (s) => s['studentId'] == selectedStudentId,
+          orElse: () => {'name': ''});
+      fullName = selectedStudent['name'] ?? '';
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: Text('Assign Student'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                      'Available Licenses: ${courseInfo['availableLicenses']}'),
+                  SizedBox(height: 20),
+                  DropdownButtonFormField<String>(
+                    value: selectedStudentId,
+                    decoration: InputDecoration(
+                      labelText: 'Select Student',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: students.map((student) {
+                      return DropdownMenuItem<String>(
+                        value: student['studentId'],
+                        child: Text(student['name']),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedStudentId = value;
+                        if (value != null) {
+                          Map<String, dynamic> selectedStudent = students
+                              .firstWhere((s) => s['studentId'] == value);
+                          fullName = selectedStudent['name'] ?? '';
+                        }
+                      });
+                    },
+                  ),
+                  SizedBox(height: 20),
+                  TextField(
+                    decoration: InputDecoration(
+                      labelText: 'Full Name (Name and Surname)',
+                      border: OutlineInputBorder(),
+                    ),
+                    controller: TextEditingController(text: fullName),
+                    onChanged: (value) {
+                      fullName = value;
+                    },
+                  ),
+                  SizedBox(height: 20),
+                  TextField(
+                    decoration: InputDecoration(
+                      labelText: 'ID Number (for certificate)',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      idNumber = value;
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  if (selectedStudentId != null) {
+                    if (fullName.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content:
+                              Text('Please enter the student\'s full name'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    try {
+                      // Find an available license
+                      QuerySnapshot licenseSnapshot = await firestore
+                          .collection('courseLicenses')
+                          .where('courseId', isEqualTo: widget.courseId)
+                          .where('facilitatorId',
+                              isEqualTo: widget.facilitatorId)
+                          .where('status', isEqualTo: 'available')
+                          .limit(1)
+                          .get();
+
+                      if (licenseSnapshot.docs.isEmpty) {
+                        throw Exception('No available licenses found');
+                      }
+
+                      // Update the license
+                      await licenseSnapshot.docs.first.reference.update({
+                        'status': 'assigned',
+                        'assignedTo': selectedStudentId,
+                        'assignmentDate': FieldValue.serverTimestamp(),
+                        'idNumber': idNumber, // Store ID number with license
+                      });
+
+                      // Update the course's available licenses count
+                      await firestore
+                          .collection('Users')
+                          .doc(widget.facilitatorId)
+                          .update({
+                        'facilitatorCourses': facilitatorCourses.map((course) {
+                          if (course['courseId'] == widget.courseId) {
+                            return {
+                              ...course,
+                              'availableLicenses':
+                                  course['availableLicenses'] - 1,
+                            };
+                          }
+                          return course;
+                        }).toList(),
+                      });
+
+                      // Add student to the course
+                      DocumentSnapshot courseDoc = await firestore
+                          .collection('courses')
+                          .doc(widget.courseId)
+                          .get();
+
+                      // Initialize students array if it doesn't exist
+                      Map<String, dynamic> courseData =
+                          courseDoc.data() as Map<String, dynamic>;
+                      List<dynamic> currentStudents =
+                          courseData['students'] ?? [];
+
+                      // Check if student is already in the course
+                      bool studentExists = currentStudents
+                          .any((s) => s['studentId'] == selectedStudentId);
+
+                      if (!studentExists) {
+                        // Add student in the required format
+                        currentStudents.add({
+                          'studentId': selectedStudentId,
+                          'name': fullName,
+                          'idNumber': idNumber,
+                          'registered': true,
+                        });
+
+                        // Update the course document with the new students array
+                        await firestore
+                            .collection('courses')
+                            .doc(widget.courseId)
+                            .set(
+                                {
+                              'students': currentStudents,
+                            },
+                                SetOptions(
+                                    merge:
+                                        true)); // Use merge to preserve other fields
+
+                        // Update student record with full name and ID number
+                        await firestore
+                            .collection('Users')
+                            .doc(widget.facilitatorId)
+                            .collection('facilitatorStudents')
+                            .doc(selectedStudentId)
+                            .set({
+                          'name': fullName,
+                          'idNumber': idNumber,
+                        }, SetOptions(merge: true));
+
+                        // Add the course to the student's enrolled courses
+                        DocumentReference studentRef = firestore
+                            .collection('Users')
+                            .doc(selectedStudentId);
+
+                        DocumentSnapshot studentDoc = await studentRef.get();
+
+                        // Initialize enrolledCourses if it doesn't exist
+                        if (!studentDoc.exists ||
+                            !(studentDoc.data() as Map<String, dynamic>)
+                                .containsKey('enrolledCourses')) {
+                          await studentRef.set({
+                            'enrolledCourses': [],
+                          }, SetOptions(merge: true));
+                        }
+
+                        // Add the course to student's enrolled courses
+                        await studentRef.update({
+                          'enrolledCourses': FieldValue.arrayUnion([
+                            {
+                              'courseId': widget.courseId,
+                              'courseName': widget.courseName,
+                              'facilitatorId': widget.facilitatorId,
+                              'licenseId': licenseSnapshot.docs.first.id,
+                              'enrollmentDate':
+                                  DateTime.now().toIso8601String(),
+                              'idNumber': idNumber,
+                            }
+                          ])
+                        });
+
+                        // Refresh the course license info
+                        await _fetchCourseLicenseInfo();
+                      }
+
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Student assigned successfully'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error assigning student: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                },
+                child: Text('Assign'),
+              ),
+            ],
+          );
+        });
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     // Print the course image URL to the console
-    print("Course Image URL: ${widget.courseImage}");
 
     return Material(
       borderRadius: BorderRadius.circular(15),
@@ -170,29 +429,56 @@ class _FacilitatorCourseContainersState
                           alignment: Alignment.centerLeft,
                           child: Padding(
                             padding: const EdgeInsets.only(left: 10),
-                            child: GestureDetector(
-                              onTap: () => _showAssignStudentDialog(context),
-                              child: Container(
-                                height: 30,
-                                width: widget.isAssignStudent ? 150 : 80,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(5),
-                                  color: widget.isAssignStudent
-                                      ? Mycolors().blue
-                                      : Mycolors().darkTeal,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    widget.isAssignStudent
-                                        ? 'Assign Student'
-                                        : widget.coursePrice,
-                                    style: GoogleFonts.montserrat(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 12),
+                            child: Row(
+                              children: [
+                                if (widget.isAssignStudent) ...[
+                                  Container(
+                                    height: 30,
+                                    width: 30,
+                                    decoration: BoxDecoration(
+                                      color: Mycolors().blue,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '${courseLicenseInfo?['availableLicenses'] ?? 0}',
+                                        style: GoogleFonts.montserrat(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                ],
+                                GestureDetector(
+                                  onTap: () =>
+                                      _showAssignStudentDialog(context),
+                                  child: Container(
+                                    height: 30,
+                                    width: widget.isAssignStudent ? 120 : 80,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(5),
+                                      color: widget.isAssignStudent
+                                          ? Mycolors().blue
+                                          : Mycolors().darkTeal,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        widget.isAssignStudent
+                                            ? 'Assign Student'
+                                            : widget.coursePrice,
+                                        style: GoogleFonts.montserrat(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
                         ),
@@ -264,48 +550,6 @@ class _FacilitatorCourseContainersState
           ],
         ),
       ),
-    );
-  }
-
-  void _showAssignStudentDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Assign Student"),
-          content: DropdownButtonFormField<String>(
-            value: selectedStudentId,
-            onChanged: (value) {
-              setState(() {
-                selectedStudentId = value;
-              });
-            },
-            items: students.map((student) {
-              return DropdownMenuItem<String>(
-                value: student['studentId'],
-                child: Text(student['name']),
-              );
-            }).toList(),
-            decoration: InputDecoration(
-              hintText: "Select a student",
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                await _assignStudentToCourse();
-                Navigator.of(context).pop();
-              },
-              child: Text("Assign"),
-            ),
-          ],
-        );
-      },
     );
   }
 }

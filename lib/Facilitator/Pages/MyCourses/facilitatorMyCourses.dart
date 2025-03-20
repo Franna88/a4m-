@@ -76,8 +76,6 @@ class _FacilitatorMyCoursesState extends State<FacilitatorMyCourses> {
             int studentCount =
                 (courseData['students'] as List<dynamic>? ?? []).length;
 
-            print("Course ID: ${doc.id}, Image: ${courseData['courseImage']}");
-
             // Add all dynamic values to the course data
             fetchedCourses.add({
               ...courseData,
@@ -87,8 +85,6 @@ class _FacilitatorMyCoursesState extends State<FacilitatorMyCourses> {
               'studentCount': studentCount,
             });
           }
-
-          print("Fetched courses: $fetchedCourses");
 
           setState(() {
             facilitatorCourses = fetchedCourses;
