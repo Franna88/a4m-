@@ -33,7 +33,10 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
               .collection('pendingCourses')
               .where('status', isEqualTo: widget.status)
               .snapshots()
-          : FirebaseFirestore.instance.collection('courses').snapshots(),
+          : FirebaseFirestore.instance
+              .collection('courses')
+              .where('status', isEqualTo: widget.status)
+              .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -425,15 +428,17 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
 
   Future<void> _declineCourse(String courseId, bool isEdited) async {
     try {
+      FirebaseFirestore firestore = FirebaseFirestore.instance;
+
       if (isEdited) {
-        // Remove the doc from pendingCourses
-        await FirebaseFirestore.instance
+        // For edited courses, mark them as declined in pendingCourses
+        await firestore
             .collection('pendingCourses')
             .doc(courseId)
-            .delete();
+            .update({'status': 'declined'});
       } else {
-        // For non-edited courses, mark them 'declined' in the courses collection
-        await FirebaseFirestore.instance
+        // For new courses, mark them as declined in the courses collection
+        await firestore
             .collection('courses')
             .doc(courseId)
             .update({'status': 'declined'});

@@ -189,7 +189,7 @@ class _CreateModuleState extends State<CreateModule> {
           courseModel.modules = fetchedModules;
         }
 
-        // Only reset _currentModuleIndex to 0 if it’s null or out-of-bounds.
+        // Only reset _currentModuleIndex to 0 if it's null or out-of-bounds.
         if (_currentModuleIndex == null ||
             _currentModuleIndex! >= fetchedModules.length) {
           _currentModuleIndex = 0;
@@ -442,243 +442,276 @@ class _CreateModuleState extends State<CreateModule> {
   }
 
   Future<void> _saveToFirebase() async {
-    if (!_validateInputs()) return;
+    if (!_validateInputs()) {
+      return;
+    }
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final firestore = FirebaseFirestore.instance;
-      final storage = firebase_storage.FirebaseStorage.instance;
-      final user = FirebaseAuth.instance.currentUser;
-
-      if (user == null) throw Exception('No user logged in');
-
       final courseModel = Provider.of<CourseModel>(context, listen: false);
-
-      // Fetch live course data for comparison
-      DocumentSnapshot liveDoc =
-          await firestore.collection('courses').doc(widget.courseId).get();
-      Map<String, dynamic> liveData =
-          liveDoc.exists ? liveDoc.data() as Map<String, dynamic> : {};
-
-      List<String> courseChangeList = [];
-      List<Map<String, dynamic>> moduleChanges = [];
-
-      // Track course field changes
-      if (courseModel.courseName.trim() !=
-          (liveData['courseName'] ?? '').trim()) {
-        courseChangeList.add("Updated Course Name: ${courseModel.courseName}");
-      }
-      if (courseModel.coursePrice.trim() !=
-          (liveData['coursePrice'] ?? '').trim()) {
-        courseChangeList
-            .add("Updated Course Price: ${courseModel.coursePrice}");
-      }
-      if (courseModel.courseCategory.trim() !=
-          (liveData['courseCategory'] ?? '').trim()) {
-        courseChangeList
-            .add("Updated Course Category: ${courseModel.courseCategory}");
-      }
-      if (courseModel.courseDescription.trim() !=
-          (liveData['courseDescription'] ?? '').trim()) {
-        courseChangeList.add("Updated Course Description");
+      final firebase_storage.FirebaseStorage storage =
+          firebase_storage.FirebaseStorage.instance;
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('No user logged in');
       }
 
-      // Handle course image
-      String newImageUrl =
-          _selectedImageUrl ?? courseModel.courseImageUrl ?? '';
+      // Check if this is a new course or an edit
+      bool isNewCourse = widget.courseId == null;
 
-      if (_selectedImage != null) {
-        firebase_storage.Reference imageRef = storage
+      // Track course changes
+      List<String> courseChanges = [];
+      if (!isNewCourse) {
+        // Fetch existing course data to compare
+        DocumentSnapshot existingDoc = await FirebaseFirestore.instance
+            .collection('courses')
+            .doc(widget.courseId)
+            .get();
+
+        if (existingDoc.exists) {
+          Map<String, dynamic> existingData =
+              existingDoc.data() as Map<String, dynamic>;
+
+          if (courseModel.courseName != existingData['courseName']) {
+            courseChanges.add("Updated Course Name: ${courseModel.courseName}");
+          }
+          if (courseModel.courseDescription !=
+              existingData['courseDescription']) {
+            courseChanges.add("Updated Course Description");
+          }
+          if (courseModel.coursePrice != existingData['coursePrice']) {
+            courseChanges
+                .add("Updated Course Price: ${courseModel.coursePrice}");
+          }
+          if (courseModel.courseCategory != existingData['courseCategory']) {
+            courseChanges
+                .add("Updated Course Category: ${courseModel.courseCategory}");
+          }
+        }
+      }
+
+      // Upload the course image only if it's new
+      String? courseImageUrl =
+          courseModel.courseImageUrl; // Keep existing URL by default
+      if (courseModel.courseImage != null) {
+        firebase_storage.Reference ref = storage
             .ref()
             .child('courses/${DateTime.now().millisecondsSinceEpoch}.png');
-
-        firebase_storage.TaskSnapshot snapshot =
-            await imageRef.putData(_selectedImage!);
-        newImageUrl = await snapshot.ref.getDownloadURL();
-
-        // Update the course model with the new image URL
-        courseModel.setCourseImageUrl(newImageUrl);
-        courseChangeList.add("Updated Course Image");
+        firebase_storage.UploadTask uploadTask =
+            ref.putData(courseModel.courseImage!);
+        firebase_storage.TaskSnapshot snapshot = await uploadTask;
+        courseImageUrl = await snapshot.ref.getDownloadURL();
+        if (!isNewCourse) {
+          courseChanges.add("Updated Course Image");
+        }
       }
 
-      // --- Save Pending Course Data ---
-      DocumentReference pendingCourseRef =
-          firestore.collection('pendingCourses').doc(widget.courseId);
+      // Determine which collection to use
+      final collection = isNewCourse ? 'courses' : 'pendingCourses';
+      DocumentReference docRef;
+      if (isNewCourse) {
+        docRef = FirebaseFirestore.instance.collection(collection).doc();
+      } else {
+        // For edited courses, use the same document ID as the original course
+        docRef = FirebaseFirestore.instance
+            .collection(collection)
+            .doc(widget.courseId);
+      }
 
-      await pendingCourseRef.set({
+      // Track module changes
+      List<Map<String, dynamic>> moduleChanges = [];
+
+      // Upload modules to a subcollection under the course document
+      for (var module in courseModel.modules) {
+        // Track changes for this module
+        List<String> moduleChangeList = [];
+
+        // For edited courses, fetch existing module data to compare
+        if (!isNewCourse) {
+          try {
+            DocumentSnapshot existingModuleDoc = await FirebaseFirestore
+                .instance
+                .collection('courses')
+                .doc(widget.courseId)
+                .collection('modules')
+                .doc(module.id)
+                .get();
+
+            if (existingModuleDoc.exists) {
+              Map<String, dynamic> existingData =
+                  existingModuleDoc.data() as Map<String, dynamic>;
+
+              // Compare and track changes
+              if (module.moduleName != existingData['moduleName']) {
+                moduleChangeList
+                    .add("Updated Module Name: ${module.moduleName}");
+              }
+              if (module.moduleDescription !=
+                  existingData['moduleDescription']) {
+                moduleChangeList.add("Updated Module Description");
+              }
+              if (module.moduleImage != null) {
+                moduleChangeList.add("Updated Module Image");
+              }
+              if (module.modulePdf != null) {
+                moduleChangeList.add("Updated Module PDF");
+              }
+              if (module.studentGuidePdf != null) {
+                moduleChangeList.add("Updated Student Guide");
+              }
+              if (module.facilitatorGuidePdf != null) {
+                moduleChangeList.add("Updated Facilitator Guide");
+              }
+              if (module.answerSheetPdf != null) {
+                moduleChangeList.add("Updated Answer Sheet");
+              }
+              if (module.activitiesPdf != null) {
+                moduleChangeList.add("Updated Activities");
+              }
+              if (module.assessmentsPdf != null) {
+                moduleChangeList.add("Updated Assessments");
+              }
+              if (module.testSheetPdf != null) {
+                moduleChangeList.add("Updated Test Sheet");
+              }
+            }
+          } catch (e) {
+            print("Error fetching existing module data: $e");
+          }
+        }
+
+        // Upload module image only if it's new
+        String? moduleImageUrl =
+            module.moduleImageUrl; // Keep existing URL by default
+        if (module.moduleImage != null) {
+          firebase_storage.Reference ref = storage.ref().child(
+              'modules/${DateTime.now().millisecondsSinceEpoch}_module.png');
+          firebase_storage.UploadTask uploadTask =
+              ref.putData(module.moduleImage!);
+          firebase_storage.TaskSnapshot snapshot = await uploadTask;
+          moduleImageUrl = await snapshot.ref.getDownloadURL();
+        }
+
+        // Upload module PDF only if it's new
+        String? modulePdfUrl =
+            module.modulePdfUrl; // Keep existing URL by default
+        if (module.modulePdf != null) {
+          firebase_storage.Reference ref = storage.ref().child(
+              'modules/${DateTime.now().millisecondsSinceEpoch}_module.pdf');
+          firebase_storage.UploadTask uploadTask =
+              ref.putData(module.modulePdf!);
+          firebase_storage.TaskSnapshot snapshot = await uploadTask;
+          modulePdfUrl = await snapshot.ref.getDownloadURL();
+        }
+
+        // Helper function to handle PDF uploads
+        Future<String?> uploadPdf(
+            Uint8List? pdfData, String? existingUrl, String fileName) async {
+          if (pdfData == null)
+            return existingUrl; // Return existing URL if no new file
+          firebase_storage.Reference ref = storage.ref().child(
+              'pdfs/${DateTime.now().millisecondsSinceEpoch}_$fileName.pdf');
+          firebase_storage.UploadTask uploadTask = ref.putData(pdfData);
+          firebase_storage.TaskSnapshot snapshot = await uploadTask;
+          return await snapshot.ref.getDownloadURL();
+        }
+
+        // Upload new PDFs while keeping existing URLs for unchanged files
+        String? studentGuidePdfUrl = await uploadPdf(
+            module.studentGuidePdf, module.studentGuidePdfUrl, 'student_guide');
+        String? facilitatorGuidePdfUrl = await uploadPdf(
+            module.facilitatorGuidePdf,
+            module.facilitatorGuidePdfUrl,
+            'facilitator_guide');
+        String? answerSheetPdfUrl = await uploadPdf(
+            module.answerSheetPdf, module.answerSheetPdfUrl, 'answer_sheet');
+        String? activitiesPdfUrl = await uploadPdf(
+            module.activitiesPdf, module.activitiesPdfUrl, 'activities');
+        String? assessmentsPdfUrl = await uploadPdf(
+            module.assessmentsPdf, module.assessmentsPdfUrl, 'assessments');
+        String? testSheetPdfUrl = await uploadPdf(
+            module.testSheetPdf, module.testSheetPdfUrl, 'test_sheet');
+
+        // If there are changes, add to moduleChanges list
+        if (moduleChangeList.isNotEmpty) {
+          moduleChanges.add({
+            'moduleId': module.id,
+            'moduleName': module.moduleName,
+            'changes': moduleChangeList,
+          });
+        }
+
+        // Prepare module data with additional PDFs
+        final moduleData = {
+          'moduleName': module.moduleName,
+          'moduleDescription': module.moduleDescription,
+          'moduleImageUrl': moduleImageUrl,
+          'modulePdfUrl': modulePdfUrl,
+          'modulePdfName': module.modulePdfName,
+          'studentGuidePdfUrl': studentGuidePdfUrl,
+          'studentGuidePdfName': module.studentGuidePdfName,
+          'facilitatorGuidePdfUrl': facilitatorGuidePdfUrl,
+          'facilitatorGuidePdfName': module.facilitatorGuidePdfName,
+          'answerSheetPdfUrl': answerSheetPdfUrl,
+          'answerSheetPdfName': module.answerSheetPdfName,
+          'activitiesPdfUrl': activitiesPdfUrl,
+          'activitiesPdfName': module.activitiesPdfName,
+          'assessmentsPdfUrl': assessmentsPdfUrl,
+          'assessmentsPdfName': module.assessmentsPdfName,
+          'testSheetPdfUrl': testSheetPdfUrl,
+          'testSheetPdfName': module.testSheetPdfName,
+          'questions': module.questions.map((q) => q.toMap()).toList(),
+          'tasks': module.tasks.map((t) => t.toMap()).toList(),
+          'assignments': module.assignments.map((a) => a.toMap()).toList(),
+        };
+
+        // For edited courses, use the same module ID in the subcollection
+        if (!isNewCourse) {
+          await docRef.collection('modules').doc(module.id).set(moduleData);
+        } else {
+          await docRef.collection('modules').add(moduleData);
+        }
+      }
+
+      // Prepare data for Firestore
+      final courseData = {
         'courseName': courseModel.courseName,
         'coursePrice': courseModel.coursePrice,
         'courseCategory': courseModel.courseCategory,
         'courseDescription': courseModel.courseDescription,
-        'courseImageUrl': newImageUrl,
-        'status': 'pending',
-        'editedAt': FieldValue.serverTimestamp(),
-        'changes': courseChangeList.isNotEmpty
-            ? courseChangeList
-            : ["No Course Changes"],
-      }, SetOptions(merge: true));
+        'courseImageUrl': courseImageUrl,
+        'createdBy': user.uid,
+        'status': isNewCourse ? 'pending_approval' : 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+        'editedAt': isNewCourse ? null : FieldValue.serverTimestamp(),
+        'changes': isNewCourse ? null : courseChanges,
+        'moduleChanges': isNewCourse ? null : moduleChanges,
+      };
 
-      // --- Save Pending Module Data ---
-      // --- Save Pending Module Data ---
-      // --- Save Pending Module Data ---
-      for (int i = 0; i < courseModel.modules.length; i++) {
-        Module module = courseModel.modules[i]; // Get the current module
-        String moduleId = module.id; // Ensure this is unique per module
-
-        print("Processing Module: ${module.moduleName} (ID: $moduleId)");
-
-        DocumentReference pendingModuleRef =
-            pendingCourseRef.collection('modules').doc(moduleId);
-
-        // Prevent Overwriting: Check if the module already exists
-        DocumentSnapshot existingModule = await pendingModuleRef.get();
-        Map<String, dynamic>? existingModuleData = existingModule.exists
-            ? existingModule.data() as Map<String, dynamic>
-            : null;
-
-        if (existingModuleData != null &&
-            existingModuleData['moduleName'] == module.moduleName) {
-          print("Skipping duplicate module: ${module.moduleName}");
-          continue; // Skip saving if this module is already stored
-        }
-
-        // Track module changes
-        List<String> moduleChangeList = [];
-
-        // Use the module’s own values instead of controller values
-        Map<String, dynamic> pendingData = {
-          'moduleName': module.moduleName,
-          'moduleDescription': module.moduleDescription,
-          'moduleImageUrl': module.moduleImageUrl ?? '',
-          'modulePdfUrl': module.modulePdfUrl ?? '',
-          'studentGuidePdfUrl': module.studentGuidePdfUrl ?? '',
-          'facilitatorGuidePdfUrl': module.facilitatorGuidePdfUrl ?? '',
-          'answerSheetPdfUrl': module.answerSheetPdfUrl ?? '',
-          'activitiesPdfUrl': module.activitiesPdfUrl ?? '',
-          'assessmentsPdfUrl': module.assessmentsPdfUrl ?? '',
-          'testSheetPdfUrl': module.testSheetPdfUrl ?? '',
-          'status': 'pending',
-          'editedAt': FieldValue.serverTimestamp(),
-        };
-
-        // Detect changes in module fields by comparing **module values**, not controller text
-        if (module.moduleName.trim() !=
-            (existingModuleData?['moduleName'] ?? '').trim()) {
-          moduleChangeList.add("Updated Module Name: ${module.moduleName}");
-        }
-        if (module.moduleDescription.trim() !=
-            (existingModuleData?['moduleDescription'] ?? '').trim()) {
-          moduleChangeList.add("Updated Module Description");
-        }
-
-        // Save the module only if it hasn’t been duplicated
-        await pendingModuleRef.set(pendingData, SetOptions(merge: true));
-        print("✅ Saved Module: ${module.moduleName} (ID: $moduleId)");
-
-        // --- Handle Module Image ---
-        if (_selectedImage != null) {
-          firebase_storage.Reference imageRef = storage
-              .ref()
-              .child('modules/${DateTime.now().millisecondsSinceEpoch}.png');
-          firebase_storage.TaskSnapshot imageSnapshot =
-              await imageRef.putData(_selectedImage!);
-          String newImgUrl = await imageSnapshot.ref.getDownloadURL();
-          pendingData['moduleImageUrl'] = newImgUrl;
-          moduleChangeList.add("Updated Module Image");
-        } else {
-          pendingData['moduleImageUrl'] =
-              _selectedImageUrl ?? module.moduleImageUrl ?? '';
-        }
-
-        // --- Handle PDF Uploads ---
-        Future<String> uploadPdf(
-            Uint8List? pdfData, String? existingUrl, String fileName) async {
-          if (pdfData != null) {
-            firebase_storage.Reference pdfRef = storage.ref().child(
-                'module_pdfs/${DateTime.now().millisecondsSinceEpoch}_$fileName.pdf');
-
-            firebase_storage.SettableMetadata metadata =
-                firebase_storage.SettableMetadata(
-                    contentType: 'application/pdf');
-
-            firebase_storage.TaskSnapshot pdfSnapshot =
-                await pdfRef.putData(pdfData, metadata);
-
-            return await pdfSnapshot.ref.getDownloadURL();
-          }
-          return existingUrl ?? '';
-        }
-
-        // Upload & track changes for each PDF type
-        Map<String, Uint8List?> pdfFiles = {
-          "Module PDF": _selectedPdf,
-          "Student Guide": _studentGuidePdf,
-          "Facilitator Guide": _facilitatorGuidePdf,
-          "Answer Sheet": _answerSheetPdf,
-          "Activities": _activitiesPdf,
-          "Assessments": _assessmentsPdf,
-          "Test Sheet": _testSheetPdf
-        };
-
-        Map<String, String?> existingUrls = {
-          "Module PDF": module.modulePdfUrl,
-          "Student Guide": module.studentGuidePdfUrl,
-          "Facilitator Guide": module.facilitatorGuidePdfUrl,
-          "Answer Sheet": module.answerSheetPdfUrl,
-          "Activities": module.activitiesPdfUrl,
-          "Assessments": module.assessmentsPdfUrl,
-          "Test Sheet": module.testSheetPdfUrl
-        };
-
-        for (String key in pdfFiles.keys) {
-          String pdfKey = key.replaceAll(" ", "").toLowerCase() + "Url";
-          Uint8List? pdfFile = pdfFiles[key];
-
-          String newPdfUrl = await uploadPdf(
-              pdfFile, existingUrls[key], key.replaceAll(" ", "_"));
-          if (pdfFile != null) {
-            pendingData[pdfKey] = newPdfUrl;
-            moduleChangeList.add("Updated $key");
-          }
-        }
-
-        pendingData['changes'] = moduleChangeList.isNotEmpty
-            ? moduleChangeList
-            : ["No Module Changes"];
-
-        // Save or update the pending module document
-        await pendingModuleRef.set(pendingData);
-
-        // Store module changes at course level
-        if (moduleChangeList.isNotEmpty) {
-          moduleChanges.add({
-            'moduleId': moduleId,
-            'moduleName': module.moduleName,
-            'changes': moduleChangeList
-          });
-        }
+      // If editing, update the document
+      if (!isNewCourse) {
+        await docRef.set(courseData, SetOptions(merge: true));
+      } else {
+        await docRef.set(courseData);
       }
 
-      // Store module changes in the pendingCourses document
-      await pendingCourseRef.set({
-        'moduleChanges': moduleChanges,
-      }, SetOptions(merge: true));
-
-      print("✅ Course & all module edits submitted for review.");
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Course & Modules submitted for review!')));
+        SnackBar(
+            content: Text(
+                'Course and modules ${isNewCourse ? 'created' : 'updated'} successfully!')),
+      );
     } catch (e) {
-      print("❌ Error submitting pending changes: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit for review.')));
+        SnackBar(content: Text('Failed to upload data: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
-
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   void _saveCurrentModuleChanges() {
