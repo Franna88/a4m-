@@ -1,3 +1,4 @@
+import 'package:a4m/Facilitator/facilitatorHome.dart';
 import 'package:a4m/Login/Tabs/FacilitatorTab/facilitatorSignUp.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -67,8 +68,8 @@ class FacilitatorLoginView extends StatefulWidget {
 }
 
 class _FacilitatorLoginViewState extends State<FacilitatorLoginView> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  final emailController = TextEditingController(text: 'facilicator@gmail.com');
+  final passwordController = TextEditingController(text: 'test123');
   final facilitatorCodeController = TextEditingController();
   bool isLoading = false;
   Future<void> _loginFacilitator() async {
@@ -88,20 +89,36 @@ class _FacilitatorLoginViewState extends State<FacilitatorLoginView> {
       }
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
-      // Print a successful login
-      print('Login successful for user: ${userCredential.user!.email}');
-      if (facilitatorCode.isNotEmpty) {
-        final userDoc = await FirebaseFirestore.instance
-            .collection('Users')
-            .doc(userCredential.user!.uid)
-            .get();
-        if (userDoc.exists && userDoc['facilitatorCode'] != facilitatorCode) {
-          _showErrorDialog('Invalid Facilitator Code.');
-          setState(() {
-            isLoading = false;
-          });
-          return;
+      // Retrieve user details from Firestore
+      final userDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (userDoc.exists) {
+        var userData = userDoc.data() as Map<String, dynamic>;
+        String userType = userData['userType'] ?? '';
+        String status = userData['status'] ?? '';
+        String storedFacilitatorCode = userData['facilitatorCode'] ?? '';
+
+        // Check if user is a facilitator and status is approved
+        if (userType == 'facilitator') {
+          // Navigate to FacilitatorHome after successful login
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+                builder: (context) => FacilitatorHome(
+                      facilitatorId: userCredential.user!.uid,
+                    )),
+          );
+        } else if (status == 'pending') {
+          _showErrorDialog(
+              'Your account is still pending approval. Please wait for admin verification.');
+        } else {
+          _showErrorDialog(
+              'Invalid credentials or your account is not verified.');
         }
+      } else {
+        _showErrorDialog('User not found.');
       }
     } on FirebaseAuthException catch (e) {
       String errorMessage;

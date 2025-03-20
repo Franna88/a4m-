@@ -11,11 +11,13 @@ import 'package:a4m/myutility.dart';
 class ReviewCourse extends StatefulWidget {
   final Function(int, [Map<String, dynamic>?]) changePageIndex;
   final String courseId;
+  final bool isEdited;
 
   ReviewCourse({
     super.key,
     required this.changePageIndex,
     required this.courseId,
+    required this.isEdited,
   });
 
   @override
@@ -28,6 +30,7 @@ class _ReviewCourseState extends State<ReviewCourse> {
   late TextEditingController _courseCategoryController;
   late TextEditingController _courseDescriptionController;
   String? courseImageUrl;
+  List<String> changes = [];
 
   @override
   void initState() {
@@ -43,8 +46,11 @@ class _ReviewCourseState extends State<ReviewCourse> {
 
   Future<void> _fetchCourseData() async {
     try {
+      // Determine whether to fetch from pendingCourses or courses
+      String collection = widget.isEdited ? 'pendingCourses' : 'courses';
+
       DocumentSnapshot courseSnapshot = await FirebaseFirestore.instance
-          .collection('courses')
+          .collection(collection)
           .doc(widget.courseId)
           .get();
 
@@ -58,11 +64,15 @@ class _ReviewCourseState extends State<ReviewCourse> {
             courseData['courseCategory'] ?? 'Unknown';
         _courseDescriptionController.text =
             courseData['courseDescription'] ?? 'No description available';
+
         setState(() {
           courseImageUrl = courseData['courseImageUrl'] ?? '';
+          changes =
+              (courseData['changes'] as List<dynamic>?)?.cast<String>() ?? [];
         });
 
         print("Course Image URL: $courseImageUrl");
+        print("Detected Changes: $changes");
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Course data not found.')),
@@ -215,8 +225,10 @@ class _ReviewCourseState extends State<ReviewCourse> {
                           borderColor: Color.fromRGBO(203, 210, 224, 1),
                           textColor: Mycolors().green,
                           onPressed: () {
-                            widget.changePageIndex(
-                                10, {'courseId': widget.courseId});
+                            widget.changePageIndex(10, {
+                              'courseId': widget.courseId,
+                              'isEdited': widget.isEdited
+                            });
                           },
                           customWidth: 85,
                           customHeight: 35,

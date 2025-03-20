@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../Constants/myColors.dart';
 import '../../Themes/text_style.dart';
@@ -8,7 +9,8 @@ import '../BrowseCourse/BrowseCourseContainer.dart';
 import '../../myutility.dart';
 
 class BrowseAvailableContainer extends StatefulWidget {
-  const BrowseAvailableContainer({super.key});
+  final String studentId;
+  const BrowseAvailableContainer({super.key, required this.studentId});
 
   @override
   State<BrowseAvailableContainer> createState() =>
@@ -27,40 +29,121 @@ class _BrowseAvailableContainerState extends State<BrowseAvailableContainer> {
     for (var doc in snapshot.docs) {
       final courseData = doc.data() as Map<String, dynamic>;
 
-      // Fetch modules for the course
-      QuerySnapshot moduleSnapshot = await FirebaseFirestore.instance
-          .collection('courses')
-          .doc(doc.id)
-          .collection('modules')
-          .get();
+      // Check if the course has assigned lecturers
+      if (courseData['assignedLecturers'] != null &&
+          (courseData['assignedLecturers'] as List).isNotEmpty) {
+        // Fetch modules for the course
+        QuerySnapshot moduleSnapshot = await FirebaseFirestore.instance
+            .collection('courses')
+            .doc(doc.id)
+            .collection('modules')
+            .get();
 
-      // Count the number of modules
-      int moduleCount = moduleSnapshot.docs.length;
+        // Count the number of modules
+        int moduleCount = moduleSnapshot.docs.length;
 
-      // Count the total number of assessments based on `assessmentsPdfUrl`
-      int assessmentCount = 0;
-      for (var module in moduleSnapshot.docs) {
-        final moduleData = module.data() as Map<String, dynamic>;
-        if (moduleData['assessmentsPdfUrl'] != null &&
-            moduleData['assessmentsPdfUrl'].isNotEmpty) {
-          assessmentCount++;
+        // Count the total number of assessments based on `assessmentsPdfUrl`
+        int assessmentCount = 0;
+        for (var module in moduleSnapshot.docs) {
+          final moduleData = module.data() as Map<String, dynamic>;
+          if (moduleData['assessmentsPdfUrl'] != null &&
+              moduleData['assessmentsPdfUrl'].isNotEmpty) {
+            assessmentCount++;
+          }
         }
+
+        // Count the number of students
+        int studentCount =
+            (courseData['students'] as List<dynamic>? ?? []).length;
+
+        // Add all dynamic values to the course data
+        courses.add({
+          ...courseData,
+          'courseId': doc.id,
+          'moduleCount': moduleCount,
+          'assessmentCount': assessmentCount,
+          'studentCount': studentCount,
+        });
       }
-
-      // Count the number of students
-      int studentCount =
-          (courseData['students'] as List<dynamic>? ?? []).length;
-
-      // Add all dynamic values to the course data
-      courses.add({
-        ...courseData,
-        'courseId': doc.id,
-        'moduleCount': moduleCount,
-        'assessmentCount': assessmentCount,
-        'studentCount': studentCount,
-      });
     }
     return courses;
+  }
+
+  // Method to show the popup dialog
+  void _showAddCourseDialog(Map<String, dynamic> course) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Add Course'),
+          content: Text(
+              'Do you want to add ${course['courseName']} to your courses?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _addCourseToStudent(course);
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Method to add the course to the student's profile
+  Future<void> _addCourseToStudent(Map<String, dynamic> course) async {
+    String studentId = widget.studentId; // Use the correct studentId
+
+    if (studentId.isNotEmpty) {
+      FirebaseFirestore firestore = FirebaseFirestore.instance;
+      DocumentReference studentRef =
+          firestore.collection('Users').doc(studentId);
+      DocumentReference courseRef =
+          firestore.collection('courses').doc(course['courseId']);
+
+      try {
+        // Fetch student data from the "Users" collection
+        DocumentSnapshot studentSnapshot = await studentRef.get();
+        if (!studentSnapshot.exists) {
+          print('Student record not found!');
+          return;
+        }
+
+        Map<String, dynamic> studentData =
+            studentSnapshot.data() as Map<String, dynamic>;
+
+        // Add the course to the student's profile
+        await studentRef.update({
+          'courses': FieldValue.arrayUnion(
+              [course['courseId']]), // Update user's courses array
+        });
+
+        // Add the student to the course's student list
+        await courseRef.update({
+          'students': FieldValue.arrayUnion([
+            {
+              'studentId': studentId, // Store correct studentId
+              'name': studentData['name'] ?? 'Unknown',
+              'registered': true, // Mark as registered
+            }
+          ]),
+        });
+
+        print('Course successfully added for student!');
+      } catch (e) {
+        print('Error adding course: $e');
+      }
+    } else {
+      print('Invalid student ID!');
+    }
   }
 
   @override
@@ -140,21 +223,27 @@ class _BrowseAvailableContainerState extends State<BrowseAvailableContainer> {
                             columnGap: 20, // Space between columns
                             children: [
                               for (var course in courses)
-                                SizedBox(
-                                  width: 320, // Fixed width
-                                  height: 340, // Fixed height
-                                  child: BrowseCourseContainer(
-                                    imagePath: course['courseImageUrl'] ??
-                                        'images/placeholder.png',
-                                    courseName:
-                                        course['courseName'] ?? 'No Name',
-                                    description: course['courseDescription'] ??
-                                        'No Description',
-                                    price: 'R ${course['coursePrice'] ?? '0'}',
-                                    moduleCount: course['moduleCount'] ?? 0,
-                                    assessmentCount:
-                                        course['assessmentCount'] ?? 0,
-                                    studentCount: course['studentCount'] ?? 0,
+                                GestureDetector(
+                                  onTap: () => _showAddCourseDialog(
+                                      course), // Show dialog on course click
+                                  child: SizedBox(
+                                    width: 320, // Fixed width
+                                    height: 340, // Fixed height
+                                    child: BrowseCourseContainer(
+                                      imagePath: course['courseImageUrl'] ??
+                                          'images/placeholder.png',
+                                      courseName:
+                                          course['courseName'] ?? 'No Name',
+                                      description:
+                                          course['courseDescription'] ??
+                                              'No Description',
+                                      price:
+                                          'R ${course['coursePrice'] ?? '0'}',
+                                      moduleCount: course['moduleCount'] ?? 0,
+                                      assessmentCount:
+                                          course['assessmentCount'] ?? 0,
+                                      studentCount: course['studentCount'] ?? 0,
+                                    ),
                                   ),
                                 ),
                             ],

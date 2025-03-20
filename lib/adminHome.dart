@@ -29,8 +29,9 @@ class _AdminHomeState extends State<AdminHome> {
       pageIndex = value;
       pageData = data;
 
-      // Debugging statement to track courseId
-      if (data != null && data.containsKey('courseId')) {
+      if (data != null &&
+          data.containsKey('courseId') &&
+          (data['courseId'] as String).isNotEmpty) {
         print('AdminHome: Received courseId ${data['courseId']}');
       } else {
         print('AdminHome: No courseId provided');
@@ -41,28 +42,46 @@ class _AdminHomeState extends State<AdminHome> {
   @override
   Widget build(BuildContext context) {
     List<Widget> pages = [
+      //Index 0
       AdminDashboardMain(),
+      //Index 1
       AdminCourseList(),
+      //Index 2
       AdminMarketing(),
+      //Index 3
       A4mMembersList(),
+      //Index 4
       AdminCertification(),
+      //Index 5
       ApproveContent(
         changePage: changePage,
       ),
+      //Index 6
       CompSuggestionsMain(),
+      //Index 7
       AdminMessagesMain(),
+      //Index 8
       CirriculumVitae(),
+      //Index 9
       ReviewCourse(
         changePageIndex: changePage,
         courseId: pageData != null && pageData!.containsKey('courseId')
             ? pageData!['courseId']
             : '',
+        isEdited: pageData != null && pageData!.containsKey('isEdited')
+            ? pageData!['isEdited']
+            : false,
       ),
+
+      //Index 10
       ReviewModule(
         changePageIndex: changePage,
         courseId: pageData != null && pageData!.containsKey('courseId')
             ? pageData!['courseId']
             : '',
+        isEdited: pageData != null && pageData!.containsKey('isEdited')
+            ? pageData!['isEdited']
+            : false,
       ),
     ];
 

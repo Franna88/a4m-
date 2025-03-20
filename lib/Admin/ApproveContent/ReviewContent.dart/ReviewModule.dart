@@ -1,3 +1,4 @@
+import 'package:a4m/Admin/ApproveContent/ReviewContent.dart/pdfViewScreen.dart';
 import 'package:a4m/Admin/Dashboard/ui/coursePerformancePieChart.dart';
 import 'package:a4m/Admin/Dashboard/ui/monthlySalesChart.dart';
 import 'package:a4m/Admin/Dashboard/ui/monthlyStatSumContainers.dart';
@@ -9,18 +10,20 @@ import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Themes/text_style.dart';
 import 'package:a4m/myutility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:image_network/image_network.dart';
 
 class ReviewModule extends StatefulWidget {
   final Function(int, [Map<String, dynamic>?]) changePageIndex;
   final String courseId;
+  final bool isEdited;
 
   ReviewModule({
     super.key,
     required this.changePageIndex,
     required this.courseId,
+    required this.isEdited,
   });
 
   @override
@@ -39,19 +42,48 @@ class _ReviewModuleState extends State<ReviewModule> {
 
   Future<void> _fetchModules() async {
     try {
+      String collectionPath = widget.isEdited ? 'pendingCourses' : 'courses';
+
       QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('courses')
+          .collection(collectionPath)
           .doc(widget.courseId)
           .collection('modules')
           .get();
+
+      if (snapshot.docs.isEmpty) {
+        print(
+            "⚠️ No modules found in $collectionPath/${widget.courseId}/modules");
+      } else {
+        print(
+            "✅ Loaded ${snapshot.docs.length} modules from $collectionPath/${widget.courseId}/modules");
+      }
 
       setState(() {
         modules = snapshot.docs;
       });
     } catch (e) {
+      print("❌ Error fetching modules: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to fetch modules: $e')),
       );
+    }
+  }
+
+  Future<String> _getFreshPdfUrl(String storedPath) async {
+    try {
+      if (storedPath.isEmpty) return '';
+
+      final ref = FirebaseStorage.instance.ref(
+          storedPath.contains('module_pdfs')
+              ? storedPath
+              : 'module_pdfs/$storedPath');
+
+      final freshUrl = await ref.getDownloadURL();
+      print("🔄 Fresh Firebase PDF URL: $freshUrl");
+      return freshUrl;
+    } catch (e) {
+      print("❌ Error fetching fresh PDF URL: $e");
+      return storedPath; // Fallback to original URL if error
     }
   }
 
@@ -74,7 +106,8 @@ class _ReviewModuleState extends State<ReviewModule> {
   }
 
   void _navigateBackToCourseReview() {
-    widget.changePageIndex(9, {'courseId': widget.courseId});
+    widget.changePageIndex(
+        9, {'courseId': widget.courseId, 'isEdited': widget.isEdited});
   }
 
   @override
@@ -194,34 +227,33 @@ class _ReviewModuleState extends State<ReviewModule> {
                           Column(
                             children: [
                               if (studentGuidePdfUrl.isNotEmpty) ...[
-                                _buildDownloadButton('Download Student Guide',
-                                    studentGuidePdfUrl),
+                                _buildViewButton(
+                                    'View Student Guide', studentGuidePdfUrl),
                                 SizedBox(height: 10),
                               ],
                               if (facilitatorGuidePdfUrl.isNotEmpty) ...[
-                                _buildDownloadButton(
-                                    'Download Facilitator Guide',
+                                _buildViewButton('View Facilitator Guide',
                                     facilitatorGuidePdfUrl),
                                 SizedBox(height: 10),
                               ],
                               if (answerSheetPdfUrl.isNotEmpty) ...[
-                                _buildDownloadButton(
-                                    'Download Answer Sheet', answerSheetPdfUrl),
+                                _buildViewButton(
+                                    'View Answer Sheet', answerSheetPdfUrl),
                                 SizedBox(height: 10),
                               ],
                               if (activitiesPdfUrl.isNotEmpty) ...[
-                                _buildDownloadButton(
-                                    'Download Activities', activitiesPdfUrl),
+                                _buildViewButton(
+                                    'View Activities', activitiesPdfUrl),
                                 SizedBox(height: 10),
                               ],
                               if (assessmentsPdfUrl.isNotEmpty) ...[
-                                _buildDownloadButton(
-                                    'Download Assessments', assessmentsPdfUrl),
+                                _buildViewButton(
+                                    'View Assessments', assessmentsPdfUrl),
                                 SizedBox(height: 10),
                               ],
                               if (testSheetPdfUrl.isNotEmpty) ...[
-                                _buildDownloadButton(
-                                    'Download Test Sheet', testSheetPdfUrl),
+                                _buildViewButton(
+                                    'View Test Sheet', testSheetPdfUrl),
                                 SizedBox(height: 10),
                               ],
                             ],
@@ -246,21 +278,24 @@ class _ReviewModuleState extends State<ReviewModule> {
                       SizedBox(height: 20),
                       if (pdfUrl.isNotEmpty)
                         SlimButtons(
-                          buttonText: 'Download Module PDF',
+                          buttonText: 'View Module PDF',
                           buttonColor: Colors.white,
                           borderColor: Mycolors().darkGrey,
                           textColor: Mycolors().darkGrey,
                           onPressed: () async {
-                            final Uri pdfUri = Uri.parse(pdfUrl);
-                            if (await canLaunchUrl(pdfUri)) {
-                              await launchUrl(pdfUri);
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text(
-                                        'Could not launch PDF download link')),
-                              );
-                            }
+                            String freshPdfUrl =
+                                await _getFreshPdfUrl(pdfUrl); // Get fresh URL
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => Scaffold(
+                                  appBar: AppBar(title: Text('View PDF')),
+                                  body: PdfViewerWeb(
+                                      pdfUrl: freshPdfUrl), // Use fresh URL
+                                ),
+                              ),
+                            );
                           },
                           customWidth: 160,
                           customHeight: 40,
@@ -315,24 +350,38 @@ class _ReviewModuleState extends State<ReviewModule> {
     );
   }
 
-  Widget _buildDownloadButton(String text, String url) {
-    return SlimButtons(
-      buttonText: text,
-      buttonColor: Colors.white,
-      borderColor: Mycolors().darkGrey,
-      textColor: Mycolors().darkGrey,
-      onPressed: () async {
-        final Uri pdfUri = Uri.parse(url);
-        if (await canLaunchUrl(pdfUri)) {
-          await launchUrl(pdfUri);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Could not launch $text link')),
-          );
+  Widget _buildViewButton(String text, String path) {
+    return FutureBuilder<String>(
+      future: _getFreshPdfUrl(path), // Get fresh URL before opening
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator();
         }
+        if (snapshot.hasError) {
+          return Text('Error loading PDF');
+        }
+        final freshPdfUrl = snapshot.data ?? path; // Use fresh URL
+
+        return SlimButtons(
+          buttonText: text,
+          buttonColor: Colors.white,
+          borderColor: Mycolors().darkGrey,
+          textColor: Mycolors().darkGrey,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  appBar: AppBar(title: Text(text)), // Show correct title
+                  body: PdfViewerWeb(pdfUrl: freshPdfUrl), // Open correct PDF
+                ),
+              ),
+            );
+          },
+          customWidth: 180,
+          customHeight: 40,
+        );
       },
-      customWidth: 180,
-      customHeight: 40,
     );
   }
 }

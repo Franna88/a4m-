@@ -7,8 +7,10 @@ class CourseModel with ChangeNotifier {
   String coursePrice = '';
   String courseCategory = '';
   String courseDescription = '';
-  Uint8List? courseImage;
+  Uint8List? courseImage; // Raw image data
+  String? courseImageUrl; // 🔥 Image URL field
   List<Module> modules = [];
+  bool isNewCourse = true;
 
   void setCourseName(String name) {
     courseName = name;
@@ -32,6 +34,12 @@ class CourseModel with ChangeNotifier {
 
   void setCourseImage(Uint8List? image) {
     courseImage = image;
+    notifyListeners();
+  }
+
+  void setCourseImageUrl(String? imageUrl) {
+    // 🔥 New method
+    courseImageUrl = imageUrl;
     notifyListeners();
   }
 
@@ -61,77 +69,122 @@ class CourseModel with ChangeNotifier {
     }
   }
 
-  // Convert the CourseModel to a Map for Firebase
+  void clearCourseData() {
+    courseName = '';
+    coursePrice = '';
+    courseCategory = '';
+    courseDescription = '';
+    courseImage = null;
+    courseImageUrl = null; // 🔥 Reset the image URL
+    modules.clear();
+    notifyListeners();
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'courseName': courseName,
       'coursePrice': coursePrice,
       'courseCategory': courseCategory,
       'courseDescription': courseDescription,
-      'courseImage': courseImage != null ? base64Encode(courseImage!) : null,
+      'courseImageUrl': courseImageUrl, // 🔥 Store URL instead of raw image
       'modules': modules.map((module) => module.toMap()).toList(),
+      'isNewCourse': isNewCourse,
     };
   }
 }
 
-class Module {
+class Module with ChangeNotifier {
   String moduleName;
   String moduleDescription;
+
+  // Module Image (both local data & Firestore URL)
+  Uint8List? moduleImage;
+  String? moduleImageUrl; // ✅ Stores existing image URL from Firestore
+
+  // Module PDF (both local data & Firestore URL)
   Uint8List? modulePdf;
   String? modulePdfName;
-  Uint8List? moduleImage;
+  String? modulePdfUrl; // ✅ Stores existing module PDF URL from Firestore
 
-  // New fields for six additional PDFs
+  // Additional PDFs (both local files and Firestore URLs)
   Uint8List? studentGuidePdf;
   String? studentGuidePdfName;
+  String? studentGuidePdfUrl; // ✅ Firestore URL
+
   Uint8List? facilitatorGuidePdf;
   String? facilitatorGuidePdfName;
+  String? facilitatorGuidePdfUrl; // ✅ Firestore URL
+
   Uint8List? answerSheetPdf;
   String? answerSheetPdfName;
+  String? answerSheetPdfUrl; // ✅ Firestore URL
+
   Uint8List? activitiesPdf;
   String? activitiesPdfName;
+  String? activitiesPdfUrl; // ✅ Firestore URL
+
   Uint8List? assessmentsPdf;
   String? assessmentsPdfName;
+  String? assessmentsPdfUrl; // ✅ Firestore URL
+
   Uint8List? testSheetPdf;
   String? testSheetPdfName;
+  String? testSheetPdfUrl; // ✅ Firestore URL
 
   List<Question> questions;
   List<Task> tasks;
   List<Assignment> assignments;
 
+  List<String> changes;
+  String id;
+
   Module({
     required this.moduleName,
     required this.moduleDescription,
+    this.moduleImage,
+    this.moduleImageUrl, // ✅ Firestore URL
     this.modulePdf,
     this.modulePdfName,
-    this.moduleImage,
+    this.modulePdfUrl, // ✅ Firestore URL
     this.studentGuidePdf,
     this.studentGuidePdfName,
+    this.studentGuidePdfUrl, // ✅ Firestore URL
     this.facilitatorGuidePdf,
     this.facilitatorGuidePdfName,
+    this.facilitatorGuidePdfUrl, // ✅ Firestore URL
     this.answerSheetPdf,
     this.answerSheetPdfName,
+    this.answerSheetPdfUrl, // ✅ Firestore URL
     this.activitiesPdf,
     this.activitiesPdfName,
+    this.activitiesPdfUrl, // ✅ Firestore URL
     this.assessmentsPdf,
     this.assessmentsPdfName,
+    this.assessmentsPdfUrl, // ✅ Firestore URL
     this.testSheetPdf,
     this.testSheetPdfName,
+    this.testSheetPdfUrl, // ✅ Firestore URL
+    this.changes = const [],
     List<Question>? questions,
     List<Task>? tasks,
     List<Assignment>? assignments,
+    required this.id,
   })  : questions = questions ?? [],
         tasks = tasks ?? [],
         assignments = assignments ?? [];
 
+  // ✅ Add Question
   void addQuestion(Question question) {
     questions.add(question);
+    notifyListeners(); // ✅ UI updates after adding a question
     print('Question added: ${question.questionText}');
   }
 
+  // ✅ Update Question
   void updateQuestion(int index, Question updatedQuestion) {
     if (index >= 0 && index < questions.length) {
       questions[index] = updatedQuestion;
+      notifyListeners(); // ✅ UI updates after question update
       print(
           'Question updated at index $index: ${updatedQuestion.questionText}');
     } else {
@@ -139,73 +192,87 @@ class Module {
     }
   }
 
+  // ✅ Remove Question
   void removeQuestion(int index) {
     if (index >= 0 && index < questions.length) {
       print(
           'Question removed at index $index: ${questions[index].questionText}');
       questions.removeAt(index);
+      notifyListeners(); // ✅ UI updates after question removal
     } else {
       print('Invalid index when removing question: $index');
     }
   }
 
+  // ✅ Add Task
   void addTask(Task task) {
     tasks.add(task);
+    notifyListeners(); // ✅ UI updates after adding a task
     print('Task added: ${task.title}');
   }
 
+  // ✅ Remove Task
   void removeTask(int index) {
     if (index >= 0 && index < tasks.length) {
       print('Task removed at index $index: ${tasks[index].title}');
       tasks.removeAt(index);
+      notifyListeners(); // ✅ UI updates after task removal
     } else {
       print('Invalid index when removing task: $index');
     }
   }
 
+  // ✅ Add Assignment
   void addAssignment(Assignment assignment) {
     assignments.add(assignment);
+    notifyListeners(); // ✅ UI updates after adding an assignment
     print('Assignment added: ${assignment.title}');
   }
 
+  // ✅ Remove Assignment
   void removeAssignment(int index) {
     if (index >= 0 && index < assignments.length) {
       print('Assignment removed at index $index: ${assignments[index].title}');
       assignments.removeAt(index);
+      notifyListeners(); // ✅ UI updates after assignment removal
     } else {
       print('Invalid index when removing assignment: $index');
     }
   }
 
-  // Convert Module to a Map for Firebase
+  // ✅ Convert Module to a Map for Firestore
   Map<String, dynamic> toMap() {
     return {
       'moduleName': moduleName,
       'moduleDescription': moduleDescription,
+
+      // ✅ Store URLs instead of base64 encoding
+      'moduleImageUrl': moduleImageUrl,
+      'modulePdfUrl': modulePdfUrl,
       'modulePdfName': modulePdfName,
-      'modulePdf': modulePdf != null ? base64Encode(modulePdf!) : null,
-      'moduleImage': moduleImage != null ? base64Encode(moduleImage!) : null,
-      'studentGuidePdf':
-          studentGuidePdf != null ? base64Encode(studentGuidePdf!) : null,
+
+      'studentGuidePdfUrl': studentGuidePdfUrl,
       'studentGuidePdfName': studentGuidePdfName,
-      'facilitatorGuidePdf': facilitatorGuidePdf != null
-          ? base64Encode(facilitatorGuidePdf!)
-          : null,
+
+      'facilitatorGuidePdfUrl': facilitatorGuidePdfUrl,
       'facilitatorGuidePdfName': facilitatorGuidePdfName,
-      'answerSheetPdf':
-          answerSheetPdf != null ? base64Encode(answerSheetPdf!) : null,
+
+      'answerSheetPdfUrl': answerSheetPdfUrl,
       'answerSheetPdfName': answerSheetPdfName,
-      'activitiesPdf':
-          activitiesPdf != null ? base64Encode(activitiesPdf!) : null,
+
+      'activitiesPdfUrl': activitiesPdfUrl,
       'activitiesPdfName': activitiesPdfName,
-      'assessmentsPdf':
-          assessmentsPdf != null ? base64Encode(assessmentsPdf!) : null,
+
+      'assessmentsPdfUrl': assessmentsPdfUrl,
       'assessmentsPdfName': assessmentsPdfName,
-      'testSheetPdf': testSheetPdf != null ? base64Encode(testSheetPdf!) : null,
+
+      'testSheetPdfUrl': testSheetPdfUrl,
       'testSheetPdfName': testSheetPdfName,
+
       'questions': questions.map((q) => q.toMap()).toList(),
       'tasks': tasks.map((t) => t.toMap()).toList(),
       'assignments': assignments.map((a) => a.toMap()).toList(),
+      'changes': changes,
     };
   }
 }

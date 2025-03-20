@@ -50,57 +50,47 @@ class _CertificationTableState extends State<CertificationTable> {
           ),
           children: [
             TableStructure(
-              child: TableCell(
-                child: Text(
-                  'Student',
-                  style: GoogleFonts.montserrat(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+              child: Text(
+                'Student',
+                style: GoogleFonts.montserrat(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
             TableStructure(
-              child: TableCell(
-                child: Text(
-                  'Date Added',
-                  style: GoogleFonts.montserrat(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+              child: Text(
+                'Date Added',
+                style: GoogleFonts.montserrat(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
             TableStructure(
-              child: TableCell(
-                child: Text(
-                  'Course',
-                  style: GoogleFonts.montserrat(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+              child: Text(
+                'Course',
+                style: GoogleFonts.montserrat(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
             TableStructure(
-              child: TableCell(
-                child: Text(
-                  'Payment Status',
-                  style: GoogleFonts.montserrat(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+              child: Text(
+                'Payment Status',
+                style: GoogleFonts.montserrat(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
             TableStructure(
-              child: TableCell(
-                child: Text(
-                  'Student Details',
-                  style: GoogleFonts.montserrat(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+              child: Text(
+                'Student Details',
+                style: GoogleFonts.montserrat(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -119,55 +109,47 @@ class _CertificationTableState extends State<CertificationTable> {
             ),
             children: [
               TableStructure(
-                child: TableCell(
-                  child: Text(
-                    course['student']!,
-                    style: GoogleFonts.montserrat(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+                child: Text(
+                  course['student']!,
+                  style: GoogleFonts.montserrat(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                   ),
                 ),
               ),
               TableStructure(
-                child: TableCell(
-                  child: Text(
-                    course['date']!,
-                    style: GoogleFonts.montserrat(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+                child: Text(
+                  course['date']!,
+                  style: GoogleFonts.montserrat(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                   ),
                 ),
               ),
               TableStructure(
-                child: TableCell(
-                  child: Text(
-                    overflow: TextOverflow.ellipsis,
-                    course['course']!,
-                    style: GoogleFonts.montserrat(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+                child: Text(
+                  course['course']!,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.montserrat(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                   ),
                 ),
               ),
               TableStructure(
-                child: TableCell(child: StatusIndicators(isApproved: true)),
+                child: StatusIndicators(isApproved: true),
               ),
               TableStructure(
-                child: TableCell(
-                  child: SizedBox(
-                    width: 80,
-                    child: SlimButtons(
-                      buttonText: 'View',
-                      buttonColor: Mycolors().peach,
-                      onPressed: () {},
-                      customWidth: 100,
-                    ),
+                child: SizedBox(
+                  width: 80,
+                  child: SlimButtons(
+                    buttonText: 'View',
+                    buttonColor: Mycolors().peach,
+                    onPressed: () {},
+                    customWidth: 100,
                   ),
                 ),
               ),
