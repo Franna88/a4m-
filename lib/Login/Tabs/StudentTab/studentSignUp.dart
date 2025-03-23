@@ -18,6 +18,7 @@ class _StudentSignUpState extends State<StudentSignUp> {
   final facilitatorCodeController = TextEditingController();
   final nameController = TextEditingController();
   final phoneNumController = TextEditingController();
+  final studentIdController = TextEditingController();
   bool isFirstStep = true;
   bool isLoading = false;
 
@@ -32,6 +33,7 @@ class _StudentSignUpState extends State<StudentSignUp> {
       String name = nameController.text.trim();
       String phoneNumber = phoneNumController.text.trim();
       String facilitatorCode = facilitatorCodeController.text.trim();
+      String studentId = studentIdController.text.trim();
 
       print('Creating user with email: $email');
       UserCredential userCredential = await FirebaseAuth.instance
@@ -44,6 +46,7 @@ class _StudentSignUpState extends State<StudentSignUp> {
         'email': email,
         'name': name,
         'phoneNumber': phoneNumber,
+        'studentId': studentId,
       };
 
       if (facilitatorCode.isNotEmpty) {
@@ -142,6 +145,16 @@ class _StudentSignUpState extends State<StudentSignUp> {
                 inputController: nameController,
                 headerText: "Full Name",
                 hintText: 'Name and surname',
+                keyboardType: '',
+              ),
+            ),
+            const SizedBox(height: 15),
+            SizedBox(
+              width: 380,
+              child: MyTextFields(
+                inputController: studentIdController,
+                headerText: "Student ID",
+                hintText: 'Enter your student ID',
                 keyboardType: '',
               ),
             ),

@@ -1,6 +1,7 @@
 import 'package:a4m/Admin/AdminMessaging/adminMessagesMain.dart';
 import 'package:a4m/Facilitator/Pages/BrowseCourses/facilitatorBrowseCourses.dart';
 import 'package:a4m/Facilitator/Pages/Dashboard/facilitatorDashboard.dart';
+import 'package:a4m/Facilitator/Pages/Messaging/facilitatorMessaging.dart';
 import 'package:a4m/Facilitator/Pages/MyCourses/facilitatorMyCourses.dart';
 import 'package:a4m/Facilitator/Pages/Students/facilitatorStudents.dart';
 import 'package:a4m/Facilitator/facilitatorNavBar.dart';
@@ -57,8 +58,11 @@ class _FacilitatorHomeState extends State<FacilitatorHome> {
       FacilitatorBrowseCourses(
         facilitatorId: widget.facilitatorId,
       ),
-      FacilitatorStudents(),
-      AdminMessagesMain(),
+      FacilitatorStudents(
+        facilitatorId: widget.facilitatorId,
+      ),
+      const LecturePresentations(),
+      FacilitatorMessaging(facilitatorId: widget.facilitatorId),
     ];
 
     return FacilitatorNavBar(

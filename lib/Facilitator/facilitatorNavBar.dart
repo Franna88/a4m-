@@ -99,16 +99,16 @@ class _FacilitatorNavBarState extends State<FacilitatorNavBar> {
                 ),
                 NavButtons(
                   buttonText: 'Presentation',
-                  onTap: () => _handleItemClick(3),
-                  isActive: activeIndex == 3,
+                  onTap: () => _handleItemClick(4),
+                  isActive: activeIndex == 4,
                 ),
                 const SizedBox(
                   height: 25,
                 ),
                 NavButtons(
                   buttonText: 'Messages',
-                  onTap: () => _handleItemClick(4),
-                  isActive: activeIndex == 4,
+                  onTap: () => _handleItemClick(5),
+                  isActive: activeIndex == 5,
                 ),
                 const SizedBox(
                   height: 25,

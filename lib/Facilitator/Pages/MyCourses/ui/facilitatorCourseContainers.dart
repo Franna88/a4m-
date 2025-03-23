@@ -174,26 +174,8 @@ class _FacilitatorCourseContainersState
                     },
                   ),
                   SizedBox(height: 20),
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: 'Full Name (Name and Surname)',
-                      border: OutlineInputBorder(),
-                    ),
-                    controller: TextEditingController(text: fullName),
-                    onChanged: (value) {
-                      fullName = value;
-                    },
-                  ),
-                  SizedBox(height: 20),
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: 'ID Number (for certificate)',
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      idNumber = value;
-                    },
-                  ),
+                  Text(
+                      'Student name will be used as shown in dropdown. Certificate details can be collected when the course is completed.'),
                 ],
               ),
             ),
@@ -205,147 +187,28 @@ class _FacilitatorCourseContainersState
               TextButton(
                 onPressed: () async {
                   if (selectedStudentId != null) {
-                    if (fullName.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text('Please enter the student\'s full name'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-
                     try {
-                      // Find an available license
-                      QuerySnapshot licenseSnapshot = await firestore
-                          .collection('courseLicenses')
-                          .where('courseId', isEqualTo: widget.courseId)
-                          .where('facilitatorId',
-                              isEqualTo: widget.facilitatorId)
-                          .where('status', isEqualTo: 'available')
-                          .limit(1)
-                          .get();
+                      // Get student name from the selection
+                      Map<String, dynamic> selectedStudent =
+                          students.firstWhere(
+                              (s) => s['studentId'] == selectedStudentId);
+                      String studentName = selectedStudent['name'] ?? 'Unknown';
 
-                      if (licenseSnapshot.docs.isEmpty) {
-                        throw Exception('No available licenses found');
-                      }
-
-                      // Update the license
-                      await licenseSnapshot.docs.first.reference.update({
-                        'status': 'assigned',
-                        'assignedTo': selectedStudentId,
-                        'assignmentDate': FieldValue.serverTimestamp(),
-                        'idNumber': idNumber, // Store ID number with license
-                      });
-
-                      // Update the course's available licenses count
-                      await firestore
-                          .collection('Users')
-                          .doc(widget.facilitatorId)
-                          .update({
-                        'facilitatorCourses': facilitatorCourses.map((course) {
-                          if (course['courseId'] == widget.courseId) {
-                            return {
-                              ...course,
-                              'availableLicenses':
-                                  course['availableLicenses'] - 1,
-                            };
-                          }
-                          return course;
-                        }).toList(),
-                      });
-
-                      // Add student to the course
-                      DocumentSnapshot courseDoc = await firestore
-                          .collection('courses')
-                          .doc(widget.courseId)
-                          .get();
-
-                      // Initialize students array if it doesn't exist
-                      Map<String, dynamic> courseData =
-                          courseDoc.data() as Map<String, dynamic>;
-                      List<dynamic> currentStudents =
-                          courseData['students'] ?? [];
-
-                      // Check if student is already in the course
-                      bool studentExists = currentStudents
-                          .any((s) => s['studentId'] == selectedStudentId);
-
-                      if (!studentExists) {
-                        // Add student in the required format
-                        currentStudents.add({
-                          'studentId': selectedStudentId,
-                          'name': fullName,
-                          'idNumber': idNumber,
-                          'registered': true,
-                        });
-
-                        // Update the course document with the new students array
-                        await firestore
-                            .collection('courses')
-                            .doc(widget.courseId)
-                            .set(
-                                {
-                              'students': currentStudents,
-                            },
-                                SetOptions(
-                                    merge:
-                                        true)); // Use merge to preserve other fields
-
-                        // Update student record with full name and ID number
-                        await firestore
-                            .collection('Users')
-                            .doc(widget.facilitatorId)
-                            .collection('facilitatorStudents')
-                            .doc(selectedStudentId)
-                            .set({
-                          'name': fullName,
-                          'idNumber': idNumber,
-                        }, SetOptions(merge: true));
-
-                        // Add the course to the student's enrolled courses
-                        DocumentReference studentRef = firestore
-                            .collection('Users')
-                            .doc(selectedStudentId);
-
-                        DocumentSnapshot studentDoc = await studentRef.get();
-
-                        // Initialize enrolledCourses if it doesn't exist
-                        if (!studentDoc.exists ||
-                            !(studentDoc.data() as Map<String, dynamic>)
-                                .containsKey('enrolledCourses')) {
-                          await studentRef.set({
-                            'enrolledCourses': [],
-                          }, SetOptions(merge: true));
-                        }
-
-                        // Add the course to student's enrolled courses
-                        await studentRef.update({
-                          'enrolledCourses': FieldValue.arrayUnion([
-                            {
-                              'courseId': widget.courseId,
-                              'courseName': widget.courseName,
-                              'facilitatorId': widget.facilitatorId,
-                              'licenseId': licenseSnapshot.docs.first.id,
-                              'enrollmentDate':
-                                  DateTime.now().toIso8601String(),
-                              'idNumber': idNumber,
-                            }
-                          ])
-                        });
-
-                        // Refresh the course license info
-                        await _fetchCourseLicenseInfo();
-                      }
-
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Student assigned successfully'),
-                          backgroundColor: Colors.green,
-                        ),
+                      // Start a local transaction with empty ID number (will be collected later)
+                      bool isSuccessful = await _assignLicenseTransaction(
+                        selectedStudentId!,
+                        studentName,
                       );
+
+                      if (isSuccessful) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Student assigned successfully'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -354,6 +217,13 @@ class _FacilitatorCourseContainersState
                         ),
                       );
                     }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Please select a student'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
                   }
                 },
                 child: Text('Assign'),
@@ -363,6 +233,132 @@ class _FacilitatorCourseContainersState
         });
       },
     );
+  }
+
+  Future<bool> _assignLicenseTransaction(
+    String studentId,
+    String fullName,
+  ) async {
+    // Create references to all documents that will be modified
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    try {
+      // Step 1: Find an available license
+      QuerySnapshot licenseSnapshot = await firestore
+          .collection('courseLicenses')
+          .where('courseId', isEqualTo: widget.courseId)
+          .where('facilitatorId', isEqualTo: widget.facilitatorId)
+          .where('status', isEqualTo: 'available')
+          .limit(1)
+          .get();
+
+      if (licenseSnapshot.docs.isEmpty) {
+        throw Exception('No available licenses found');
+      }
+
+      String licenseId = licenseSnapshot.docs.first.id;
+
+      // Step 2: Get current state of all documents
+      DocumentSnapshot facilitatorDoc =
+          await firestore.collection('Users').doc(widget.facilitatorId).get();
+
+      DocumentSnapshot courseDoc =
+          await firestore.collection('courses').doc(widget.courseId).get();
+
+      DocumentSnapshot studentDoc =
+          await firestore.collection('Users').doc(studentId).get();
+
+      // Prepare data updates
+      // 1. Update license data - not storing ID number
+      await licenseSnapshot.docs.first.reference.update({
+        'status': 'assigned',
+        'assignedTo': studentId,
+        'assignmentDate': FieldValue.serverTimestamp(),
+      });
+
+      // 2. Update facilitator's course license count
+      List<dynamic> facilitatorCourses =
+          facilitatorDoc['facilitatorCourses'] ?? [];
+      List<dynamic> updatedFacilitatorCourses =
+          facilitatorCourses.map((course) {
+        if (course['courseId'] == widget.courseId) {
+          return {
+            ...course,
+            'availableLicenses': course['availableLicenses'] - 1,
+          };
+        }
+        return course;
+      }).toList();
+
+      await firestore.collection('Users').doc(widget.facilitatorId).update({
+        'facilitatorCourses': updatedFacilitatorCourses,
+      });
+
+      // 3. Add student to course if not already added
+      Map<String, dynamic> courseData =
+          courseDoc.data() as Map<String, dynamic>;
+      List<dynamic> currentStudents = courseData['students'] ?? [];
+      bool studentExists =
+          currentStudents.any((s) => s['studentId'] == studentId);
+
+      if (!studentExists) {
+        currentStudents.add({
+          'studentId': studentId,
+          'name': fullName,
+          'registered': true,
+        });
+
+        await firestore.collection('courses').doc(widget.courseId).update({
+          'students': currentStudents,
+        });
+      }
+
+      // 4. Update student info in facilitator's student collection - only name
+      await firestore
+          .collection('Users')
+          .doc(widget.facilitatorId)
+          .collection('facilitatorStudents')
+          .doc(studentId)
+          .set({
+        'name': fullName,
+      }, SetOptions(merge: true));
+
+      // 5. Add course to student's enrolled courses
+      List<dynamic> enrolledCourses = [];
+      if (studentDoc.exists) {
+        Map<String, dynamic> studentData =
+            studentDoc.data() as Map<String, dynamic>;
+        enrolledCourses = studentData['enrolledCourses'] ?? [];
+      }
+
+      // Check if course is already in student's enrolled courses
+      bool courseExists =
+          enrolledCourses.any((c) => c['courseId'] == widget.courseId);
+
+      if (!courseExists) {
+        enrolledCourses.add({
+          'courseId': widget.courseId,
+          'courseName': widget.courseName,
+          'facilitatorId': widget.facilitatorId,
+          'licenseId': licenseId,
+          'enrollmentDate': DateTime.now().toIso8601String(),
+        });
+
+        await firestore.collection('Users').doc(studentId).set({
+          'enrolledCourses': enrolledCourses,
+        }, SetOptions(merge: true));
+      }
+
+      // 6. Refresh local data
+      await _fetchCourseLicenseInfo();
+
+      return true;
+    } catch (e) {
+      print('Transaction failed: $e');
+      // If anything fails, we should ideally roll back changes
+      // This would require a true server-side transaction
+      return false;
+    }
   }
 
   @override

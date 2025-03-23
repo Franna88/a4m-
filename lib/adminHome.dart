@@ -2,6 +2,7 @@ import 'package:a4m/Admin/AdminA4mMembers/a4mMemebersList.dart';
 import 'package:a4m/Admin/AdminCertification/adminCertification.dart';
 import 'package:a4m/Admin/AdminCourses/adminCourseList.dart';
 import 'package:a4m/Admin/AdminMarketing/AdminMarketing.dart';
+import 'package:a4m/Admin/AdminMessaging/adminMessaging.dart';
 import 'package:a4m/Admin/AdminMessaging/adminMessagesMain.dart';
 import 'package:a4m/Admin/ApproveContent/ReviewContent.dart/ReviewCourse.dart';
 import 'package:a4m/Admin/ApproveContent/ReviewContent.dart/ReviewModule.dart';
@@ -59,7 +60,7 @@ class _AdminHomeState extends State<AdminHome> {
       //Index 6
       CompSuggestionsMain(),
       //Index 7
-      AdminMessagesMain(),
+      AdminMessaging(),
       //Index 8
       CirriculumVitae(),
       //Index 9

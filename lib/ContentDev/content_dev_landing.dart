@@ -1,5 +1,6 @@
 import 'package:a4m/Admin/AdminMessaging/adminMessagesMain.dart';
 import 'package:a4m/ContentDev/DevelopedCourses/DevelopedCourses.dart';
+import 'package:a4m/ContentDev/Messaging/contentDevMessaging.dart';
 import 'package:a4m/ContentDev/ModuleAssessments/CourseModel.dart';
 import 'package:a4m/ContentDev/ModuleAssessments/add_module_assignments.dart';
 import 'package:a4m/ContentDev/ModuleAssessments/add_module_tasks.dart';
@@ -68,7 +69,7 @@ class _ContentDevHomeState extends State<ContentDevHome> {
         changePageIndex: changePageIndex,
         moduleIndex: selectedModuleIndex,
       ),
-      AdminMessagesMain(),
+      ContentDevMessaging(contentDevId: widget.contentDevId),
     ];
   }
 

@@ -1,5 +1,6 @@
 import 'package:a4m/Admin/AdminMessaging/adminMessagesMain.dart';
 import 'package:a4m/Student/BrowseCourse/BrowseAvailableContainer.dart';
+import 'package:a4m/Student/Messaging/studentMessaging.dart';
 import 'package:a4m/Student/MyCourses/myCoursesMain.dart';
 import 'package:a4m/Student/MyCourses/studentViewCourse.dart';
 import 'package:a4m/Student/ReviewAssessments/MarkedAssessment/MarkedAssessment.dart';
@@ -75,7 +76,9 @@ class _StudentMainState extends State<StudentMain> {
         changePageWithCourseId: changePageWithCourseId,
         courseId: selectedCourseId,
       ),
-      AdminMessagesMain(),
+      StudentMessaging(
+        studentId: widget.studentId,
+      ),
     ];
 
     return StudentNavBar(
