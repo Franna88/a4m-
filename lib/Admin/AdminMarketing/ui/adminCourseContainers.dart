@@ -14,6 +14,7 @@ class AdminCourseContainers extends StatefulWidget {
   final String moduleAmount;
   final String assessmentAmount;
   final String courseImage;
+  final String status;
   final Function() onTap;
   const AdminCourseContainers(
       {super.key,
@@ -24,7 +25,8 @@ class AdminCourseContainers extends StatefulWidget {
       required this.moduleAmount,
       required this.assessmentAmount,
       required this.courseImage,
-      required this.onTap});
+      required this.onTap,
+      required this.status});
 
   @override
   State<AdminCourseContainers> createState() => _AdminCourseContainersState();
@@ -40,8 +42,11 @@ class _AdminCourseContainersState extends State<AdminCourseContainers> {
         height: 340,
         width: 320,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: widget.status == 'removed' ? Colors.grey[50] : Colors.white,
           borderRadius: BorderRadius.circular(15),
+          border: widget.status == 'removed'
+              ? Border.all(color: Mycolors().red.withOpacity(0.3), width: 1)
+              : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,15 +68,26 @@ class _AdminCourseContainersState extends State<AdminCourseContainers> {
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: ImageNetwork(
-                        image: widget.courseImage,
-                        fitWeb: BoxFitWeb.cover,
-                        fitAndroidIos: BoxFit.cover,
-                        onLoading: const Center(
-                          child: CircularProgressIndicator(),
+                      child: ColorFiltered(
+                        colorFilter: widget.status == 'removed'
+                            ? ColorFilter.mode(
+                                Colors.grey.withOpacity(0.3),
+                                BlendMode.saturation,
+                              )
+                            : const ColorFilter.mode(
+                                Colors.transparent,
+                                BlendMode.saturation,
+                              ),
+                        child: ImageNetwork(
+                          image: widget.courseImage,
+                          fitWeb: BoxFitWeb.cover,
+                          fitAndroidIos: BoxFit.cover,
+                          onLoading: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                          width: 320,
+                          height: 180,
                         ),
-                        width: 320,
-                        height: 180,
                       ),
                     ),
                     Align(
@@ -123,16 +139,21 @@ class _AdminCourseContainersState extends State<AdminCourseContainers> {
                                       height: 30,
                                       width: 80,
                                       decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(5),
-                                          color: Mycolors().peach),
+                                        borderRadius: BorderRadius.circular(5),
+                                        color: widget.status == 'removed'
+                                            ? Mycolors().red
+                                            : Mycolors().peach,
+                                      ),
                                       child: Center(
                                         child: Text(
-                                          'EDIT',
+                                          widget.status == 'removed'
+                                              ? 'RESTORE'
+                                              : 'EDIT',
                                           style: GoogleFonts.montserrat(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 12),
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 12,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -150,12 +171,34 @@ class _AdminCourseContainersState extends State<AdminCourseContainers> {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text(
-                widget.courseName,
-                style: GoogleFonts.montserrat(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    widget.courseName,
+                    style: GoogleFonts.montserrat(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  if (widget.status == 'removed')
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Mycolors().red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'Removed',
+                        style: GoogleFonts.montserrat(
+                          color: Mycolors().red,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             Padding(

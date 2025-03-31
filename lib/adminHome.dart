@@ -59,7 +59,10 @@ class _AdminHomeState extends State<AdminHome> {
       //Index 6
       CompSuggestionsMain(),
       //Index 7
-      AdminMessagesMain(),
+      AdminMessagesMain(
+        userId: 'admin', // Admin user ID
+        userRole: 'admin',
+      ),
       //Index 8
       CirriculumVitae(),
       //Index 9

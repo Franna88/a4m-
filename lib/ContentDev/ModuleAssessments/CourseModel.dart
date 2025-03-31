@@ -9,6 +9,9 @@ class CourseModel with ChangeNotifier {
   String courseDescription = '';
   Uint8List? courseImage; // Raw image data
   String? courseImageUrl; // 🔥 Image URL field
+  Uint8List? previewPdf;
+  String? previewPdfUrl;
+  String? previewPdfName;
   List<Module> modules = [];
   bool isNewCourse = true;
 
@@ -40,6 +43,17 @@ class CourseModel with ChangeNotifier {
   void setCourseImageUrl(String? imageUrl) {
     // 🔥 New method
     courseImageUrl = imageUrl;
+    notifyListeners();
+  }
+
+  void setPreviewPdf(Uint8List? pdf, String? name) {
+    previewPdf = pdf;
+    previewPdfName = name;
+    notifyListeners();
+  }
+
+  void setPreviewPdfUrl(String? url) {
+    previewPdfUrl = url;
     notifyListeners();
   }
 
@@ -76,6 +90,9 @@ class CourseModel with ChangeNotifier {
     courseDescription = '';
     courseImage = null;
     courseImageUrl = null; // 🔥 Reset the image URL
+    previewPdf = null;
+    previewPdfUrl = null;
+    previewPdfName = null;
     modules.clear();
     notifyListeners();
   }

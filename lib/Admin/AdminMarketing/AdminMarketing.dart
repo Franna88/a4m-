@@ -35,9 +35,6 @@ class _AdminMarketingState extends State<AdminMarketing> {
       for (var doc in coursesSnapshot.docs) {
         final courseData = doc.data() as Map<String, dynamic>;
 
-        // Filter only approved courses
-        if (courseData['status'] != 'approved') continue;
-
         // Get student count
         int studentCount =
             (courseData['students'] as List<dynamic>? ?? []).length;
@@ -166,6 +163,7 @@ class _AdminMarketingState extends State<AdminMarketing> {
                                         '0',
                                 courseImage: course['courseImageUrl'] ??
                                     'https://via.placeholder.com/150',
+                                status: course['status'] ?? 'approved',
                                 onTap: () => openCourseDetailsPopup(course),
                               ),
                             ),

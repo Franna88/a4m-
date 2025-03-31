@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../Constants/myColors.dart';
 import '../../Themes/text_style.dart';
 import '../BrowseCourse/BrowseCourseContainer.dart';
+import '../BrowseCourse/CoursePreviewPdf.dart';
 import '../../myutility.dart';
 
 class BrowseAvailableContainer extends StatefulWidget {
@@ -18,6 +19,9 @@ class BrowseAvailableContainer extends StatefulWidget {
 }
 
 class _BrowseAvailableContainerState extends State<BrowseAvailableContainer> {
+  String? currentPreviewPdfUrl;
+  String? currentPreviewCourseName;
+
   // Fetch approved courses from Firebase
   Future<List<Map<String, dynamic>>> fetchApprovedCourses() async {
     QuerySnapshot snapshot = await FirebaseFirestore.instance
@@ -167,93 +171,126 @@ class _BrowseAvailableContainerState extends State<BrowseAvailableContainer> {
             width: MyUtility(context).width,
             child: Padding(
               padding: const EdgeInsets.all(15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Search bar and dropdown
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Available Courses',
-                        style: MyTextStyles(context).subHeaderBlack,
-                      ),
-                      Spacer(),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Divider(
-                    color: Mycolors().green,
-                    thickness: 6,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Use FutureBuilder to display courses
-                  Expanded(
-                    child: FutureBuilder<List<Map<String, dynamic>>>(
-                      future: fetchApprovedCourses(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
-                        } else if (snapshot.hasError) {
-                          return Center(
-                              child: Text('Error: ${snapshot.error}'));
-                        } else if (!snapshot.hasData ||
-                            snapshot.data!.isEmpty) {
-                          return Center(
-                              child: Text('No approved courses available.'));
-                        }
-
-                        final courses = snapshot.data!;
-
-                        return SingleChildScrollView(
-                          child: LayoutGrid(
-                            columnSizes: List.generate(
-                              crossAxisCount,
-                              (_) =>
-                                  FlexibleTrackSize(1), // Flexible column sizes
-                            ),
-                            rowSizes: List.generate(
-                              (courses.length / crossAxisCount).ceil(),
-                              (_) => auto, // Auto height for rows
-                            ),
-                            rowGap: 20, // Space between rows
-                            columnGap: 20, // Space between columns
-                            children: [
-                              for (var course in courses)
-                                GestureDetector(
-                                  onTap: () => _showAddCourseDialog(
-                                      course), // Show dialog on course click
-                                  child: SizedBox(
-                                    width: 320, // Fixed width
-                                    height: 340, // Fixed height
-                                    child: BrowseCourseContainer(
-                                      imagePath: course['courseImageUrl'] ??
-                                          'images/placeholder.png',
-                                      courseName:
-                                          course['courseName'] ?? 'No Name',
-                                      description:
-                                          course['courseDescription'] ??
-                                              'No Description',
-                                      price:
-                                          'R ${course['coursePrice'] ?? '0'}',
-                                      moduleCount: course['moduleCount'] ?? 0,
-                                      assessmentCount:
-                                          course['assessmentCount'] ?? 0,
-                                      studentCount: course['studentCount'] ?? 0,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        );
+              child: currentPreviewPdfUrl != null
+                  ? CoursePreviewPdf(
+                      pdfUrl: currentPreviewPdfUrl!,
+                      courseName: currentPreviewCourseName ?? '',
+                      onBack: () {
+                        setState(() {
+                          currentPreviewPdfUrl = null;
+                          currentPreviewCourseName = null;
+                        });
                       },
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Search bar and dropdown
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Available Courses',
+                              style: MyTextStyles(context).subHeaderBlack,
+                            ),
+                            Spacer(),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Divider(
+                          color: Mycolors().green,
+                          thickness: 6,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Use FutureBuilder to display courses
+                        Expanded(
+                          child: FutureBuilder<List<Map<String, dynamic>>>(
+                            future: fetchApprovedCourses(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Center(
+                                    child: CircularProgressIndicator());
+                              } else if (snapshot.hasError) {
+                                return Center(
+                                    child: Text('Error: ${snapshot.error}'));
+                              } else if (!snapshot.hasData ||
+                                  snapshot.data!.isEmpty) {
+                                return Center(
+                                    child:
+                                        Text('No approved courses available.'));
+                              }
+
+                              final courses = snapshot.data!;
+
+                              return SingleChildScrollView(
+                                child: LayoutGrid(
+                                  columnSizes: List.generate(
+                                    crossAxisCount,
+                                    (_) => FlexibleTrackSize(
+                                        1), // Flexible column sizes
+                                  ),
+                                  rowSizes: List.generate(
+                                    (courses.length / crossAxisCount).ceil(),
+                                    (_) => auto, // Auto height for rows
+                                  ),
+                                  rowGap: 20, // Space between rows
+                                  columnGap: 20, // Space between columns
+                                  children: [
+                                    for (var course in courses)
+                                      GestureDetector(
+                                        onTap: () => _showAddCourseDialog(
+                                            course), // Show dialog on course click
+                                        child: SizedBox(
+                                          width: 320, // Fixed width
+                                          height: 340, // Fixed height
+                                          child: BrowseCourseContainer(
+                                            imagePath:
+                                                course['courseImageUrl'] ??
+                                                    'images/placeholder.png',
+                                            courseName: course['courseName'] ??
+                                                'No Name',
+                                            description:
+                                                course['courseDescription'] ??
+                                                    'No Description',
+                                            price:
+                                                'R ${course['coursePrice'] ?? '0'}',
+                                            moduleCount:
+                                                course['moduleCount'] ?? 0,
+                                            assessmentCount:
+                                                course['assessmentCount'] ?? 0,
+                                            studentCount:
+                                                course['studentCount'] ?? 0,
+                                            previewPdfUrl:
+                                                course['previewPdfUrl'],
+                                            onPreviewPressed: () {
+                                              print(
+                                                  'BrowseAvailableContainer: Preview button pressed');
+                                              print(
+                                                  'BrowseAvailableContainer: PDF URL from course data: ${course['previewPdfUrl']}');
+                                              print(
+                                                  'BrowseAvailableContainer: Course name: ${course['courseName']}');
+                                              setState(() {
+                                                currentPreviewPdfUrl =
+                                                    course['previewPdfUrl'];
+                                                currentPreviewCourseName =
+                                                    course['courseName'] ??
+                                                        'No Name';
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
             ),
           ),
         ),

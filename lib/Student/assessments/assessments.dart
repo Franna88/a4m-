@@ -28,7 +28,7 @@ class _AssessmentsMainState extends State<AssessmentsMain> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CategoryNameStack(text: 'Assessments'),
+          CategoryNameStack(text: 'Submissions'),
           const SizedBox(height: 15),
           SizedBox(
             height: 50,

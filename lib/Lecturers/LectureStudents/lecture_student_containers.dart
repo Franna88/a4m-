@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_network/image_network.dart';
 
 import '../../../CommonComponents/displayCardIcons.dart';
 import '../../../Constants/myColors.dart';
@@ -15,6 +16,7 @@ class LectureStudentContainers extends StatefulWidget {
   final String? studentAmount;
   final String? contentTotal;
   final String? rating;
+  final VoidCallback? onMessageTap;
   const LectureStudentContainers(
       {super.key,
       this.isLecturer,
@@ -26,7 +28,8 @@ class LectureStudentContainers extends StatefulWidget {
       required this.number,
       this.studentAmount,
       this.contentTotal,
-      this.rating});
+      this.rating,
+      this.onMessageTap});
 
   @override
   State<LectureStudentContainers> createState() =>
@@ -53,58 +56,72 @@ class _LectureStudentContainersState extends State<LectureStudentContainers> {
               width: 250,
               height: 180,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(15),
                   topRight: Radius.circular(15),
                 ),
-                image: DecorationImage(
-                  image: AssetImage(widget.image),
-                  fit: BoxFit.cover,
-                ),
               ),
-              child: Column(
-                children: [
-                  const Spacer(),
-                  Container(
-                    height: 60,
-                    width: 320,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Mycolors().green,
-                          const Color.fromARGB(0, 255, 255, 255),
-                        ],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(15),
+                  topRight: Radius.circular(15),
+                ),
+                child: Stack(
+                  children: [
+                    // Profile Image
+                    Positioned.fill(
+                      child: widget.image.startsWith('http') &&
+                              widget.image.isNotEmpty
+                          ? ImageNetwork(
+                              image: widget.image,
+                              fitWeb: BoxFitWeb.cover,
+                              fitAndroidIos: BoxFit.cover,
+                              height: 180,
+                              width: 250,
+                              duration: 500,
+                              onLoading: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                              onError: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  image: const DecorationImage(
+                                    image: AssetImage('images/person2.png'),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Container(
+                              decoration: const BoxDecoration(
+                                image: DecorationImage(
+                                  image: AssetImage('images/person2.png'),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                    ),
+                    // Gradient Overlay
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        height: 60,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Mycolors().green,
+                              const Color.fromARGB(0, 255, 255, 255),
+                            ],
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                          ),
+                        ),
                       ),
                     ),
-                    // child: Visibility(
-                    //   visible: widget.isLecturer == true,
-                    //   child: Align(
-                    //     alignment: Alignment.centerLeft,
-                    //     child: Padding(
-                    //       padding: const EdgeInsets.only(left: 10),
-                    //       child: Container(
-                    //         height: 30,
-                    //         width: 80,
-                    //         decoration: BoxDecoration(
-                    //             borderRadius: BorderRadius.circular(5),
-                    //             color: Mycolors().darkTeal),
-                    //         child: Center(
-                    //           child: Text(
-                    //             widget.rating ?? '',
-                    //             style: GoogleFonts.montserrat(
-                    //                 color: Colors.white,
-                    //                 fontWeight: FontWeight.w600,
-                    //                 fontSize: 12),
-                    //           ),
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             Padding(
@@ -118,10 +135,7 @@ class _LectureStudentContainersState extends State<LectureStudentContainers> {
               ),
             ),
             ElevatedButton.icon(
-              onPressed: () {
-                // Your button action here
-                print('Button Pressed!');
-              },
+              onPressed: widget.onMessageTap,
               icon: Icon(
                 Icons.mail_outline, // Replace with your desired icon
                 color: Colors.white, // White icon

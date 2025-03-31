@@ -43,7 +43,7 @@ class CustomTabBar extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: isSelected
-                ? Color(0xFF1A8CF0)
+                ? Color(0xFF4CAF50) // Changed from blue to green
                 : Colors.transparent, // Tab background color
             borderRadius:
                 BorderRadius.circular(8), // Rounded corners for the tab
@@ -51,8 +51,9 @@ class CustomTabBar extends StatelessWidget {
           child: Text(
             title,
             style: TextStyle(
-              color:
-                  isSelected ? Colors.white : Color(0xFF002A6A), // Text color
+              color: isSelected
+                  ? Colors.white
+                  : Color(0xFF2E7D32), // Changed from navy blue to dark green
               fontWeight: FontWeight.w600, // Bold text for better visibility
             ),
           ),

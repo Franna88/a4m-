@@ -1,6 +1,7 @@
 import 'package:a4m/CommonComponents/buttons/CustomButton.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
 import 'package:a4m/Student/studentMain.dart';
+import 'package:a4m/Student/StudentCourseBrowse/studentCourseBrowse.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Login/Tabs/StudentTab/studentSignUp.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -45,7 +46,7 @@ class _StudentLoginTabState extends State<StudentLoginTab> {
                 Text(
                   isSignUp
                       ? 'Already Have an Account?'
-                      : 'Don’t have an Account?',
+                      : "Don't have an Account?",
                   style: GoogleFonts.kanit(color: Colors.white, fontSize: 12),
                 ),
                 const SizedBox(height: 25),
@@ -118,13 +119,12 @@ class _StudentLoginViewState extends State<StudentLoginView> {
 
         // Check if user is a student and status is approved
         if (userType == 'student') {
-          // Navigate to student's main page
+          // Navigate to course browse page first
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-                builder: (context) => StudentMain(
-                      studentId: userCredential.user!.uid,
-                    )),
+              builder: (context) => const StudentCourseBrowse(),
+            ),
           );
         } else if (status == 'pending') {
           _showErrorDialog(

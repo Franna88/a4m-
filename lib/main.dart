@@ -33,3 +33,12 @@ void main() async {
     ),
   );
 }
+
+final validRoles = {
+  'student': 'student',
+  'lecturer': 'lecturer',
+  'content_dev': 'content_dev',
+  'contentDev': 'content_dev',
+  'facilitator': 'facilitator',
+  'admin': 'admin',
+};

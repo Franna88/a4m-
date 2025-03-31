@@ -6,11 +6,14 @@ class DisplayCardIcons extends StatefulWidget {
   final IconData icon;
   final String count;
   final String tooltipText;
-  const DisplayCardIcons(
-      {super.key,
-      required this.icon,
-      required this.count,
-      required this.tooltipText});
+  final Color? iconColor;
+  const DisplayCardIcons({
+    super.key,
+    required this.icon,
+    required this.count,
+    required this.tooltipText,
+    this.iconColor,
+  });
 
   @override
   State<DisplayCardIcons> createState() => _DisplayCardIconsState();
@@ -25,7 +28,7 @@ class _DisplayCardIconsState extends State<DisplayCardIcons> {
           message: widget.tooltipText,
           child: Icon(
             widget.icon,
-            color: Mycolors().green,
+            color: widget.iconColor ?? Mycolors().green,
           ),
         ),
         const SizedBox(

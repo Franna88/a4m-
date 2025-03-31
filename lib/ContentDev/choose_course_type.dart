@@ -50,41 +50,44 @@ class _AdminDashboardMainState extends State<ChooseCourseType> {
               ),
               Row(
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      widget.changePageIndex(2);
-                      print("Create New Course Content tapped");
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      width: MyUtility(context).width * 0.35,
-                      height: MyUtility(context).height * 0.7,
-                      child: Center(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              height: MyUtility(context).height * 0.04,
-                            ),
-                            Text(
-                              'Create New Course Content',
-                              style: MyTextStyles(context).subHeaderBlack,
-                            ),
-                            Spacer(),
-                            Image.asset(
-                              'images/create_course_content.png',
-                              width: MyUtility(context).width * 0.5,
-                              height: MyUtility(context).height * 0.6,
-                              fit: BoxFit.fill,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  // Visibility(
+                  //   visible: false,
+                  //   child: GestureDetector(
+                  //     onTap: () {
+                  //       widget.changePageIndex(2);
+                  //       print("Create New Course Content tapped");
+                  //     },
+                  //     child: Container(
+                  //       decoration: BoxDecoration(
+                  //         color: Colors.white,
+                  //         borderRadius: BorderRadius.circular(10),
+                  //       ),
+                  //       width: MyUtility(context).width * 0.35,
+                  //       height: MyUtility(context).height * 0.7,
+                  //       child: Center(
+                  //         child: Column(
+                  //           crossAxisAlignment: CrossAxisAlignment.center,
+                  //           children: [
+                  //             SizedBox(
+                  //               height: MyUtility(context).height * 0.04,
+                  //             ),
+                  //             Text(
+                  //               'Create New Course Content',
+                  //               style: MyTextStyles(context).subHeaderBlack,
+                  //             ),
+                  //             Spacer(),
+                  //             Image.asset(
+                  //               'images/create_course_content.png',
+                  //               width: MyUtility(context).width * 0.5,
+                  //               height: MyUtility(context).height * 0.6,
+                  //               fit: BoxFit.fill,
+                  //             ),
+                  //           ],
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
                   Spacer(),
                   GestureDetector(
                     onTap: () {

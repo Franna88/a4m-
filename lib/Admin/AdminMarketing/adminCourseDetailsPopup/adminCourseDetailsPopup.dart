@@ -19,6 +19,14 @@ class AdminCourseDetailsPopup extends StatefulWidget {
 }
 
 class _AdminCourseDetailsPopupState extends State<AdminCourseDetailsPopup> {
+  late String currentStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    currentStatus = widget.course['status'] ?? 'approved';
+  }
+
   @override
   Widget build(BuildContext context) {
     final changePrice =
@@ -115,6 +123,23 @@ class _AdminCourseDetailsPopupState extends State<AdminCourseDetailsPopup> {
                 ),
                 Row(
                   children: [
+                    MyDropDownMenu(
+                      description: 'Course Status',
+                      customSize: 200,
+                      items: ['Approved', 'Removed'],
+                      textfieldController: TextEditingController(
+                        text:
+                            currentStatus == 'removed' ? 'Removed' : 'Approved',
+                      ),
+                      onChanged: (String? newValue) {
+                        if (newValue == null) return;
+                        setState(() {
+                          currentStatus =
+                              newValue == 'Removed' ? 'removed' : 'approved';
+                        });
+                      },
+                    ),
+                    const Spacer(),
                     Image.asset('images/facebookIcon.png'),
                     const SizedBox(
                       width: 30,
@@ -130,8 +155,7 @@ class _AdminCourseDetailsPopupState extends State<AdminCourseDetailsPopup> {
                       buttonColor: Mycolors().darkGrey,
                       onPressed: () async {
                         String newPrice = changePrice.text;
-                        String courseId = widget
-                            .course['courseId']; // Ensure courseId is available
+                        String courseId = widget.course['courseId'];
 
                         if (courseId == null || courseId.isEmpty) {
                           print("Error: No courseId provided!");
@@ -139,19 +163,39 @@ class _AdminCourseDetailsPopupState extends State<AdminCourseDetailsPopup> {
                         }
 
                         try {
-                          // Update the price in Firebase
+                          // Update both price and status
+                          Map<String, dynamic> updateData = {
+                            'coursePrice': newPrice,
+                            'status': currentStatus,
+                          };
+
                           await FirebaseFirestore.instance
                               .collection('courses')
                               .doc(courseId)
-                              .update({'coursePrice': newPrice});
+                              .update(updateData);
 
-                          print("Course price updated successfully!");
+                          print(
+                              "Course updated successfully with status: $currentStatus");
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(currentStatus == 'removed'
+                                  ? 'Course removed successfully'
+                                  : 'Course updated successfully'),
+                              backgroundColor: Mycolors().green,
+                            ),
+                          );
 
                           // Refresh the parent screen
-                          Navigator.pop(context,
-                              true); // Return true to indicate an update
+                          Navigator.pop(context, true);
                         } catch (e) {
-                          print("Error updating price: $e");
+                          print("Error updating course: $e");
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error updating course: $e'),
+                              backgroundColor: Mycolors().red,
+                            ),
+                          );
                         }
                       },
                       width: 80,
