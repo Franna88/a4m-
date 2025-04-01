@@ -159,16 +159,24 @@ class _AllStudentCoursesState extends State<AllStudentCourses> {
           itemCount: courses.length,
           itemBuilder: (context, index) {
             final course = courses[index];
+            double progress = 0.0;
+
+            // Calculate progress based on completion status
+            if (course['isCompleted'] != null) {
+              progress = course['isCompleted'] ? 1.0 : 0.0;
+            }
+
             return Padding(
               padding: const EdgeInsets.only(top: 10),
               child: StudentCourseItem(
                 courseName: course['courseName'] ?? 'No Name',
                 courseImage: course['courseImageUrl'] ??
-                    'https://via.placeholder.com/200',
+                    'https://picsum.photos/200', // Using picsum for placeholder
                 courseDescription:
                     course['courseDescription'] ?? 'No Description',
                 moduleCount: course['moduleCount'].toString(),
                 assessmentCount: course['assessmentCount'].toString(),
+                progress: progress,
                 onTap: () {
                   widget.onCourseTap(course['id']);
                 },

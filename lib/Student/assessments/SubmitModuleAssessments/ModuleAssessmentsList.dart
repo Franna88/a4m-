@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:a4m/Student/assessments/SubmitModuleAssessments/ModuleContainerSubmit.dart';
+import 'StudentModuleSubmitItem.dart';
 
 class ModuleAssessmentList extends StatefulWidget {
   final String courseId;
@@ -92,47 +92,36 @@ class _ModuleAssessmentListState extends State<ModuleAssessmentList> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: FutureBuilder<List<Map<String, dynamic>>>(
-            future: _modulesFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text('No modules found.'));
-              }
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _modulesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No modules found.'));
+        }
 
-              final modules = snapshot.data!;
+        final modules = snapshot.data!;
 
-              return ListView.builder(
-                itemCount: modules.length,
-                itemBuilder: (context, index) {
-                  final module = modules[index];
+        return ListView.builder(
+          itemCount: modules.length,
+          itemBuilder: (context, index) {
+            final module = modules[index];
 
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: ModuleContainerSubmit(
-                      courseName: module['moduleName'],
-                      courseImage: module['moduleImageUrl'],
-                      courseDescription: module['moduleDescription'],
-                      moduleCount: "1",
-                      assessmentCount:
-                          "${module['submittedAssessments']} / ${module['totalAssessments']}",
-                      onTap: () {
-                        widget.onTap(module['id']);
-                      },
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
+            return StudentModuleSubmitItem(
+              moduleName: module['moduleName'],
+              moduleImage: module['moduleImageUrl'],
+              moduleDescription: module['moduleDescription'],
+              moduleCount: "1",
+              assessmentCount:
+                  "${module['submittedAssessments']} / ${module['totalAssessments']}",
+              onTap: () => widget.onTap(module['id']),
+            );
+          },
+        );
+      },
     );
   }
 }

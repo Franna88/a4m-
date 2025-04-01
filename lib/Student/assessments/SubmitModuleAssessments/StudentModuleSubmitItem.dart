@@ -1,31 +1,32 @@
-import 'package:a4m/CommonComponents/buttons/onHoverButton.dart';
-import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_network/image_network.dart';
-import '../../CommonComponents/displayCardIcons.dart';
-import '../../Themes/Constants/myColors.dart';
+import '../../../Themes/Constants/myColors.dart';
 
-class StudentCourseItem extends StatelessWidget {
-  final String courseName;
-  final String courseImage;
-  final String courseDescription;
+class StudentModuleSubmitItem extends StatefulWidget {
+  final String moduleName;
+  final String moduleImage;
+  final String moduleDescription;
   final String moduleCount;
   final String assessmentCount;
   final Function() onTap;
-  final double progress;
 
-  const StudentCourseItem({
+  const StudentModuleSubmitItem({
     super.key,
-    required this.courseName,
-    required this.courseImage,
-    required this.courseDescription,
+    required this.moduleName,
+    required this.moduleImage,
+    required this.moduleDescription,
     required this.moduleCount,
     required this.assessmentCount,
     required this.onTap,
-    this.progress = 0.0,
   });
 
+  @override
+  State<StudentModuleSubmitItem> createState() =>
+      _StudentModuleSubmitItemState();
+}
+
+class _StudentModuleSubmitItemState extends State<StudentModuleSubmitItem> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -48,7 +49,7 @@ class StudentCourseItem extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
+          onTap: widget.onTap,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -65,19 +66,19 @@ class StudentCourseItem extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildCourseImage(),
+        _buildModuleImage(),
         const SizedBox(width: 24),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildCourseHeader(),
+              _buildModuleHeader(),
               const SizedBox(height: 12),
-              _buildCourseDescription(),
+              _buildModuleDescription(),
               const SizedBox(height: 24),
-              _buildCourseStats(),
+              _buildModuleStats(),
               const SizedBox(height: 24),
-              _buildContinueButton(),
+              _buildSubmitButton(),
             ],
           ),
         ),
@@ -89,20 +90,20 @@ class StudentCourseItem extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildCourseImage(),
+        _buildModuleImage(),
         const SizedBox(height: 16),
-        _buildCourseHeader(),
+        _buildModuleHeader(),
         const SizedBox(height: 12),
-        _buildCourseDescription(),
+        _buildModuleDescription(),
         const SizedBox(height: 16),
-        _buildCourseStats(),
+        _buildModuleStats(),
         const SizedBox(height: 16),
-        _buildContinueButton(),
+        _buildSubmitButton(),
       ],
     );
   }
 
-  Widget _buildCourseImage() {
+  Widget _buildModuleImage() {
     return Stack(
       children: [
         Container(
@@ -122,20 +123,22 @@ class StudentCourseItem extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: ImageNetwork(
-              image: courseImage,
+              image: widget.moduleImage,
               height: 160,
               width: 160,
               fitAndroidIos: BoxFit.cover,
               fitWeb: BoxFitWeb.cover,
               onLoading: Container(
                 color: Colors.grey[200],
-                child: const Center(
-                  child: CircularProgressIndicator(),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Mycolors().green),
+                  ),
                 ),
               ),
               onError: Container(
                 color: Colors.grey[200],
-                child: const Icon(Icons.error, color: Colors.red),
+                child: Icon(Icons.error, color: Colors.red),
               ),
             ),
           ),
@@ -154,7 +157,7 @@ class StudentCourseItem extends StatelessWidget {
               ),
             ),
             child: FractionallySizedBox(
-              widthFactor: progress,
+              widthFactor: 0.0, // No progress for module container
               child: Container(
                 decoration: BoxDecoration(
                   color: Mycolors().green,
@@ -171,13 +174,13 @@ class StudentCourseItem extends StatelessWidget {
     );
   }
 
-  Widget _buildCourseHeader() {
+  Widget _buildModuleHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
           child: Text(
-            courseName,
+            widget.moduleName,
             style: GoogleFonts.poppins(
               fontSize: 24,
               fontWeight: FontWeight.w600,
@@ -192,14 +195,14 @@ class StudentCourseItem extends StatelessWidget {
             vertical: 4,
           ),
           decoration: BoxDecoration(
-            color: Mycolors().green.withOpacity(0.1),
+            color: Colors.orange.withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            '${(progress * 100).toInt()}% Complete',
+            'Pending',
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Mycolors().green,
+              color: Colors.orange,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -208,9 +211,9 @@ class StudentCourseItem extends StatelessWidget {
     );
   }
 
-  Widget _buildCourseDescription() {
+  Widget _buildModuleDescription() {
     return Text(
-      courseDescription,
+      widget.moduleDescription,
       style: GoogleFonts.poppins(
         fontSize: 14,
         color: Colors.grey[600],
@@ -221,30 +224,30 @@ class StudentCourseItem extends StatelessWidget {
     );
   }
 
-  Widget _buildCourseStats() {
+  Widget _buildModuleStats() {
     return Wrap(
       spacing: 24,
       runSpacing: 12,
       children: [
         _buildStatItem(
           Icons.library_books_outlined,
-          '$moduleCount Modules',
+          '${widget.moduleCount} Module',
           Colors.blue,
         ),
         _buildStatItem(
           Icons.assignment_outlined,
-          '$assessmentCount Assessments',
+          '${widget.assessmentCount} Assessments',
           Colors.orange,
         ),
       ],
     );
   }
 
-  Widget _buildContinueButton() {
+  Widget _buildSubmitButton() {
     return Align(
       alignment: Alignment.centerRight,
       child: ElevatedButton(
-        onPressed: onTap,
+        onPressed: widget.onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: Mycolors().green,
           foregroundColor: Colors.white,
@@ -261,7 +264,7 @@ class StudentCourseItem extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Continue',
+              'Submit',
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,

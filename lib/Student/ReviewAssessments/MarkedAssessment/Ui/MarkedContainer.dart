@@ -33,6 +33,25 @@ class _MarkedContainerState extends State<MarkedContainer> {
   /// 🔹 Fetch only **marked** assessments from Firestore
   Future<void> fetchMarkedAssessments() async {
     try {
+      print("Fetching marked assessments for student: ${widget.studentId}");
+      print("Course ID: ${widget.courseId}");
+      print("Module ID: ${widget.moduleId}");
+
+      // First get the module name
+      final moduleDoc = await FirebaseFirestore.instance
+          .collection('courses')
+          .doc(widget.courseId)
+          .collection('modules')
+          .doc(widget.moduleId)
+          .get();
+
+      if (moduleDoc.exists) {
+        setState(() {
+          moduleName = moduleDoc.data()?['moduleName'] ?? 'Unknown Module';
+        });
+      }
+
+      // Then get the student's submissions
       final submissionRef = FirebaseFirestore.instance
           .collection('courses')
           .doc(widget.courseId)
@@ -42,31 +61,44 @@ class _MarkedContainerState extends State<MarkedContainer> {
           .doc(widget.studentId);
 
       final submissionDoc = await submissionRef.get();
+      print("Found submission document: ${submissionDoc.exists}");
+
+      List<Map<String, dynamic>> tempMarkedAssessments = [];
 
       if (submissionDoc.exists) {
         final data = submissionDoc.data();
         if (data != null && data.containsKey('submittedAssessments')) {
           List<dynamic> allAssessments = data['submittedAssessments'];
+          print("Found ${allAssessments.length} submitted assessments");
 
-          // Filter out assessments that have been marked
-          List<Map<String, dynamic>> marked = allAssessments
-              .where((assessment) => assessment.containsKey('mark'))
-              .map((assessment) => {
-                    'assessmentName': assessment['assessmentName'],
-                    'fileUrl': assessment['fileUrl'],
-                    'mark': assessment['mark'],
-                    'comment': assessment['comment'],
-                  })
-              .toList();
-
-          setState(() {
-            markedAssessments = marked;
-          });
+          for (var assessment in allAssessments) {
+            if (assessment is Map<String, dynamic> &&
+                (assessment['mark']?.toString().isNotEmpty ?? false)) {
+              tempMarkedAssessments.add({
+                'name': assessment['assessmentName'] ?? 'Unknown Assessment',
+                'submittedAt': assessment['submittedAt'] != null
+                    ? (assessment['submittedAt'] as Timestamp)
+                        .toDate()
+                        .toString()
+                        .split(' ')[0]
+                    : 'Unknown Date',
+                'mark': assessment['mark'] ?? 'Not Graded',
+                'comment': assessment['comment'] ?? 'No Comment',
+                'fileUrl': assessment['fileUrl'] ?? '',
+              });
+              print("Added marked assessment: ${assessment['assessmentName']}");
+            }
+          }
         }
       }
+
+      setState(() {
+        markedAssessments = tempMarkedAssessments;
+        isLoading = false;
+      });
+      print("Total marked assessments: ${markedAssessments.length}");
     } catch (e) {
-      debugPrint('Error fetching marked assessments: $e');
-    } finally {
+      print("Error fetching marked assessments: $e");
       setState(() {
         isLoading = false;
       });
@@ -75,120 +107,70 @@ class _MarkedContainerState extends State<MarkedContainer> {
 
   @override
   Widget build(BuildContext context) {
-    return isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (markedAssessments.isEmpty) {
+      return Center(
+        child: Text(
+          'No marked assessments found',
+          style: GoogleFonts.montserrat(
+            fontSize: 16,
+            color: Colors.grey[600],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: markedAssessments.length,
+      itemBuilder: (context, index) {
+        final assessment = markedAssessments[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: ListTile(
+            title: Text(
+              assessment['name'],
+              style: GoogleFonts.montserrat(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Module 2: $moduleName',
+                  'Submitted: ${assessment['submittedAt']}',
+                  style: GoogleFonts.montserrat(),
+                ),
+                Text(
+                  'Mark: ${assessment['mark']}',
                   style: GoogleFonts.montserrat(
-                    fontSize: 18,
+                    color: Colors.green,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: markedAssessments.isEmpty
-                      ? const Center(child: Text('No marked assessments yet.'))
-                      : ListView.builder(
-                          itemCount: markedAssessments.length,
-                          itemBuilder: (context, index) {
-                            final assessment = markedAssessments[index];
-                            return _buildMarkedAssessmentCard(assessment);
-                          },
-                        ),
-                ),
+                if (assessment['comment'].isNotEmpty)
+                  Text(
+                    'Comment: ${assessment['comment']}',
+                    style: GoogleFonts.montserrat(),
+                  ),
               ],
             ),
-          );
-  }
-
-  /// 🔹 Build the marked assessment card with **Score, Download & Popup**
-  Widget _buildMarkedAssessmentCard(Map<String, dynamic> assessment) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                assessment['assessmentName'],
-                style: GoogleFonts.montserrat(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            Text(
-              '${assessment['mark']}/100', // 🔹 Display score on the container
-              style: GoogleFonts.montserrat(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-            IconButton(
-              onPressed: () => _showAssessmentPopup(assessment),
-              icon: const Icon(Icons.info, color: Colors.blue),
-            ),
-            IconButton(
-              onPressed: () => _downloadAssessment(assessment['fileUrl']),
-              icon: const Icon(Icons.download, color: Colors.green),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 🔹 **Show Popup with Mark & Comment**
-  void _showAssessmentPopup(Map<String, dynamic> assessment) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Assessment Details", style: GoogleFonts.montserrat()),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Assessment: ${assessment['assessmentName']}",
-                  style: GoogleFonts.montserrat(fontWeight: FontWeight.w500)),
-              const SizedBox(height: 10),
-              Text("Score: ${assessment['mark']}/100",
-                  style: GoogleFonts.montserrat(fontSize: 16)),
-              const SizedBox(height: 10),
-              Text("Comment: ${assessment['comment']}",
-                  style: GoogleFonts.montserrat(fontSize: 16)),
-            ],
+            trailing: assessment['fileUrl'].isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.visibility),
+                    onPressed: () async {
+                      if (await canLaunch(assessment['fileUrl'])) {
+                        await launch(assessment['fileUrl']);
+                      }
+                    },
+                    tooltip: 'View Submission',
+                  )
+                : null,
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Close"),
-            ),
-          ],
         );
       },
     );
-  }
-
-  /// 🔹 **Download File**
-  void _downloadAssessment(String fileUrl) async {
-    if (await canLaunch(fileUrl)) {
-      await launch(fileUrl);
-    } else {
-      debugPrint('Could not open file: $fileUrl');
-    }
   }
 }

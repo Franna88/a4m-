@@ -258,7 +258,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                                             curve: Curves.easeIn,
                                             onPointer: true,
                                             debugPrint: false,
-                                            fullScreen: false,
                                             fitAndroidIos: BoxFit.cover,
                                             fitWeb: BoxFitWeb.cover,
                                             borderRadius:

@@ -51,7 +51,6 @@ class _DashCalendarNoticesState extends State<DashCalendarNotices> {
               color: Mycolors().offWhite,
             ),
           ),
-          
           Row(
             children: [
               Spacer(),
@@ -69,7 +68,6 @@ class _DashCalendarNoticesState extends State<DashCalendarNotices> {
               ),
             ],
           ),
-          
           Expanded(
             child: ListView(
               children: (_reminders[_selectedDay] ?? []).map((reminder) {

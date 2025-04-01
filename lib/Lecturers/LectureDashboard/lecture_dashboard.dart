@@ -11,7 +11,8 @@ import 'package:flutter/material.dart';
 
 class LectureDashboard extends StatefulWidget {
   final String lecturerId;
-  final Function(int, String) changePageWithCourseId;
+  final Function(int, {String courseId, String moduleId})
+      changePageWithCourseId;
 
   final String reminder;
   const LectureDashboard(

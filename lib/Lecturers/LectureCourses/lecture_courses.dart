@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 
 class LectureCourses extends StatefulWidget {
-  final Function(int, String) changePageWithCourseId;
+  final Function(int, {String courseId, String moduleId})
+      changePageWithCourseId;
   final String lecturerId;
 
   const LectureCourses({
@@ -153,7 +154,9 @@ class _LectureCoursesState extends State<LectureCourses> {
                                     print(
                                         "Navigating to Modules for Course ID: ${course['id']}");
                                     widget.changePageWithCourseId(
-                                        6, course['id']);
+                                      6,
+                                      courseId: course['id'],
+                                    );
                                   },
                                   child: LectureCourseContainers(
                                     courseName: course['courseName'],
@@ -168,9 +171,14 @@ class _LectureCoursesState extends State<LectureCourses> {
                                         course['totalAssessments'],
                                     courseImage: course['courseImage'],
                                     onTap: () {},
-                                    changePage: (index) =>
+                                    changePage: (index,
+                                            {String? courseId,
+                                            String? moduleId}) =>
                                         widget.changePageWithCourseId(
-                                            index, course['id']),
+                                      index,
+                                      courseId: courseId ?? course['id'],
+                                      moduleId: moduleId ?? '',
+                                    ),
                                   ),
                                 ),
                             ],

@@ -27,6 +27,10 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
   bool isLoading = true;
 
   Future<void> fetchStudentSubmissions() async {
+    print("Starting fetchStudentSubmissions");
+    print("CourseId: ${widget.courseId}");
+    print("ModuleId: ${widget.moduleId}");
+
     try {
       // Fetch course details
       var courseDoc = await FirebaseFirestore.instance
@@ -34,6 +38,14 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
           .doc(widget.courseId)
           .get();
 
+      if (!courseDoc.exists) {
+        print("Course not found for ID: ${widget.courseId}");
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+      print("Course found: ${courseDoc.data()?['courseName']}");
       courseName = courseDoc.data()?['courseName'] ?? 'No Course Name';
 
       // Fetch module details
@@ -44,9 +56,18 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
           .doc(widget.moduleId)
           .get();
 
-      moduleName = moduleDoc.data()?['moduleName'] ?? 'No Module Name';
+      if (!moduleDoc.exists) {
+        print("Module not found for ID: ${widget.moduleId}");
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+      print("Module found: ${moduleDoc.data()?['moduleName']}");
+      final moduleData = moduleDoc.data();
+      moduleName = moduleData?['moduleName'] ?? 'No Module Name';
 
-      // Fetch submissions from the `submissions` subcollection
+      // Get all submissions from the submissions subcollection
       var submissionsSnapshot = await FirebaseFirestore.instance
           .collection('courses')
           .doc(widget.courseId)
@@ -55,32 +76,54 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
           .collection('submissions')
           .get();
 
+      print("Found ${submissionsSnapshot.docs.length} submission documents");
       List<Map<String, dynamic>> tempSubmissions = [];
 
-      for (var doc in submissionsSnapshot.docs) {
-        final submissionData = doc.data();
+      for (var submissionDoc in submissionsSnapshot.docs) {
+        print("Processing submission for student: ${submissionDoc.id}");
+        if (!submissionDoc.exists) continue;
 
-        String studentName = submissionData['studentName'] ?? 'Unknown Student';
-        Timestamp submittedDate =
-            submissionData['submitted'] ?? Timestamp.now();
+        final submissionData = submissionDoc.data();
+        if (submissionData == null) continue;
 
-        List<dynamic> submittedAssessments =
-            submissionData['submittedAssessments'] ?? [];
+        final submittedAssessments =
+            submissionData['submittedAssessments'] as List<dynamic>?;
+        if (submittedAssessments == null) continue;
+
+        print("Found ${submittedAssessments.length} assessments in submission");
 
         for (var assessment in submittedAssessments) {
+          if (assessment == null || assessment is! Map<String, dynamic>)
+            continue;
+
+          final submittedTimestamp = assessment['submittedAt'];
+          String submittedDate;
+          if (submittedTimestamp is Timestamp) {
+            submittedDate =
+                submittedTimestamp.toDate().toString().split(' ')[0];
+          } else if (submittedTimestamp is String) {
+            submittedDate = submittedTimestamp;
+          } else {
+            submittedDate = 'Unknown Date';
+          }
+
           tempSubmissions.add({
-            'student': studentName,
-            'date': submittedDate.toDate().toString().split(' ')[0],
+            'student': assessment['studentName'] ?? 'Unknown Student',
+            'date': submittedDate,
             'course': courseName,
             'module': moduleName,
-            'assessment': assessment['assessmentName'] ?? '',
+            'assessment': assessment['assessmentName'] ?? 'Unknown Assessment',
             'fileUrl': assessment['fileUrl'] ?? '',
             'mark': assessment['mark'] ?? '',
             'comment': assessment['comment'] ?? '',
-            'submissionDocId': doc.id, // Reference to submission doc
+            'submissionId': submissionDoc.id,
+            'assessmentIndex': submittedAssessments.indexOf(assessment),
           });
+          print("Added submission for student: ${assessment['studentName']}");
         }
       }
+
+      print("Total processed submissions: ${tempSubmissions.length}");
 
       setState(() {
         submissions = tempSubmissions;
@@ -173,7 +216,7 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
           .collection('modules')
           .doc(widget.moduleId)
           .collection('submissions')
-          .doc(submission['submissionDocId']);
+          .doc(submission['submissionId']);
 
       DocumentSnapshot doc = await submissionRef.get();
       if (!doc.exists) {
@@ -181,138 +224,160 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
         return;
       }
 
-      List<dynamic> submittedAssessments = doc['submittedAssessments'] ?? [];
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      List<dynamic> submittedAssessments =
+          List.from(data['submittedAssessments'] ?? []);
+      int assessmentIndex = submission['assessmentIndex'];
 
-      for (var assessment in submittedAssessments) {
-        if (assessment['assessmentName'] == submission['assessment']) {
-          assessment['mark'] = mark;
-          assessment['comment'] = comment;
-        }
+      if (assessmentIndex >= 0 &&
+          assessmentIndex < submittedAssessments.length) {
+        submittedAssessments[assessmentIndex] = {
+          ...submittedAssessments[assessmentIndex],
+          'mark': mark,
+          'comment': comment,
+        };
+
+        await submissionRef.update({
+          'submittedAssessments': submittedAssessments,
+        });
+
+        // Update local state
+        setState(() {
+          submissions = submissions.map((s) {
+            if (s['submissionId'] == submission['submissionId'] &&
+                s['assessmentIndex'] == assessmentIndex) {
+              return {
+                ...s,
+                'mark': mark,
+                'comment': comment,
+              };
+            }
+            return s;
+          }).toList();
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Grade updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
-
-      await submissionRef.update({
-        'submittedAssessments': submittedAssessments,
-      });
-
-      setState(() {
-        submissions = submissions.map((s) {
-          if (s['assessment'] == submission['assessment'] &&
-              s['student'] == submission['student']) {
-            return {...s, 'mark': mark, 'comment': comment};
-          }
-          return s;
-        }).toList();
-      });
-
-      print("Grade updated successfully!");
     } catch (e) {
       print("Error updating grade: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating grade: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   void initState() {
     super.initState();
-    fetchStudentSubmissions();
+    if (widget.courseId.isNotEmpty && widget.moduleId.isNotEmpty) {
+      fetchStudentSubmissions();
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return isLoading
         ? const Center(child: CircularProgressIndicator())
-        : Table(
-            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-            children: [
-              TableRow(
-                decoration: BoxDecoration(
-                  color: Mycolors().green,
-                  border: const Border(bottom: BorderSide(color: Colors.black)),
+        : submissions.isEmpty
+            ? const Center(
+                child: Text(
+                  'No submissions found for this module.',
+                  style: TextStyle(fontSize: 16),
                 ),
-                children: [
-                  _buildHeaderCell('Student'),
-                  _buildHeaderCell('Date'),
-                  _buildHeaderCell('Course'),
-                  _buildHeaderCell('Module'),
-                  _buildHeaderCell('Download'),
-                  _buildHeaderCell('Grade'),
-                ],
-              ),
-              ...submissions.map((submission) {
-                return TableRow(
+              )
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildCell(submission['student']),
-                    _buildCell(submission['date']),
-                    _buildCell(submission['course']),
-                    _buildCell(submission['module']),
-                    _buildButtonCell(
-                      icon: Icons.download_sharp,
-                      color: Colors.blue.shade700,
-                      onPressed: () => _downloadFile(submission['fileUrl']),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'Student Submissions - $moduleName',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                    _buildButtonCell(
-                      icon: Icons.grade,
-                      color: Colors.green.shade700,
-                      onPressed: () => _openGradeDialog(submission),
+                    DataTable(
+                      columns: const [
+                        DataColumn(label: Text('Student')),
+                        DataColumn(label: Text('Submission Date')),
+                        DataColumn(label: Text('Mark')),
+                        DataColumn(label: Text('Comment')),
+                        DataColumn(label: Text('Actions')),
+                      ],
+                      rows: submissions.map((submission) {
+                        return DataRow(
+                          cells: [
+                            DataCell(Text(submission['student'] ?? 'Unknown',
+                                style: GoogleFonts.montserrat())),
+                            DataCell(Text(submission['date'] ?? '',
+                                style: GoogleFonts.montserrat())),
+                            DataCell(Text(submission['mark'] ?? 'Not graded',
+                                style: GoogleFonts.montserrat())),
+                            DataCell(
+                              Text(
+                                submission['comment'] ?? 'No comment',
+                                style: GoogleFonts.montserrat(),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            DataCell(
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  if (submission['fileUrl']?.isNotEmpty ??
+                                      false)
+                                    IconButton(
+                                      icon: const Icon(Icons.visibility),
+                                      onPressed: () async {
+                                        final url = submission['fileUrl'];
+                                        if (url != null && url.isNotEmpty) {
+                                          if (await canLaunch(url)) {
+                                            await launch(url);
+                                          }
+                                        }
+                                      },
+                                      tooltip: 'View Submission',
+                                    ),
+                                  IconButton(
+                                    icon: Icon(
+                                      submission['mark']?.isNotEmpty ?? false
+                                          ? Icons.edit
+                                          : Icons.grade,
+                                      color: Mycolors().green,
+                                    ),
+                                    onPressed: () =>
+                                        _openGradeDialog(submission),
+                                    tooltip:
+                                        submission['mark']?.isNotEmpty ?? false
+                                            ? 'Edit Grade'
+                                            : 'Grade Submission',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
                     ),
                   ],
-                );
-              }).toList(),
-            ],
-          );
-  }
-
-  Widget _buildHeaderCell(String text) {
-    return TableStructure(
-      child: Text(
-        text,
-        style: GoogleFonts.montserrat(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCell(String text) {
-    return TableStructure(
-      child: Text(
-        text,
-        style: GoogleFonts.montserrat(
-          color: Colors.black,
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildButtonCell({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onPressed,
-  }) {
-    return TableStructure(
-      child: Container(
-        width: 35,
-        height: 35,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: IconButton(
-          onPressed: onPressed,
-          icon: Icon(icon, color: Colors.white),
-          iconSize: 20,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _downloadFile(String url) async {
-    if (url.isNotEmpty && await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url));
-    } else {
-      print("Failed to launch URL: $url");
-    }
+                ),
+              );
   }
 }

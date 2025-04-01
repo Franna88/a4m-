@@ -248,28 +248,40 @@ class _CertificatesStudentContainerState
             ),
             content: Container(
               width: 400,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    padding: EdgeInsets.all(15),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
                       children: [
                         _detailRow('Student', studentName),
-                        SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         _detailRow('Course', courseName),
-                        SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         _detailRow('Completion Date', completionDate),
-                        SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         _detailRow('Price', widget.price),
                       ],
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [

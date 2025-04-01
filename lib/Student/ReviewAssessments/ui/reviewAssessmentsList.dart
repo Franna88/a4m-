@@ -4,12 +4,12 @@ import 'package:a4m/Student/ReviewAssessments/ui/reviewAssessmentsItem.dart';
 
 class ReviewAssessmentsList extends StatefulWidget {
   final void Function(String moduleId) onTap;
-  final String courseId; // 🔹 Ensure we get the course ID
+  final String courseId;
 
   const ReviewAssessmentsList({
     super.key,
     required this.onTap,
-    required this.courseId, // Receive courseId
+    required this.courseId,
   });
 
   @override
@@ -17,118 +17,85 @@ class ReviewAssessmentsList extends StatefulWidget {
 }
 
 class _ReviewAssessmentsListState extends State<ReviewAssessmentsList> {
-  late Future<List<Map<String, dynamic>>> _modulesFuture;
+  Future<List<Map<String, dynamic>>>? _modulesFuture;
+  bool _mounted = true;
 
   @override
   void initState() {
     super.initState();
-    _modulesFuture = fetchModulesForCourse();
+    _modulesFuture = fetchModules();
   }
 
-  /// 🔹 Fetch modules and their assessment details for the selected course
-  Future<List<Map<String, dynamic>>> fetchModulesForCourse() async {
+  @override
+  void dispose() {
+    _mounted = false;
+    super.dispose();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchModules() async {
+    if (!_mounted) return [];
+
     try {
-      QuerySnapshot moduleSnapshot = await FirebaseFirestore.instance
+      final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('courses')
           .doc(widget.courseId)
           .collection('modules')
           .get();
 
-      List<Map<String, dynamic>> modules = [];
+      if (!_mounted) return [];
 
-      for (var module in moduleSnapshot.docs) {
-        final moduleData = module.data() as Map<String, dynamic>;
-
-        int totalAssessments = 0;
-        bool isPassed = false;
-
-        if (moduleData['assessmentsPdfUrl'] != null &&
-            moduleData['assessmentsPdfUrl'].isNotEmpty) {
-          totalAssessments++;
-        }
-
-        if (moduleData['testSheetPdfUrl'] != null &&
-            moduleData['testSheetPdfUrl'].isNotEmpty) {
-          totalAssessments++;
-        }
-
-        // Fetch review status (if module is passed/failed)
-        DocumentSnapshot reviewDoc = await FirebaseFirestore.instance
-            .collection('courses')
-            .doc(widget.courseId)
-            .collection('modules')
-            .doc(module.id)
-            .collection('reviews')
-            .doc(widget
-                .courseId) // Assuming reviews are stored per course/module
-            .get();
-
-        if (reviewDoc.exists) {
-          isPassed = reviewDoc['isPassed'] ?? false;
-        }
-
-        modules.add({
-          'id': module.id,
-          'moduleName': moduleData['moduleName'] ?? 'No Name',
-          'moduleImageUrl':
-              moduleData['moduleImageUrl'] ?? 'https://via.placeholder.com/200',
-          'moduleDescription':
-              moduleData['moduleDescription'] ?? 'No Description',
-          'totalAssessments': totalAssessments,
-          'isPassed': isPassed,
-        });
-      }
-
-      return modules;
+      return snapshot.docs
+          .map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>})
+          .toList();
     } catch (e) {
-      debugPrint('❌ Error fetching modules: $e');
+      debugPrint('Error fetching modules: $e');
       return [];
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: FutureBuilder<List<Map<String, dynamic>>>(
-            future: _modulesFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('❌ Error: ${snapshot.error}'));
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text('⚠️ No modules found.'));
-              }
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _modulesFuture,
+      builder: (context, snapshot) {
+        if (!_mounted) return const SizedBox();
 
-              final modules = snapshot.data!;
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error: ${snapshot.error}',
+              style: const TextStyle(color: Colors.red),
+            ),
+          );
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No modules found.'));
+        }
 
-              return ListView.builder(
-                itemCount: modules.length,
-                itemBuilder: (context, index) {
-                  final module = modules[index];
+        final modules = snapshot.data!;
 
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: ReviewAssessmentsItem(
-                      moduleName: module['moduleName'],
-                      moduleImage: module['moduleImageUrl'],
-                      moduleDescription: module['moduleDescription'],
-                      moduleCount: "1",
-                      assessmentCount: module['totalAssessments'].toString(),
-                      isPassed: module['isPassed'],
-                      onTap: () {
-                        widget.onTap(module['id']);
-                      },
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
+        return ListView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: modules.length,
+          itemBuilder: (context, index) {
+            final module = modules[index];
+
+            return ReviewAssessmentsItem(
+              moduleName: module['moduleName'] ?? 'No Name',
+              moduleImage:
+                  module['moduleImageUrl'] ?? 'https://picsum.photos/400',
+              moduleDescription:
+                  module['moduleDescription'] ?? 'No Description',
+              moduleCount: "1",
+              assessmentCount:
+                  (module['assessmentsPdfUrl'] != null ? 1 : 0).toString(),
+              isPassed: false,
+              onTap: () => widget.onTap(module['id']),
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 
 class NewlySubmitedModules extends StatefulWidget {
   final String lecturerId;
-  final Function(int, String) changePageWithCourseId;
+  final Function(int, {String courseId, String moduleId})
+      changePageWithCourseId;
 
   const NewlySubmitedModules(
       {Key? key,
@@ -31,6 +32,13 @@ class _NewlySubmitedModulesState extends State<NewlySubmitedModules> {
   Future<void> fetchRecentSubmissions() async {
     print("Fetching recent submissions for lecturerId: ${widget.lecturerId}");
     try {
+      // Validate lecturer ID
+      if (widget.lecturerId.isEmpty) {
+        print("Error: Lecturer ID is empty");
+        setState(() => isLoading = false);
+        return;
+      }
+
       final DateTime oneWeekAgo =
           DateTime.now().subtract(const Duration(days: 7));
       print("Looking for submissions after: $oneWeekAgo");
@@ -44,7 +52,11 @@ class _NewlySubmitedModulesState extends State<NewlySubmitedModules> {
       print("Fetched ${coursesSnapshot.docs.length} courses.");
 
       for (var courseDoc in coursesSnapshot.docs) {
+        // Skip if course doc is invalid
+        if (!courseDoc.exists) continue;
+
         final courseData = courseDoc.data();
+        if (courseData == null) continue;
 
         // Check if the lecturer is assigned
         final assignedLecturers =
@@ -57,32 +69,46 @@ class _NewlySubmitedModulesState extends State<NewlySubmitedModules> {
           if (lecturerFound) {
             print("Course '${courseData['courseName']}' assigned to lecturer.");
 
+            // Skip if course ID is empty
+            if (courseDoc.id.isEmpty) continue;
+
             // Step 2: Get modules in the course
             final modulesSnapshot =
                 await courseDoc.reference.collection('modules').get();
 
             for (var moduleDoc in modulesSnapshot.docs) {
+              // Skip if module doc is invalid
+              if (!moduleDoc.exists) continue;
+
               final moduleData = moduleDoc.data();
+              if (moduleData == null) continue;
+
               final studentAssessments =
                   moduleData['studentAssessment'] as List<dynamic>?;
 
               if (studentAssessments != null) {
                 for (var submission in studentAssessments) {
-                  DateTime submissionDate =
-                      (submission['submitted'] as Timestamp).toDate();
+                  if (submission == null || submission is! Map<String, dynamic>)
+                    continue;
+
+                  final submittedTimestamp =
+                      submission['submitted'] as Timestamp?;
+                  if (submittedTimestamp == null) continue;
+
+                  DateTime submissionDate = submittedTimestamp.toDate();
 
                   if (submissionDate.isAfter(oneWeekAgo)) {
                     tempSubmissions.add({
                       'name': submission['name'] ?? 'Unknown Student',
-                      'moduleName': courseData['courseName'] ??
-                          'Unknown Course', // Course Name first
-                      'moduleNumber': moduleData['moduleName'] ??
-                          'Unknown Module', // Module Name second
+                      'moduleName':
+                          courseData['courseName'] ?? 'Unknown Course',
+                      'moduleNumber':
+                          moduleData['moduleName'] ?? 'Unknown Module',
                       'moduleType': 'Assessment',
                       'submitted': submissionDate.toString(),
                       'mark': submission['mark'] ?? 'N/A',
                       'comment': submission['comment'] ?? '',
-                      'courseId': courseDoc.id, // Add course ID
+                      'courseId': courseDoc.id,
                     });
 
                     print(
@@ -164,8 +190,9 @@ class _NewlySubmitedModulesState extends State<NewlySubmitedModules> {
                                 onTap: () {
                                   print(
                                       "Navigating to Modules for Course ID: ${module['courseId']}");
-                                  widget.changePageWithCourseId(
-                                      6, module['courseId']);
+                                  widget.changePageWithCourseId(6,
+                                      courseId: module['courseId'],
+                                      moduleId: '');
                                 },
                               ),
                             );

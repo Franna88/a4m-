@@ -25,19 +25,16 @@ class _StudentMainState extends State<StudentMain> {
   var pageIndex = 0;
   String selectedCourseId = '';
   String moduleId = '';
-
-  void changePageWithCourseId(int value, String courseId,
-      [String moduleId = '']) {
-    setState(() {
-      pageIndex = value;
-      selectedCourseId = courseId;
-      this.moduleId = moduleId;
-    });
-  }
+  late final List<Widget> _pages;
 
   @override
-  Widget build(BuildContext context) {
-    var pages = [
+  void initState() {
+    super.initState();
+    _initializePages();
+  }
+
+  void _initializePages() {
+    _pages = [
       MyCoursesMain(
         changePageWithCourseId: changePageWithCourseId,
         studentId: widget.studentId,
@@ -82,10 +79,51 @@ class _StudentMainState extends State<StudentMain> {
       ), // 10 - Review Assessments
       const CourseEvaluationPage(), // 11 - Course Evaluation
     ];
+  }
 
+  void changePageWithCourseId(int value, String courseId,
+      [String moduleId = '']) {
+    setState(() {
+      pageIndex = value;
+      selectedCourseId = courseId;
+      this.moduleId = moduleId;
+      // Update pages that depend on courseId and moduleId
+      _updateDynamicPages();
+    });
+  }
+
+  void _updateDynamicPages() {
+    // Update only the pages that depend on courseId and moduleId
+    _pages[5] = SubmitAssessment(
+      courseId: selectedCourseId,
+      moduleId: moduleId,
+      studentId: widget.studentId,
+    );
+    _pages[6] = MarkedAssessment(
+      courseId: selectedCourseId,
+      moduleId: moduleId,
+      studentId: widget.studentId,
+    );
+    _pages[7] = StudentViewCourse(
+      courseId: selectedCourseId,
+    );
+    _pages[8] = SubmitModuleAssessments(
+      changePageWithCourseId: changePageWithCourseId,
+      selectedCourseId: selectedCourseId,
+      studentID: widget.studentId,
+    );
+    _pages[10] = ReviewAssessments(
+      changePageWithCourseId: changePageWithCourseId,
+      courseId: selectedCourseId,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return StudentNavBar(
-      child: pages[pageIndex],
+      child: _pages[pageIndex],
       changePage: (value) => changePageWithCourseId(value, ''),
+      initialIndex: pageIndex,
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:a4m/Student/ReviewAssessments/ui/reviewAssessmentsList.dart';
 import 'package:flutter/material.dart';
-import '../../LandingPage/CourseListPage/ui/categoryNameStack.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../Themes/Constants/myColors.dart';
 import '../../myutility.dart';
 
 class ReviewAssessments extends StatefulWidget {
@@ -21,24 +22,56 @@ class ReviewAssessments extends StatefulWidget {
 class _ReviewAssessmentsState extends State<ReviewAssessments> {
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CategoryNameStack(text: 'My Courses'),
-          const SizedBox(height: 15),
-          SizedBox(
-            width: MyUtility(context).width - 360,
-            height: MyUtility(context).height - 205,
-            child: ReviewAssessmentsList(
-              courseId: widget.courseId,
-              onTap: (moduleId) {
-                widget.changePageWithCourseId(6, widget.courseId, moduleId);
-              },
+    return Container(
+      width: MyUtility(context).width - 360,
+      height: MyUtility(context).height - 80,
+      padding: const EdgeInsets.all(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Results',
+                style: GoogleFonts.poppins(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Mycolors().green,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: ReviewAssessmentsList(
+                  courseId: widget.courseId,
+                  onTap: (moduleId) {
+                    widget.changePageWithCourseId(6, widget.courseId, moduleId);
+                  },
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

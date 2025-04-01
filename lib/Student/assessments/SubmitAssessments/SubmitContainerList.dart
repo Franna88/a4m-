@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart'; // Required for kIsWeb
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../Constants/myColors.dart';
 
 class SubmitContainerList extends StatefulWidget {
   final String courseId;
@@ -131,7 +132,7 @@ class _SubmitContainerListState extends State<SubmitContainerList> {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
-        withData: kIsWeb, // Get bytes on web
+        withData: kIsWeb,
       );
 
       if (result != null) {
@@ -164,7 +165,12 @@ class _SubmitContainerListState extends State<SubmitContainerList> {
         debugPrint('No file selected.');
       }
     } catch (e) {
-      debugPrint('Error picking or uploading file: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error uploading file: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       setState(() {
         isUploading = false;
@@ -177,7 +183,10 @@ class _SubmitContainerListState extends State<SubmitContainerList> {
       Map<String, dynamic> submission, String downloadUrl) async {
     if (studentName == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: Student name not loaded.')),
+        const SnackBar(
+          content: Text('Error: Student name not loaded.'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -202,134 +211,203 @@ class _SubmitContainerListState extends State<SubmitContainerList> {
         }
       }
 
-      Map<String, dynamic> newSubmission = {
-        'fileUrl': downloadUrl,
-        'assessmentName': submission['assessment'],
-        'submittedFile': submission['type'],
-        'submittedDate': Timestamp.now(),
-        'documentRef': submissionRef, // Store Document Reference
-      };
+      // Remove existing submission of the same file if it exists
+      existingFiles.removeWhere(
+        (file) => file['assessmentName'] == submission['assessment'],
+      );
 
-      existingFiles.add(newSubmission);
+      // Add new submission with current timestamp
+      existingFiles.add({
+        'assessmentName': submission['assessment'],
+        'fileUrl': downloadUrl,
+        'submittedAt': Timestamp.now(),
+        'studentName': studentName,
+      });
 
       await submissionRef.set({
-        'studentId': widget.studentId,
-        'studentName': studentName,
-        'submitted': Timestamp.now(),
         'submittedAssessments': existingFiles,
-      }, SetOptions(merge: true));
-
-      setState(() {
-        // Change "Pending" to "Submitted"
-        submissions = submissions.map((s) {
-          if (s['assessment'] == submission['assessment']) {
-            return {...s, 'status': 'Submitted'}; // Update status
-          }
-          return s;
-        }).toList();
+        'lastUpdated': FieldValue.serverTimestamp(),
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content:
-                Text('${submission['assessment']} submitted successfully')),
+          content: Text('Successfully submitted ${submission['assessment']}'),
+          backgroundColor: Mycolors().green,
+        ),
       );
+
+      // Refresh the submissions list
+      await fetchStudentSubmissions();
     } catch (e) {
-      debugPrint('Error submitting assessment: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error submitting assessment: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Module 2: Production Technology',
-                  style: GoogleFonts.montserrat(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: submissions.length,
-                    itemBuilder: (context, index) {
-                      final submission = submissions[index];
-                      return _buildSubmissionCard(submission);
-                    },
-                  ),
-                ),
-              ],
-            ),
-          );
-  }
+    if (isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
 
-  Widget _buildSubmissionCard(Map<String, dynamic> submission) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    if (submissions.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Expanded(
-              child: Text(
-                submission['assessment'],
-                style: GoogleFonts.montserrat(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black),
-              ),
+            Icon(
+              Icons.assignment_outlined,
+              size: 64,
+              color: Colors.grey[400],
             ),
+            const SizedBox(height: 16),
             Text(
-              submission.containsKey('status') &&
-                      submission['status'] == 'Submitted'
-                  ? 'Submitted'
-                  : 'Pending',
-              style: GoogleFonts.montserrat(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: submission.containsKey('status') &&
-                          submission['status'] == 'Submitted'
-                      ? Colors.green
-                      : Colors.orange),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 10, right: 10),
-              child: Container(
-                width: 5,
-                height: 40,
-                color: Colors.grey[400],
+              'No assessments available',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                color: Colors.grey[600],
               ),
             ),
-            isUploading && uploadingFile == submission['assessment']
-                ? const CircularProgressIndicator()
-                : Container(
-                    width: 35,
-                    height: 35,
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: IconButton(
-                      onPressed: () => pickAndUploadFile(submission),
-                      icon: const Icon(Icons.upload, color: Colors.white),
-                      iconSize: 20,
-                    ),
-                  ),
           ],
         ),
-      ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: submissions.length,
+      itemBuilder: (context, index) {
+        final submission = submissions[index];
+        final isUploadingThis =
+            isUploading && uploadingFile == submission['assessment'];
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap:
+                  isUploadingThis ? null : () => pickAndUploadFile(submission),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: submission['status'] == 'Submitted'
+                            ? Mycolors().green.withOpacity(0.1)
+                            : Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.description_outlined,
+                        color: submission['status'] == 'Submitted'
+                            ? Mycolors().green
+                            : Colors.orange,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            submission['assessment'],
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            submission['type'],
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: submission['status'] == 'Submitted'
+                            ? Mycolors().green.withOpacity(0.1)
+                            : Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isUploadingThis)
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  submission['status'] == 'Submitted'
+                                      ? Mycolors().green
+                                      : Colors.orange,
+                                ),
+                              ),
+                            )
+                          else
+                            Icon(
+                              submission['status'] == 'Submitted'
+                                  ? Icons.check_circle_outline
+                                  : Icons.pending_outlined,
+                              size: 16,
+                              color: submission['status'] == 'Submitted'
+                                  ? Mycolors().green
+                                  : Colors.orange,
+                            ),
+                          const SizedBox(width: 4),
+                          Text(
+                            submission['status'],
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: submission['status'] == 'Submitted'
+                                  ? Mycolors().green
+                                  : Colors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

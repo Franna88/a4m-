@@ -168,7 +168,6 @@ class _AdminMainNavBarState extends State<ContentDevNavBar> {
                                   curve: Curves.easeIn,
                                   onPointer: true,
                                   debugPrint: false,
-                                  fullScreen: false,
                                   fitAndroidIos: BoxFit.cover,
                                   fitWeb: BoxFitWeb.cover,
                                   onError: CircleAvatar(

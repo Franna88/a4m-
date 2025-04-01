@@ -45,7 +45,7 @@ class _CourseEvaluationFormState extends State<CourseEvaluationForm> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Course Evaluation - ${widget.courseName}',
+          'Evaluate - ${widget.courseName}',
           style: GoogleFonts.poppins(color: Colors.white),
         ),
         backgroundColor: Mycolors().darkTeal,

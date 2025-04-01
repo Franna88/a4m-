@@ -193,7 +193,6 @@ class _FacilitatorNavBarState extends State<FacilitatorNavBar> {
                                   curve: Curves.easeIn,
                                   onPointer: true,
                                   debugPrint: false,
-                                  fullScreen: false,
                                   fitAndroidIos: BoxFit.cover,
                                   fitWeb: BoxFitWeb.cover,
                                   onError: CircleAvatar(

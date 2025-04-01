@@ -32,52 +32,63 @@ class _LectureHomePageState extends State<LectureHomePage> {
   String selectedCourseId = ''; // To store the passed course ID
   String selectedModuleId = ''; // To store the passed module ID
 
-  // Modify changePage to optionally accept a courseId
+  @override
+  void initState() {
+    super.initState();
+    assert(widget.lecturerId.isNotEmpty, 'Lecturer ID must not be empty');
+    print(
+        'Initializing LectureHomePage with lecturer ID: ${widget.lecturerId}');
+  }
+
+  // Updated changePage to use named parameters consistently
   void changePage(int value, {String courseId = '', String moduleId = ''}) {
+    if (value < 0 || value >= pages.length) {
+      print('Invalid page index: $value');
+      return;
+    }
+
     setState(() {
       pageIndex = value;
-      if (courseId.isNotEmpty) {
-        selectedCourseId = courseId;
-      }
-      if (moduleId.isNotEmpty) {
-        selectedModuleId = moduleId;
-      }
+      selectedCourseId = courseId;
+      selectedModuleId = moduleId;
       print(
-          "Updated Course ID: $selectedCourseId, Module ID: $selectedModuleId");
+          "Navigation - Page: $value, Course ID: $selectedCourseId, Module ID: $selectedModuleId");
     });
   }
 
+  late final List<Widget> pages = [
+    LectureDashboard(
+      lecturerId: widget.lecturerId,
+      changePageWithCourseId: (page,
+          {String courseId = '', String moduleId = ''}) {
+        changePage(page, courseId: courseId, moduleId: moduleId);
+      },
+    ),
+    LectureCourses(
+      changePageWithCourseId: (int newPage,
+          {String courseId = '', String moduleId = ''}) {
+        changePage(newPage, courseId: courseId, moduleId: moduleId);
+      },
+      lecturerId: widget.lecturerId,
+    ),
+    LectureStudent(
+      lecturerId: widget.lecturerId,
+      changePage: changePage,
+    ),
+    LecturePresentations(),
+    LectureMessages(),
+    ViewModulesComplete(
+      courseId: selectedCourseId,
+      moduleId: selectedModuleId,
+    ),
+    LectureModulesContainer(
+      changePage: changePage,
+      courseId: selectedCourseId,
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    var pages = [
-      LectureDashboard(
-        lecturerId: widget.lecturerId,
-        changePageWithCourseId: (int newPage, String courseId) {
-          changePage(newPage, courseId: courseId); // Pass the courseId
-        },
-      ),
-      LectureCourses(
-        changePageWithCourseId: (int newPage, String courseId) {
-          changePage(newPage, courseId: courseId); // Pass the courseId
-        },
-        lecturerId: widget.lecturerId,
-      ),
-      LectureStudent(
-        lecturerId: widget.lecturerId,
-        changePage: changePage,
-      ),
-      LecturePresentations(),
-      LectureMessages(),
-      ViewModulesComplete(
-        courseId: selectedCourseId,
-        moduleId: selectedModuleId,
-      ),
-      LectureModulesContainer(
-        changePage: changePage,
-        courseId: selectedCourseId, // Use the selected courseId here
-      ),
-    ];
-
     return LectureNavbar(
       child: pages[pageIndex],
       changePage: (value) => changePage(value),

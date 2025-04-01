@@ -1,15 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:a4m/Student/assessments/assessmentsContainer.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ReviewedCoursesList extends StatefulWidget {
   final void Function(String courseId) onTap;
   final String studentId;
+  final bool?
+      filterByCompletion; // null = show all, false = active, true = completed
 
   const ReviewedCoursesList({
     super.key,
     required this.onTap,
     required this.studentId,
+    this.filterByCompletion,
   });
 
   @override
@@ -54,6 +58,7 @@ class _ReviewedCoursesListState extends State<ReviewedCoursesList> {
       for (var course in studentCourses) {
         int moduleCount = 0;
         int assessmentCount = 0;
+        int completedAssessments = 0;
 
         // Fetch the modules subcollection for each course
         QuerySnapshot moduleSnapshot = await FirebaseFirestore.instance
@@ -67,22 +72,61 @@ class _ReviewedCoursesListState extends State<ReviewedCoursesList> {
         for (var module in moduleSnapshot.docs) {
           final moduleData = module.data() as Map<String, dynamic>;
 
-          // Count `assessmentsPdfUrl` if it exists and is not empty
+          // Count assessments
           if (moduleData['assessmentsPdfUrl'] != null &&
               moduleData['assessmentsPdfUrl'].isNotEmpty) {
             assessmentCount++;
+
+            // Check if assessment is completed
+            QuerySnapshot reviewSnapshot = await FirebaseFirestore.instance
+                .collection('courses')
+                .doc(course['id'])
+                .collection('modules')
+                .doc(module.id)
+                .collection('reviews')
+                .where('studentId', isEqualTo: widget.studentId)
+                .get();
+
+            if (reviewSnapshot.docs.isNotEmpty) {
+              completedAssessments++;
+            }
           }
 
-          // Count `testSheetPdfUrl` if it exists and is not empty
+          // Count test sheets
           if (moduleData['testSheetPdfUrl'] != null &&
               moduleData['testSheetPdfUrl'].isNotEmpty) {
             assessmentCount++;
+
+            // Check if test is completed
+            QuerySnapshot testReviewSnapshot = await FirebaseFirestore.instance
+                .collection('courses')
+                .doc(course['id'])
+                .collection('modules')
+                .doc(module.id)
+                .collection('testReviews')
+                .where('studentId', isEqualTo: widget.studentId)
+                .get();
+
+            if (testReviewSnapshot.docs.isNotEmpty) {
+              completedAssessments++;
+            }
           }
         }
 
         // Add counts to the course map
         course['moduleCount'] = moduleCount;
         course['assessmentCount'] = assessmentCount;
+        course['completedAssessments'] = completedAssessments;
+        course['isCompleted'] =
+            completedAssessments == assessmentCount && assessmentCount > 0;
+      }
+
+      // Filter courses based on completion status if specified
+      if (widget.filterByCompletion != null) {
+        studentCourses = studentCourses
+            .where(
+                (course) => course['isCompleted'] == widget.filterByCompletion)
+            .toList();
       }
 
       return studentCourses;
@@ -94,42 +138,80 @@ class _ReviewedCoursesListState extends State<ReviewedCoursesList> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _studentCoursesFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('❌ Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('⚠️ No courses found.'));
-        }
-
-        final courses = snapshot.data!;
-
-        return ListView.builder(
-          itemCount: courses.length,
-          itemBuilder: (context, index) {
-            final course = courses[index];
-
-            return Padding(
-              padding: const EdgeInsets.only(top: 10),
-              child: AssessmentsContainer(
-                courseName: course['courseName'] ?? 'No Name',
-                courseImage: course['courseImageUrl'] ??
-                    'https://via.placeholder.com/200',
-                courseDescription:
-                    course['courseDescription'] ?? 'No Description',
-                moduleCount: course['moduleCount'].toString(),
-                assessmentCount: course['assessmentCount'].toString(),
-                onTap: () {
-                  widget.onTap(course['id']);
-                },
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _studentCoursesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                '❌ Error: ${snapshot.error}',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Colors.red,
+                ),
               ),
             );
-          },
-        );
-      },
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(
+              child: Text(
+                widget.filterByCompletion == null
+                    ? '⚠️ No courses found.'
+                    : widget.filterByCompletion!
+                        ? '⚠️ No completed courses found.'
+                        : '⚠️ No active courses found.',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            );
+          }
+
+          final courses = snapshot.data!;
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: courses.length,
+            itemBuilder: (context, index) {
+              final course = courses[index];
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: AssessmentsContainer(
+                  courseName: course['courseName'] ?? 'No Name',
+                  courseImage: course['courseImageUrl'] ??
+                      'https://via.placeholder.com/200',
+                  courseDescription:
+                      course['courseDescription'] ?? 'No Description',
+                  moduleCount: course['moduleCount'].toString(),
+                  assessmentCount: course['assessmentCount'].toString(),
+                  completedAssessments:
+                      course['completedAssessments'].toString(),
+                  isCompleted: course['isCompleted'],
+                  onTap: () {
+                    widget.onTap(course['id']);
+                  },
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

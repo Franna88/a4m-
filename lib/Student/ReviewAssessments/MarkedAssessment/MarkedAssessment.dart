@@ -56,7 +56,7 @@ class _MarkedAssessmentState extends State<MarkedAssessment> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
                       child: Text(
-                        'Marked Assessments',
+                        'Results',
                         style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 20,
