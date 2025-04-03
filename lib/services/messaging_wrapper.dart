@@ -9,10 +9,10 @@ class MessagingWrapper extends StatefulWidget {
   final String userId;
 
   const MessagingWrapper({
-    Key? key,
+    super.key,
     required this.userRole,
     required this.userId,
-  }) : super(key: key);
+  });
 
   @override
   State<MessagingWrapper> createState() => _MessagingWrapperState();
@@ -43,7 +43,7 @@ class _MessagingWrapperState extends State<MessagingWrapper> {
 
       // Log for debugging
       print(
-          "Initializing messaging for ${_normalizedRole} with ID: ${widget.userId}");
+          "Initializing messaging for $_normalizedRole with ID: ${widget.userId}");
     } catch (e) {
       print("Error setting up user role: $e");
     } finally {

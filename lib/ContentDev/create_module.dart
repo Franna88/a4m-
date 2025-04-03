@@ -18,7 +18,7 @@ class CreateModule extends StatefulWidget {
   final int? moduleIndex;
   final String? courseId;
 
-  CreateModule(
+  const CreateModule(
       {super.key,
       required this.changePageIndex,
       this.moduleIndex,
@@ -67,7 +67,7 @@ class _CreateModuleState extends State<CreateModule> {
   String? _testSheetPdfUrl;
 
   bool _isLoading = false;
-  bool _isSubmittedForReview = false;
+  final bool _isSubmittedForReview = false;
 
   @override
   void initState() {
@@ -610,8 +610,9 @@ class _CreateModuleState extends State<CreateModule> {
         // Helper function to handle PDF uploads
         Future<String?> uploadPdf(
             Uint8List? pdfData, String? existingUrl, String fileName) async {
-          if (pdfData == null)
+          if (pdfData == null) {
             return existingUrl; // Return existing URL if no new file
+          }
           firebase_storage.Reference ref = storage.ref().child(
               'pdfs/${DateTime.now().millisecondsSinceEpoch}_$fileName.pdf');
           firebase_storage.UploadTask uploadTask = ref.putData(pdfData);

@@ -19,7 +19,7 @@ class ReviewModule extends StatefulWidget {
   final String courseId;
   final bool isEdited;
 
-  ReviewModule({
+  const ReviewModule({
     super.key,
     required this.changePageIndex,
     required this.courseId,

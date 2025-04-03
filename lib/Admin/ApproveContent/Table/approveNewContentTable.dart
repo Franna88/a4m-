@@ -271,7 +271,7 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                   ),
                 ],
               );
-            }).toList(),
+            }),
           ],
         );
       },
@@ -509,7 +509,7 @@ void _showChangesDialog(BuildContext context, Map<String, dynamic> data) {
               Text("Course Changes:",
                   style: TextStyle(fontWeight: FontWeight.bold)),
               if (courseChanges != null && courseChanges.isNotEmpty)
-                ...courseChanges.map((change) => Text("- $change")).toList()
+                ...courseChanges.map((change) => Text("- $change"))
               else
                 Text("No course changes."),
               SizedBox(height: 10),

@@ -1,9 +1,6 @@
-import 'package:a4m/CommonComponents/buttons/onHoverButton.dart';
-import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_network/image_network.dart';
-import '../../CommonComponents/displayCardIcons.dart';
 import '../../Themes/Constants/myColors.dart';
 
 class StudentCourseItem extends StatelessWidget {

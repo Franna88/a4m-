@@ -10,14 +10,14 @@ class MyTextFields extends StatelessWidget {
   final bool? isOptional;
   final bool? isNumberField;
   const MyTextFields({
-    Key? key,
+    super.key,
     required this.inputController,
     this.hintText,
     required this.headerText,
     required this.keyboardType,
     this.isOptional,
     this.isNumberField,
-  }) : super(key: key);
+  });
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color.fromRGBO(203, 210, 224, 1);

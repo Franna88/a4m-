@@ -371,7 +371,7 @@ class _ImportantCompSuggestionTableState
                   ),
                 ],
               );
-            }).toList(),
+            }),
           ],
         );
       },

@@ -84,7 +84,6 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
         if (!submissionDoc.exists) continue;
 
         final submissionData = submissionDoc.data();
-        if (submissionData == null) continue;
 
         final submittedAssessments =
             submissionData['submittedAssessments'] as List<dynamic>?;
@@ -93,8 +92,9 @@ class _ModuleCompleteListState extends State<ModuleCompleteList> {
         print("Found ${submittedAssessments.length} assessments in submission");
 
         for (var assessment in submittedAssessments) {
-          if (assessment == null || assessment is! Map<String, dynamic>)
+          if (assessment == null || assessment is! Map<String, dynamic>) {
             continue;
+          }
 
           final submittedTimestamp = assessment['submittedAt'];
           String submittedDate;

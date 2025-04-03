@@ -408,9 +408,7 @@ class MessagingService {
         .map((snapshot) {
       return snapshot.docs.fold<int>(
         0,
-        (sum, doc) =>
-            sum +
-            ((doc.data() as Map<String, dynamic>)['unreadCount'] as int? ?? 0),
+        (sum, doc) => sum + ((doc.data())['unreadCount'] as int? ?? 0),
       );
     });
   }

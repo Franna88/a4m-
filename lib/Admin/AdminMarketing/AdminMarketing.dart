@@ -99,7 +99,7 @@ class _AdminMarketingState extends State<AdminMarketing> {
     double screenWidth = MediaQuery.of(context).size.width;
     int crossAxisCount = (screenWidth ~/ 400).clamp(1, 6);
 
-    return Container(
+    return SizedBox(
       width: MyUtility(context).width - 320,
       height: MyUtility(context).height - 80,
       child: Padding(

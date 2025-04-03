@@ -394,7 +394,7 @@ class _NewCompSuggestionTableState extends State<NewCompSuggestionTable> {
                     ),
                   ],
                 );
-              }).toList(),
+              }),
             ],
           );
         },

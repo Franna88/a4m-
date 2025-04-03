@@ -1,6 +1,4 @@
-import 'package:a4m/CommonComponents/displayCardIcons.dart';
 import 'package:a4m/Constants/myColors.dart';
-import 'package:a4m/Lecturers/commonUi/lecturerPdfViewer.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_network/image_network.dart';

@@ -1,4 +1,3 @@
-import 'package:a4m/CommonComponents/buttons/slimButtons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:a4m/Constants/myColors.dart';
@@ -8,12 +7,14 @@ import 'package:url_launcher/url_launcher.dart';
 
 class SubmitComplete extends StatefulWidget {
   final String courseId;
-  final String moduleId; // Added moduleId parameter
+  final String moduleId;
+  final String studentId;
 
   const SubmitComplete({
     super.key,
     required this.courseId,
     required this.moduleId,
+    required this.studentId,
   });
 
   @override
@@ -48,29 +49,44 @@ class _SubmitCompleteState extends State<SubmitComplete> {
         final moduleData = moduleDoc.data() as Map<String, dynamic>;
         moduleName = moduleData['moduleName'] ?? 'No Module Name';
 
-        // Safely handle studentAssessment data
-        final studentAssessments =
-            moduleData['studentAssessment'] as List<dynamic>?;
+        // Get submissions from the submissions subcollection
+        var submissionDoc = await FirebaseFirestore.instance
+            .collection('courses')
+            .doc(widget.courseId)
+            .collection('modules')
+            .doc(widget.moduleId)
+            .collection('submissions')
+            .doc(widget.studentId)
+            .get();
 
         List<Map<String, dynamic>> tempSubmissions = [];
 
-        if (studentAssessments != null) {
-          for (var submission in studentAssessments) {
-            tempSubmissions.add({
-              'student': submission['name']?.toString() ?? 'Unknown Student',
-              'date': submission['submitted'] != null &&
-                      submission['submitted'] is Timestamp
-                  ? (submission['submitted'] as Timestamp)
-                      .toDate()
-                      .toString()
-                      .split(' ')[0]
-                  : 'Unknown Date',
-              'course': courseName,
-              'module': moduleName,
-              'assessment': submission['assessment']?.toString() ?? '',
-              'mark': submission['mark']?.toString() ?? '',
-              'comment': submission['comment']?.toString() ?? '',
-            });
+        if (submissionDoc.exists) {
+          final submissionData = submissionDoc.data() as Map<String, dynamic>;
+          final submittedAssessments =
+              submissionData['submittedAssessments'] as List<dynamic>?;
+
+          if (submittedAssessments != null) {
+            for (var assessment in submittedAssessments) {
+              if (assessment is Map<String, dynamic>) {
+                tempSubmissions.add({
+                  'student': assessment['studentName'] ?? 'Unknown Student',
+                  'date': assessment['submittedAt'] != null &&
+                          assessment['submittedAt'] is Timestamp
+                      ? (assessment['submittedAt'] as Timestamp)
+                          .toDate()
+                          .toString()
+                          .split(' ')[0]
+                      : 'Unknown Date',
+                  'course': courseName,
+                  'module': moduleName,
+                  'assessment': assessment['assessmentName'] ?? '',
+                  'fileUrl': assessment['fileUrl'] ?? '',
+                  'mark': assessment['mark']?.toString() ?? '',
+                  'comment': assessment['comment'] ?? '',
+                });
+              }
+            }
           }
         }
 
@@ -162,22 +178,47 @@ class _SubmitCompleteState extends State<SubmitComplete> {
 
   Future<void> _updateGrade(int index, String mark, String comment) async {
     try {
-      final moduleRef = FirebaseFirestore.instance
+      final submissionRef = FirebaseFirestore.instance
           .collection('courses')
           .doc(widget.courseId)
           .collection('modules')
-          .doc(widget.moduleId);
+          .doc(widget.moduleId)
+          .collection('submissions')
+          .doc(widget.studentId);
 
-      final moduleDoc = await moduleRef.get();
-      final moduleData = moduleDoc.data() as Map<String, dynamic>;
-      final studentAssessments =
-          List<Map<String, dynamic>>.from(moduleData['studentAssessment']);
+      final submissionDoc = await submissionRef.get();
+      if (!submissionDoc.exists) {
+        throw Exception('Submission document not found');
+      }
 
-      studentAssessments[index]['mark'] = mark;
-      studentAssessments[index]['comment'] = comment;
+      final data = submissionDoc.data()!;
+      final submittedAssessments =
+          List<Map<String, dynamic>>.from(data['submittedAssessments'] ?? []);
 
-      await moduleRef.update({'studentAssessment': studentAssessments});
+      // Find the assessment to update
+      final assessmentToUpdate = submissions[index];
+      final assessmentIndex = submittedAssessments.indexWhere(
+          (a) => a['assessmentName'] == assessmentToUpdate['assessment']);
 
+      if (assessmentIndex == -1) {
+        throw Exception('Assessment not found in submission document');
+      }
+
+      // Update the assessment
+      submittedAssessments[assessmentIndex] = {
+        ...submittedAssessments[assessmentIndex],
+        'mark': mark,
+        'comment': comment,
+        'gradedAt': FieldValue.serverTimestamp(),
+      };
+
+      // Update Firestore
+      await submissionRef.update({
+        'submittedAssessments': submittedAssessments,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
+
+      // Update local state
       setState(() {
         submissions[index]['mark'] = mark;
         submissions[index]['comment'] = comment;
@@ -186,6 +227,7 @@ class _SubmitCompleteState extends State<SubmitComplete> {
       print("Grade updated successfully!");
     } catch (e) {
       print("Error updating grade: $e");
+      throw e; // Re-throw to be caught by the calling function
     }
   }
 
@@ -237,7 +279,7 @@ class _SubmitCompleteState extends State<SubmitComplete> {
                     _buildButtonCell(
                       icon: Icons.download_sharp,
                       color: Colors.blue.shade700,
-                      onPressed: () => _downloadFile(submission['assessment']),
+                      onPressed: () => _downloadFile(submission['fileUrl']),
                     ),
                     _buildButtonCell(
                       icon: Icons.grade,

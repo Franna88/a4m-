@@ -85,7 +85,7 @@ class _ViewModulesCompleteState extends State<ViewModulesComplete> {
 
     return Padding(
       padding: const EdgeInsets.all(15.0),
-      child: Container(
+      child: SizedBox(
         width: MyUtility(context).width - 320,
         height: MyUtility(context).height - 80,
         child: Material(

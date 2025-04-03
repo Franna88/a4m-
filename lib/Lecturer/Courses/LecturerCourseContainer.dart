@@ -1,35 +1,40 @@
-import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_network/image_network.dart';
+import '../../Themes/Constants/myColors.dart';
 
-class StudentModuleContainer extends StatefulWidget {
-  final String moduleName;
-  final String moduleDescription;
-  final String assessmentAmount;
-  final String moduleImage;
-  final VoidCallback studentGuidePdfUrl;
-  final VoidCallback testSheetPdfUrl;
-  final VoidCallback assessmentsPdfUrl;
-  final bool isCompleted;
+class LecturerCourseContainer extends StatefulWidget {
+  final String courseName;
+  final String courseImage;
+  final String courseDescription;
+  final String moduleCount;
+  final String assessmentCount;
+  final String studentCount;
+  final String pendingAssessments;
+  final VoidCallback onTap;
+  final VoidCallback onMarkAssessments;
+  final VoidCallback onViewAnalytics;
 
-  const StudentModuleContainer({
+  const LecturerCourseContainer({
     super.key,
-    required this.assessmentAmount,
-    required this.moduleName,
-    required this.moduleDescription,
-    required this.moduleImage,
-    required this.studentGuidePdfUrl,
-    required this.testSheetPdfUrl,
-    required this.assessmentsPdfUrl,
-    this.isCompleted = false,
+    required this.courseName,
+    required this.courseImage,
+    required this.courseDescription,
+    required this.moduleCount,
+    required this.assessmentCount,
+    required this.studentCount,
+    required this.pendingAssessments,
+    required this.onTap,
+    required this.onMarkAssessments,
+    required this.onViewAnalytics,
   });
 
   @override
-  State<StudentModuleContainer> createState() => _StudentModuleContainerState();
+  State<LecturerCourseContainer> createState() =>
+      _LecturerCourseContainerState();
 }
 
-class _StudentModuleContainerState extends State<StudentModuleContainer> {
+class _LecturerCourseContainerState extends State<LecturerCourseContainer> {
   bool isHovered = false;
 
   @override
@@ -57,7 +62,7 @@ class _StudentModuleContainerState extends State<StudentModuleContainer> {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: widget.studentGuidePdfUrl,
+            onTap: widget.onTap,
             borderRadius: BorderRadius.circular(16),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -65,17 +70,17 @@ class _StudentModuleContainerState extends State<StudentModuleContainer> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildModuleImage(),
+                  _buildCourseImage(),
                   const SizedBox(height: 16),
-                  _buildModuleHeader(),
+                  _buildCourseHeader(),
                   const SizedBox(height: 8),
-                  _buildModuleDescription(),
+                  _buildCourseDescription(),
                   const SizedBox(height: 16),
                   if (isSmallScreen)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildAssessmentCount(),
+                        _buildStats(),
                         const SizedBox(height: 12),
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
@@ -87,7 +92,7 @@ class _StudentModuleContainerState extends State<StudentModuleContainer> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildAssessmentCount(),
+                        _buildStats(),
                         Flexible(
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
@@ -105,7 +110,7 @@ class _StudentModuleContainerState extends State<StudentModuleContainer> {
     );
   }
 
-  Widget _buildModuleImage() {
+  Widget _buildCourseImage() {
     return Container(
       height: 160,
       width: double.infinity,
@@ -116,7 +121,7 @@ class _StudentModuleContainerState extends State<StudentModuleContainer> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: ImageNetwork(
-          image: widget.moduleImage,
+          image: widget.courseImage,
           height: 160,
           width: 400,
           duration: 100,
@@ -141,13 +146,13 @@ class _StudentModuleContainerState extends State<StudentModuleContainer> {
     );
   }
 
-  Widget _buildModuleHeader() {
+  Widget _buildCourseHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
           child: Text(
-            widget.moduleName,
+            widget.courseName,
             style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -156,32 +161,31 @@ class _StudentModuleContainerState extends State<StudentModuleContainer> {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        if (!widget.isCompleted)
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 4,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              'In Progress',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.orange[700],
-                fontWeight: FontWeight.w500,
-              ),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 4,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.orange.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            '${widget.moduleCount} Modules',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.orange[700],
+              fontWeight: FontWeight.w500,
             ),
           ),
+        ),
       ],
     );
   }
 
-  Widget _buildModuleDescription() {
+  Widget _buildCourseDescription() {
     return Text(
-      widget.moduleDescription,
+      widget.courseDescription,
       style: GoogleFonts.poppins(
         fontSize: 14,
         color: Colors.grey[600],
@@ -192,30 +196,54 @@ class _StudentModuleContainerState extends State<StudentModuleContainer> {
     );
   }
 
-  Widget _buildAssessmentCount() {
+  Widget _buildStats() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildStatItem(
+          Icons.people_outline,
+          widget.studentCount,
+          'Students',
+          Colors.blue,
+        ),
+        _buildStatItem(
+          Icons.assignment_outlined,
+          widget.assessmentCount,
+          'Assessments',
+          Colors.orange,
+        ),
+        _buildStatItem(
+          Icons.pending_actions_outlined,
+          widget.pendingAssessments,
+          'Pending',
+          Colors.red,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatItem(
+      IconData icon, String count, String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.assignment_outlined,
+            icon,
             size: 16,
-            color: Colors.orange[700],
+            color: color,
           ),
           const SizedBox(width: 6),
           Text(
-            '${widget.assessmentAmount} Assessments',
+            '$count $label',
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Colors.orange[700],
+              color: color,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -230,19 +258,19 @@ class _StudentModuleContainerState extends State<StudentModuleContainer> {
       runSpacing: 8,
       children: [
         _buildActionButton(
-          icon: Icons.description_outlined,
-          label: 'Guide',
-          onTap: widget.studentGuidePdfUrl,
+          icon: Icons.assessment_outlined,
+          label: 'Mark',
+          onTap: widget.onMarkAssessments,
         ),
         _buildActionButton(
-          icon: Icons.quiz_outlined,
-          label: 'Test',
-          onTap: widget.testSheetPdfUrl,
+          icon: Icons.analytics_outlined,
+          label: 'Analytics',
+          onTap: widget.onViewAnalytics,
         ),
         _buildActionButton(
-          icon: Icons.assignment_turned_in_outlined,
-          label: 'Submit',
-          onTap: widget.assessmentsPdfUrl,
+          icon: Icons.visibility_outlined,
+          label: 'View',
+          onTap: widget.onTap,
         ),
       ],
     );

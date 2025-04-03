@@ -361,7 +361,7 @@ class _CertificatesStudentContainerState
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          label + ':',
+          '$label:',
           style: GoogleFonts.montserrat(
             fontSize: 14,
             color: Colors.grey[600],

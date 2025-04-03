@@ -7,7 +7,7 @@ import 'package:firebase_storage/firebase_storage.dart'; // Firebase for fresh U
 class PdfViewerWeb extends StatelessWidget {
   final String pdfUrl;
 
-  PdfViewerWeb({Key? key, required this.pdfUrl}) : super(key: key) {
+  PdfViewerWeb({super.key, required this.pdfUrl}) {
     print("PdfViewerWeb: Received PDF URL: $pdfUrl");
   }
 

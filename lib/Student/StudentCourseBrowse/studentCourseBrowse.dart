@@ -324,7 +324,7 @@ class _StudentCourseBrowseState extends State<StudentCourseBrowse> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Container(
+                      SizedBox(
                         height: 40,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
@@ -409,7 +409,7 @@ class _StudentCourseBrowseState extends State<StudentCourseBrowse> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Container(
+                      SizedBox(
                         height: 40,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,

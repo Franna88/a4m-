@@ -1,7 +1,4 @@
-import 'package:a4m/LandingPage/CourseListPage/ui/categoryNameStack.dart';
-import 'package:a4m/Student/commonUi/customTabBar.dart';
 import 'package:a4m/Student/dummyList/allStudentCourses.dart';
-import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../Themes/Constants/myColors.dart';

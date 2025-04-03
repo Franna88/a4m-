@@ -164,14 +164,14 @@ class _AdminMessagesMainState extends State<AdminMessagesMain> {
     final double navbarWidth = currentUserRole == 'admin' ? 0 : 280;
     final double bottomOffset = currentUserRole == 'admin' ? 0 : 50;
 
-    return Container(
+    return SizedBox(
       width: screenWidth - navbarWidth,
       height: screenHeight - bottomOffset,
       child: AdminMessaging(
         changePage: changePage,
-        child: pages[pageIndex],
         availablePageNames: pageNames,
         currentUserRole: currentUserRole,
+        child: pages[pageIndex],
       ),
     );
   }

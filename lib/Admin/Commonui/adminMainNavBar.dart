@@ -202,7 +202,7 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
                     PopupMenuButton(
                       icon: _profileImageUrl != null &&
                               _profileImageUrl!.isNotEmpty
-                          ? Container(
+                          ? SizedBox(
                               width: 36,
                               height: 36,
                               child: ClipRRect(
@@ -267,7 +267,7 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
                 ),
               ),
               Expanded(
-                child: Container(
+                child: SizedBox(
                   width: MyUtility(context).width - 280,
                   child: widget.child,
                 ),

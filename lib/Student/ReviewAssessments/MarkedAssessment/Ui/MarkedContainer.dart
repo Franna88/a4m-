@@ -32,27 +32,13 @@ class _MarkedContainerState extends State<MarkedContainer> {
 
   /// 🔹 Fetch only **marked** assessments from Firestore
   Future<void> fetchMarkedAssessments() async {
+    print('\n=== Fetching Marked Assessments ===');
+    print('Course ID: ${widget.courseId}');
+    print('Module ID: ${widget.moduleId}');
+    print('Student ID: ${widget.studentId}');
+
     try {
-      print("Fetching marked assessments for student: ${widget.studentId}");
-      print("Course ID: ${widget.courseId}");
-      print("Module ID: ${widget.moduleId}");
-
-      // First get the module name
-      final moduleDoc = await FirebaseFirestore.instance
-          .collection('courses')
-          .doc(widget.courseId)
-          .collection('modules')
-          .doc(widget.moduleId)
-          .get();
-
-      if (moduleDoc.exists) {
-        setState(() {
-          moduleName = moduleDoc.data()?['moduleName'] ?? 'Unknown Module';
-        });
-      }
-
-      // Then get the student's submissions
-      final submissionRef = FirebaseFirestore.instance
+      final moduleRef = FirebaseFirestore.instance
           .collection('courses')
           .doc(widget.courseId)
           .collection('modules')
@@ -60,48 +46,104 @@ class _MarkedContainerState extends State<MarkedContainer> {
           .collection('submissions')
           .doc(widget.studentId);
 
-      final submissionDoc = await submissionRef.get();
-      print("Found submission document: ${submissionDoc.exists}");
+      print('\nFetching submission document...');
+      final submissionDoc = await moduleRef.get();
 
-      List<Map<String, dynamic>> tempMarkedAssessments = [];
+      if (!submissionDoc.exists) {
+        print('❌ ERROR: Submission document not found');
+        throw Exception('Submission document not found');
+      }
 
-      if (submissionDoc.exists) {
-        final data = submissionDoc.data();
-        if (data != null && data.containsKey('submittedAssessments')) {
-          List<dynamic> allAssessments = data['submittedAssessments'];
-          print("Found ${allAssessments.length} submitted assessments");
+      print('✅ Submission document found');
+      final data = submissionDoc.data();
+      print('Submission Data: $data');
 
-          for (var assessment in allAssessments) {
-            if (assessment is Map<String, dynamic> &&
-                (assessment['mark']?.toString().isNotEmpty ?? false)) {
-              tempMarkedAssessments.add({
-                'name': assessment['assessmentName'] ?? 'Unknown Assessment',
-                'submittedAt': assessment['submittedAt'] != null
-                    ? (assessment['submittedAt'] as Timestamp)
-                        .toDate()
-                        .toString()
-                        .split(' ')[0]
-                    : 'Unknown Date',
-                'mark': assessment['mark'] ?? 'Not Graded',
-                'comment': assessment['comment'] ?? 'No Comment',
-                'fileUrl': assessment['fileUrl'] ?? '',
-              });
-              print("Added marked assessment: ${assessment['assessmentName']}");
-            }
-          }
+      if (data == null) {
+        print('❌ ERROR: Submission data is null');
+        throw Exception('Submission data is null');
+      }
+
+      final submittedAssessments =
+          List<Map<String, dynamic>>.from(data['submittedAssessments'] ?? []);
+      print('Found ${submittedAssessments.length} submitted assessments');
+
+      final tempMarkedAssessments = <Map<String, dynamic>>[];
+
+      for (var assessment in submittedAssessments) {
+        print('\nProcessing assessment:');
+        print('Assessment Data: $assessment');
+
+        final mark = assessment['mark'];
+        print('Mark value: $mark (Type: ${mark.runtimeType})');
+
+        // Check if assessment is graded (has a mark)
+        if (mark != null &&
+            (mark is double || (mark is String && mark.isNotEmpty))) {
+          print('✅ Assessment is graded');
+
+          final markedAssessment = {
+            'name': assessment['assessmentName'],
+            'submittedAt': assessment['submittedAt'],
+            'mark': mark.toString(),
+            'comment': assessment['comment'] ?? '',
+            'fileUrl': assessment['fileUrl'],
+            'gradedAt': assessment['gradedAt'],
+            'gradedBy': assessment['gradedBy'],
+          };
+          print('Processed marked assessment: $markedAssessment');
+
+          tempMarkedAssessments.add(markedAssessment);
+        } else {
+          print('❌ Assessment is not graded');
         }
       }
 
-      setState(() {
-        markedAssessments = tempMarkedAssessments;
-        isLoading = false;
-      });
-      print("Total marked assessments: ${markedAssessments.length}");
+      print(
+          '\nTotal marked assessments found: ${tempMarkedAssessments.length}');
+
+      if (mounted) {
+        setState(() {
+          markedAssessments = tempMarkedAssessments;
+          isLoading = false;
+        });
+      }
     } catch (e) {
-      print("Error fetching marked assessments: $e");
-      setState(() {
-        isLoading = false;
-      });
+      print('\n❌ ERROR in fetchMarkedAssessments:');
+      print('Error: $e');
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error fetching marked assessments: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _viewSubmission(String fileUrl) async {
+    print('\n=== Attempting to View Submission ===');
+    print('File URL: $fileUrl');
+
+    try {
+      if (await canLaunch(fileUrl)) {
+        print('✅ Launching file URL');
+        await launch(fileUrl);
+      } else {
+        print('❌ Could not launch file URL');
+        throw 'Could not open the file';
+      }
+    } catch (e) {
+      print('❌ Error opening file: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error opening file: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -161,9 +203,7 @@ class _MarkedContainerState extends State<MarkedContainer> {
                 ? IconButton(
                     icon: const Icon(Icons.visibility),
                     onPressed: () async {
-                      if (await canLaunch(assessment['fileUrl'])) {
-                        await launch(assessment['fileUrl']);
-                      }
+                      await _viewSubmission(assessment['fileUrl']);
                     },
                     tooltip: 'View Submission',
                   )

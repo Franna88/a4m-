@@ -1,13 +1,11 @@
 import 'package:a4m/Constants/myColors.dart';
-import 'package:a4m/myutility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class LectureDashboardTotalStudents extends StatefulWidget {
   final String lecturerId;
 
-  const LectureDashboardTotalStudents({Key? key, required this.lecturerId})
-      : super(key: key);
+  const LectureDashboardTotalStudents({super.key, required this.lecturerId});
 
   @override
   State<LectureDashboardTotalStudents> createState() =>
@@ -33,142 +31,127 @@ class _LectureDashboardTotalStudentsState
       int tempTotalStudents = 0;
       int tempMonthlyStudents = 0;
 
-      // Fetch all courses
       final coursesSnapshot =
           await FirebaseFirestore.instance.collection('courses').get();
 
-      print("Fetched ${coursesSnapshot.docs.length} courses.");
-
       for (var courseDoc in coursesSnapshot.docs) {
         final courseData = courseDoc.data();
-
-        // Check if the lecturer is assigned
         final assignedLecturers =
             courseData['assignedLecturers'] as List<dynamic>?;
+
         if (assignedLecturers != null) {
           bool lecturerFound = assignedLecturers.any((lecturer) =>
               lecturer is Map<String, dynamic> &&
               lecturer['id'] == widget.lecturerId);
 
           if (lecturerFound) {
-            print("Lecturer assigned to course: ${courseData['courseName']}");
-
-            // Fetch students
             final students = courseData['students'] as List<dynamic>?;
             if (students != null) {
-              print(
-                  "Course '${courseData['courseName']}' has ${students.length} students.");
-
               tempTotalStudents += students.length;
 
               for (var student in students) {
                 final registered =
                     (student['registered'] as Timestamp?)?.toDate();
-
                 if (registered != null && registered.isAfter(startOfMonth)) {
                   tempMonthlyStudents += 1;
                 }
               }
-            } else {
-              print("Course '${courseData['courseName']}' has no students.");
             }
           }
         }
       }
 
-      setState(() {
-        totalStudents = tempTotalStudents;
-        monthlyStudents = tempMonthlyStudents;
-      });
-
-      print("Total Students: $totalStudents");
-      print("Monthly Students: $monthlyStudents");
+      if (mounted) {
+        setState(() {
+          totalStudents = tempTotalStudents;
+          monthlyStudents = tempMonthlyStudents;
+        });
+      }
     } catch (e) {
-      print("Error fetching student metrics: $e");
+      if (mounted) {
+        setState(() {
+          totalStudents = 0;
+          monthlyStudents = 0;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: MyUtility(context).width * 0.22,
-        height: MyUtility(context).height * 0.4,
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              blurRadius: 2.0,
-              spreadRadius: 2.0,
-              offset: const Offset(0, 3),
+    return Container(
+      height: 200, // Fixed height
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 4.0,
+            spreadRadius: 2.0,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Total Students',
+            style: TextStyle(
+              fontSize: 18.0,
+              fontWeight: FontWeight.bold,
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                const Text(
-                  'Total Students',
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+          ),
+          Center(
+            child: Text(
+              totalStudents.toString(),
+              style: const TextStyle(
+                fontSize: 48.0,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            const Spacer(),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  totalStudents.toString(),
-                  style: const TextStyle(
-                    fontSize: 40.0,
-                    fontWeight: FontWeight.bold,
+          ),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Mycolors().green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.arrow_upward,
+                    color: Mycolors().green,
+                    size: 16,
                   ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.arrow_upward,
+                  const SizedBox(width: 4),
+                  Text(
+                    '$monthlyStudents new',
+                    style: TextStyle(
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.w600,
                       color: Mycolors().green,
-                      size: 24.0,
                     ),
-                    Text(
-                      monthlyStudents.toString(),
-                      style: const TextStyle(
-                        fontSize: 20.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                )
-              ],
-            ),
-            const Spacer(),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Current Month',
-                  style: TextStyle(
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[400],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+          Center(
+            child: Text(
+              'Current Month',
+              style: TextStyle(
+                fontSize: 14.0,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[400],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

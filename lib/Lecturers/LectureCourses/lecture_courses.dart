@@ -4,6 +4,8 @@ import 'package:a4m/myutility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../Constants/myColors.dart';
 
 class LectureCourses extends StatefulWidget {
   final Function(int, {String courseId, String moduleId})
@@ -97,95 +99,139 @@ class _LectureCoursesState extends State<LectureCourses> {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
-    int crossAxisCount = (screenWidth ~/ 400).clamp(1, 6);
+    int crossAxisCount = (screenWidth ~/ 400).clamp(1, 3);
 
     return Container(
-      width: MyUtility(context).width - 320,
-      height: MyUtility(context).height - 80,
-      child: Padding(
-        padding: const EdgeInsets.all(15),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Search bar
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 300,
-                  height: 50,
-                  child: MySearchBar(
-                    textController: TextEditingController(),
-                    hintText: 'Search Course',
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 30),
-
-            // Courses Grid
-            Expanded(
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : assignedCourses.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'No courses assigned yet.',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w600),
-                          ),
-                        )
-                      : SingleChildScrollView(
-                          child: LayoutGrid(
-                            columnSizes: List.generate(
-                              crossAxisCount,
-                              (_) => FlexibleTrackSize(1),
-                            ),
-                            rowSizes: List.generate(
-                              (assignedCourses.length / crossAxisCount).ceil(),
-                              (_) => auto,
-                            ),
-                            rowGap: 20,
-                            columnGap: 20,
-                            children: [
-                              for (var course in assignedCourses)
-                                GestureDetector(
-                                  onTap: () {
-                                    print(
-                                        "Navigating to Modules for Course ID: ${course['id']}");
-                                    widget.changePageWithCourseId(
-                                      6,
-                                      courseId: course['id'],
-                                    );
-                                  },
-                                  child: LectureCourseContainers(
-                                    courseName: course['courseName'],
-                                    modulesComplete:
-                                        course['moduleAmount'].toString(),
-                                    courseDescription:
-                                        course['courseDescription'],
-                                    totalStudents: course['totalStudents'],
-                                    moduleAmount:
-                                        course['moduleAmount'].toString(),
-                                    assessmentAmount:
-                                        course['totalAssessments'],
-                                    courseImage: course['courseImage'],
-                                    onTap: () {},
-                                    changePage: (index,
-                                            {String? courseId,
-                                            String? moduleId}) =>
-                                        widget.changePageWithCourseId(
-                                      index,
-                                      courseId: courseId ?? course['id'],
-                                      moduleId: moduleId ?? '',
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
+      width: screenWidth - 320,
+      height: MediaQuery.of(context).size.height - 80,
+      padding: const EdgeInsets.all(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
           ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Courses',
+                    style: GoogleFonts.poppins(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  SizedBox(
+                    width: 300,
+                    height: 50,
+                    child: MySearchBar(
+                      textController: TextEditingController(),
+                      hintText: 'Search Course',
+                    ),
+                  ),
+                ],
+              ),
+              // const SizedBox(height: 24),
+              // Row(
+              //   crossAxisAlignment: CrossAxisAlignment.end,
+              //   children: [
+              //     Text(
+              //       'Assigned Courses',
+              //       style: GoogleFonts.poppins(
+              //         fontSize: 20,
+              //         fontWeight: FontWeight.w600,
+              //         color: Colors.grey[800],
+              //       ),
+              //     ),
+              //     const Spacer(),
+              //   ],
+              // ),
+              const SizedBox(height: 10),
+              Divider(
+                color: Mycolors().green,
+                thickness: 4,
+              ),
+              const SizedBox(height: 24),
+              Expanded(
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : assignedCourses.isEmpty
+                        ? Center(
+                            child: Text(
+                              'No courses assigned yet.',
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          )
+                        : SingleChildScrollView(
+                            child: LayoutGrid(
+                              columnSizes: List.generate(
+                                crossAxisCount,
+                                (_) => const FlexibleTrackSize(1),
+                              ),
+                              rowSizes: List.generate(
+                                (assignedCourses.length / crossAxisCount)
+                                    .ceil(),
+                                (_) => auto,
+                              ),
+                              rowGap: 20,
+                              columnGap: 20,
+                              children: [
+                                for (var course in assignedCourses)
+                                  GestureDetector(
+                                    onTap: () {
+                                      print(
+                                          "Navigating to Modules for Course ID: ${course['id']}");
+                                      widget.changePageWithCourseId(
+                                        6,
+                                        courseId: course['id'],
+                                      );
+                                    },
+                                    child: LectureCourseContainers(
+                                      courseName: course['courseName'],
+                                      modulesComplete:
+                                          course['moduleAmount'].toString(),
+                                      courseDescription:
+                                          course['courseDescription'],
+                                      totalStudents: course['totalStudents'],
+                                      moduleAmount:
+                                          course['moduleAmount'].toString(),
+                                      assessmentAmount:
+                                          course['totalAssessments'],
+                                      courseImage: course['courseImage'],
+                                      courseId: course['id'],
+                                      onTap: () {},
+                                      changePage: (index,
+                                              {String? courseId,
+                                              String? moduleId}) =>
+                                          widget.changePageWithCourseId(
+                                        index,
+                                        courseId: courseId ?? course['id'],
+                                        moduleId: moduleId ?? '',
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -11,11 +11,11 @@ class StudentPdfViewer extends StatefulWidget {
   final String title;
 
   const StudentPdfViewer({
-    Key? key,
+    super.key,
     required this.pdfUrl,
     this.showDownloadButton = false,
     required this.title,
-  }) : super(key: key);
+  });
 
   @override
   State<StudentPdfViewer> createState() => _StudentPdfViewerState();

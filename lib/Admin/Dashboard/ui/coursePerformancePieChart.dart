@@ -35,7 +35,7 @@ class _CoursePerformanceChartState extends State<CoursePerformanceChart> {
             SizedBox(height: 16),
             Row(
               children: [
-                Container(
+                SizedBox(
                   height: MyUtility(context).width < 1500 ? 170 : 270,
                   width: MyUtility(context).width < 1500 ? 170 : 270,
                   child: PieChart(
@@ -127,7 +127,7 @@ class LegendItem extends StatelessWidget {
   final Color color;
   final String label;
 
-  const LegendItem({required this.color, required this.label});
+  const LegendItem({super.key, required this.color, required this.label});
 
   @override
   Widget build(BuildContext context) {

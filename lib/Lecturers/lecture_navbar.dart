@@ -1,6 +1,4 @@
-import 'package:a4m/CommonComponents/buttons/navButtons.dart';
 import 'package:a4m/Constants/myColors.dart';
-import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:a4m/LandingPage/LandingPageMain.dart';
 import 'package:a4m/CommonComponents/EditProfile/EditProfileDialog.dart';
@@ -451,7 +449,7 @@ class _LectureNavbarState extends State<LectureNavbar> {
                         _buildNavItem(Icons.dashboard, 'Dashboard', 0),
                         _buildNavItem(Icons.school, 'Courses', 1),
                         _buildNavItem(Icons.people, 'Students', 2),
-                        _buildNavItem(Icons.slideshow, 'Presentation', 3),
+                        // _buildNavItem(Icons.slideshow, 'Presentation', 3),
                         _buildNavItem(Icons.message, 'Messages', 4),
                         const SizedBox(height: 20),
                         const Divider(),

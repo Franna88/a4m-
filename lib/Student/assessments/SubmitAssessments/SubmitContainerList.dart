@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
@@ -56,6 +55,11 @@ class _SubmitContainerListState extends State<SubmitContainerList> {
   }
 
   Future<void> fetchStudentSubmissions() async {
+    print('\n=== Fetching Student Submissions ===');
+    print('Course ID: ${widget.courseId}');
+    print('Module ID: ${widget.moduleId}');
+    print('Student ID: ${widget.studentId}');
+
     try {
       final moduleRef = FirebaseFirestore.instance
           .collection('courses')
@@ -66,49 +70,64 @@ class _SubmitContainerListState extends State<SubmitContainerList> {
       final submissionRef =
           moduleRef.collection('submissions').doc(widget.studentId);
 
+      print('\nFetching module document...');
       final moduleDoc = await moduleRef.get();
-      final submissionDoc =
-          await submissionRef.get(); // Check student submission
+      print('Module document exists: ${moduleDoc.exists}');
+
+      print('\nFetching submission document...');
+      final submissionDoc = await submissionRef.get();
+      print('Submission document exists: ${submissionDoc.exists}');
 
       if (!moduleDoc.exists) {
+        print('❌ ERROR: Module document does not exist!');
         throw Exception("Module document does not exist!");
       }
 
       final moduleData = moduleDoc.data();
+      print('Module Data: $moduleData');
+
       List<dynamic> submittedFiles = submissionDoc.exists
           ? (submissionDoc.data()?['submittedAssessments'] ?? [])
           : [];
+      print('Found ${submittedFiles.length} submitted files');
 
       // Extract submitted assessment names
       Set<String> submittedAssessments = submittedFiles
           .map<String>((file) => file['assessmentName'].toString())
           .toSet();
+      print('Submitted assessment names: $submittedAssessments');
 
       if (moduleData != null) {
+        print('\nProcessing module data...');
+        final newSubmissions = [
+          if (moduleData['assessmentsPdfUrl'] != null)
+            {
+              'assessment': getFileName(moduleData['assessmentsPdfUrl']),
+              'type': 'Assessment PDF',
+              'status': submittedAssessments
+                      .contains(getFileName(moduleData['assessmentsPdfUrl']))
+                  ? 'Submitted'
+                  : 'Pending',
+            },
+          if (moduleData['testSheetPdfUrl'] != null)
+            {
+              'assessment': getFileName(moduleData['testSheetPdfUrl']),
+              'type': 'Test Sheet PDF',
+              'status': submittedAssessments
+                      .contains(getFileName(moduleData['testSheetPdfUrl']))
+                  ? 'Submitted'
+                  : 'Pending',
+            },
+        ];
+        print('Processed submissions: $newSubmissions');
+
         setState(() {
-          submissions = [
-            if (moduleData['assessmentsPdfUrl'] != null)
-              {
-                'assessment': getFileName(moduleData['assessmentsPdfUrl']),
-                'type': 'Assessment PDF',
-                'status': submittedAssessments
-                        .contains(getFileName(moduleData['assessmentsPdfUrl']))
-                    ? 'Submitted'
-                    : 'Pending',
-              },
-            if (moduleData['testSheetPdfUrl'] != null)
-              {
-                'assessment': getFileName(moduleData['testSheetPdfUrl']),
-                'type': 'Test Sheet PDF',
-                'status': submittedAssessments
-                        .contains(getFileName(moduleData['testSheetPdfUrl']))
-                    ? 'Submitted'
-                    : 'Pending',
-              },
-          ];
+          submissions = newSubmissions;
         });
       }
     } catch (e) {
+      print('\n❌ ERROR in fetchStudentSubmissions:');
+      print('Error: $e');
       debugPrint('Error fetching student submissions: $e');
     } finally {
       setState(() {
@@ -181,7 +200,15 @@ class _SubmitContainerListState extends State<SubmitContainerList> {
 
   Future<void> submitAssessment(
       Map<String, dynamic> submission, String downloadUrl) async {
+    print('\n=== Submitting Assessment ===');
+    print('Course ID: ${widget.courseId}');
+    print('Module ID: ${widget.moduleId}');
+    print('Student ID: ${widget.studentId}');
+    print('Assessment Name: ${submission['assessment']}');
+    print('Download URL: $downloadUrl');
+
     if (studentName == null) {
+      print('❌ ERROR: Student name is null');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error: Student name not loaded.'),
@@ -201,13 +228,19 @@ class _SubmitContainerListState extends State<SubmitContainerList> {
       final submissionRef =
           moduleRef.collection('submissions').doc(widget.studentId);
 
+      print('\nFetching existing submission document...');
       DocumentSnapshot doc = await submissionRef.get();
+      print('Submission document exists: ${doc.exists}');
+
       List<dynamic> existingFiles = [];
 
       if (doc.exists && doc.data() != null) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        print('Existing submission data: $data');
+
         if (data.containsKey('submittedAssessments')) {
           existingFiles = List.from(data['submittedAssessments']);
+          print('Found ${existingFiles.length} existing files');
         }
       }
 
@@ -215,19 +248,26 @@ class _SubmitContainerListState extends State<SubmitContainerList> {
       existingFiles.removeWhere(
         (file) => file['assessmentName'] == submission['assessment'],
       );
+      print('Removed any existing submission for ${submission['assessment']}');
 
       // Add new submission with current timestamp
-      existingFiles.add({
+      final newSubmission = {
         'assessmentName': submission['assessment'],
         'fileUrl': downloadUrl,
         'submittedAt': Timestamp.now(),
         'studentName': studentName,
-      });
+      };
+      print('New submission data: $newSubmission');
 
+      existingFiles.add(newSubmission);
+      print('Total submissions after adding new one: ${existingFiles.length}');
+
+      print('\nUpdating Firestore document...');
       await submissionRef.set({
         'submittedAssessments': existingFiles,
         'lastUpdated': FieldValue.serverTimestamp(),
       });
+      print('✅ Firestore update successful');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -237,8 +277,11 @@ class _SubmitContainerListState extends State<SubmitContainerList> {
       );
 
       // Refresh the submissions list
+      print('\nRefreshing submissions list...');
       await fetchStudentSubmissions();
     } catch (e) {
+      print('\n❌ ERROR in submitAssessment:');
+      print('Error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error submitting assessment: ${e.toString()}'),

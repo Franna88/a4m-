@@ -4,14 +4,6 @@ import 'package:a4m/Facilitator/Pages/MyCourses/facilitatorMyCourses.dart';
 import 'package:a4m/Facilitator/Pages/Students/facilitatorStudents.dart';
 import 'package:a4m/Facilitator/facilitatorNavBar.dart';
 import 'package:a4m/Admin/AdminMessaging/adminMessagesMain.dart';
-import 'package:a4m/Lecturers/LectureCourses/Lecture_modules.dart';
-import 'package:a4m/Lecturers/LectureCourses/lecture_courses.dart';
-import 'package:a4m/Lecturers/LectureCourses/view_modules_complete.dart';
-import 'package:a4m/Lecturers/LectureDashboard/lecture_dashboard.dart';
-import 'package:a4m/Lecturers/LectureMessages/lecture_messages.dart';
-import 'package:a4m/Lecturers/LecturePresentations/lecture_presentations.dart';
-import 'package:a4m/Lecturers/LectureStudents/lecture_students.dart';
-import 'package:a4m/Lecturers/lecture_navbar.dart';
 import 'package:flutter/material.dart';
 
 class FacilitatorHome extends StatefulWidget {

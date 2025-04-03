@@ -186,7 +186,7 @@ class _CreateCourseState extends State<CreateCourse> {
 
         print('uploadPdf: Starting upload of new PDF');
         // Use the original file name if available, otherwise use the default name
-        String actualFileName = _selectedPreviewPdfName ?? '${fileName}.pdf';
+        String actualFileName = _selectedPreviewPdfName ?? '$fileName.pdf';
         print('uploadPdf: Using filename: $actualFileName');
 
         final ref = storage.ref().child(

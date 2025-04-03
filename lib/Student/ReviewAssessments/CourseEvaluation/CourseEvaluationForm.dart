@@ -9,11 +9,11 @@ class CourseEvaluationForm extends StatefulWidget {
   final String courseName;
 
   const CourseEvaluationForm({
-    Key? key,
+    super.key,
     required this.courseId,
     required this.studentId,
     required this.courseName,
-  }) : super(key: key);
+  });
 
   @override
   State<CourseEvaluationForm> createState() => _CourseEvaluationFormState();

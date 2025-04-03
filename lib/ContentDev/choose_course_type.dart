@@ -1,6 +1,3 @@
-import 'package:a4m/Admin/Dashboard/ui/coursePerformancePieChart.dart';
-import 'package:a4m/Admin/Dashboard/ui/monthlySalesChart.dart';
-import 'package:a4m/Admin/Dashboard/ui/monthlyStatSumContainers.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Themes/text_style.dart';
 import 'package:a4m/myutility.dart';

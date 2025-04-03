@@ -337,7 +337,7 @@ class _ArchiveTableState extends State<ArchiveTable> {
                   ),
                 ],
               );
-            }).toList(),
+            }),
           ],
         );
       },

@@ -1,7 +1,4 @@
-import 'package:a4m/Admin/ApproveContent/approveContent.dart';
-import 'package:a4m/CommonComponents/displayCardIcons.dart';
 import 'package:a4m/Constants/myColors.dart';
-import 'package:a4m/Lecturers/LectureCourses/view_modules_complete.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_network/image_network.dart';
@@ -14,6 +11,7 @@ class LectureCourseContainers extends StatefulWidget {
   final String moduleAmount;
   final String assessmentAmount;
   final String courseImage;
+  final String courseId;
   final Function() onTap;
   final Function(int, {String courseId, String moduleId}) changePage;
   const LectureCourseContainers({
@@ -25,6 +23,7 @@ class LectureCourseContainers extends StatefulWidget {
     required this.moduleAmount,
     required this.assessmentAmount,
     required this.courseImage,
+    required this.courseId,
     required this.onTap,
     required this.changePage,
   });
@@ -42,7 +41,7 @@ class _LectureCourseContainersState extends State<LectureCourseContainers> {
     setState(() {
       pageIndex = index;
     });
-    changePage(5);
+    widget.changePage(6, courseId: widget.courseId, moduleId: '');
   }
 
   @override
@@ -68,7 +67,10 @@ class _LectureCourseContainersState extends State<LectureCourseContainers> {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => widget.changePage(5, courseId: '', moduleId: ''),
+            onTap: () {
+              print("Course container tapped - Course ID: ${widget.courseId}");
+              widget.changePage(6, courseId: widget.courseId, moduleId: '');
+            },
             borderRadius: BorderRadius.circular(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,15 +169,18 @@ class _LectureCourseContainersState extends State<LectureCourseContainers> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        widget.courseDescription,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                          height: 1.5,
+                      SizedBox(
+                        height: 65,
+                        child: Text(
+                          widget.courseDescription,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                            height: 1.5,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 16),
                       const Divider(),

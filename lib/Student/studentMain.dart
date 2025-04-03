@@ -121,9 +121,9 @@ class _StudentMainState extends State<StudentMain> {
   @override
   Widget build(BuildContext context) {
     return StudentNavBar(
-      child: _pages[pageIndex],
       changePage: (value) => changePageWithCourseId(value, ''),
       initialIndex: pageIndex,
+      child: _pages[pageIndex],
     );
   }
 }

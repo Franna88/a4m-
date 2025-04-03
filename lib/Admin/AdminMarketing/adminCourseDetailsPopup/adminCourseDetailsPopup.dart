@@ -157,7 +157,7 @@ class _AdminCourseDetailsPopupState extends State<AdminCourseDetailsPopup> {
                         String newPrice = changePrice.text;
                         String courseId = widget.course['courseId'];
 
-                        if (courseId == null || courseId.isEmpty) {
+                        if (courseId.isEmpty) {
                           print("Error: No courseId provided!");
                           return;
                         }

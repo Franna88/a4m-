@@ -4,7 +4,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class DashCalendarNotices extends StatefulWidget {
-  const DashCalendarNotices({Key? key}) : super(key: key);
+  const DashCalendarNotices({super.key});
 
   @override
   State<DashCalendarNotices> createState() => _DashCalendarNoticesState();

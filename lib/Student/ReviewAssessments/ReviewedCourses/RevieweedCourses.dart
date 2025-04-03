@@ -12,8 +12,9 @@ class Reviewedcourses extends StatefulWidget {
   final String studentId;
 
   const Reviewedcourses(
-      {Key? key, required this.changePageWithCourseId, required this.studentId})
-      : super(key: key);
+      {super.key,
+      required this.changePageWithCourseId,
+      required this.studentId});
 
   @override
   State<Reviewedcourses> createState() => _ReviewedcoursesState();

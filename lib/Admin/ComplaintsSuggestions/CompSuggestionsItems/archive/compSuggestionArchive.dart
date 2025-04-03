@@ -1,4 +1,3 @@
-import 'package:a4m/Admin/ComplaintsSuggestions/CompSuggestionsItems/Important/table/importantCompSuggestionTable.dart';
 import 'package:a4m/Admin/ComplaintsSuggestions/CompSuggestionsItems/archive/table/archiveTable.dart';
 
 import 'package:flutter/material.dart';

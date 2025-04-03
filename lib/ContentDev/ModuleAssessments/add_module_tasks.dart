@@ -11,7 +11,7 @@ class AddModuleTasks extends StatefulWidget {
   final Function(int, {int? moduleIndex}) changePageIndex;
   final int moduleIndex;
 
-  AddModuleTasks({
+  const AddModuleTasks({
     super.key,
     required this.changePageIndex,
     required this.moduleIndex,
@@ -25,7 +25,7 @@ class _AddModuleTasksState extends State<AddModuleTasks> {
   late TextEditingController _trueFalseQuestionController;
   late TextEditingController _trueFalseAnswerController;
   late TextEditingController _studentScoreController;
-  List<String> _answers = [];
+  final List<String> _answers = [];
 
   @override
   void initState() {

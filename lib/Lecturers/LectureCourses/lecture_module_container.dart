@@ -17,7 +17,7 @@ class LectureModuleContainer extends StatefulWidget {
   final VoidCallback onAnswerSheetTap;
 
   const LectureModuleContainer({
-    Key? key,
+    super.key,
     required this.moduleName,
     required this.moduleDescription,
     required this.moduleImage,
@@ -29,7 +29,7 @@ class LectureModuleContainer extends StatefulWidget {
     required this.onAssessmentsTap,
     required this.onTestSheetTap,
     required this.onAnswerSheetTap,
-  }) : super(key: key);
+  });
 
   @override
   State<LectureModuleContainer> createState() => _LectureModuleContainerState();

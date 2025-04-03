@@ -9,8 +9,7 @@ class MySearchBar extends StatelessWidget {
       {required this.textController,
       required this.hintText,
       this.onChanged,
-      Key? key})
-      : super(key: key);
+      super.key});
 
   @override
   Widget build(BuildContext context) {

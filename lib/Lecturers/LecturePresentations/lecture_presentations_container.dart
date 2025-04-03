@@ -1,7 +1,5 @@
-import 'package:a4m/Admin/ApproveContent/approveContent.dart';
 import 'package:a4m/CommonComponents/displayCardIcons.dart';
 import 'package:a4m/Constants/myColors.dart';
-import 'package:a4m/Lecturers/LectureCourses/view_modules_complete.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 

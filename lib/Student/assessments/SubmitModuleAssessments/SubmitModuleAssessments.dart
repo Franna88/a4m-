@@ -11,11 +11,11 @@ class SubmitModuleAssessments extends StatefulWidget {
   final String studentID;
 
   const SubmitModuleAssessments({
-    Key? key,
+    super.key,
     required this.changePageWithCourseId,
     required this.selectedCourseId,
     required this.studentID,
-  }) : super(key: key);
+  });
 
   @override
   State<SubmitModuleAssessments> createState() =>

@@ -1,6 +1,3 @@
-import 'package:a4m/Admin/Dashboard/ui/coursePerformancePieChart.dart';
-import 'package:a4m/Admin/Dashboard/ui/monthlySalesChart.dart';
-import 'package:a4m/Admin/Dashboard/ui/monthlyStatSumContainers.dart';
 import 'package:a4m/Constants/myColors.dart';
 import 'package:a4m/Lecturers/LectureDashboard/dash_calendar_notices.dart';
 import 'package:a4m/Lecturers/LectureDashboard/lecture_dashboard_profile.dart';
@@ -35,93 +32,59 @@ class _LectureDashboardState extends State<LectureDashboard> {
       child: Padding(
         padding: const EdgeInsets.all(15.0),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    LectureDashboardProfile(
-                      lecturerId: widget.lecturerId,
+            Expanded(
+              flex: 3,
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 200,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: LectureDashboardProfile(
+                            lecturerId: widget.lecturerId,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: LectureDashboardTotalStudents(
+                            lecturerId: widget.lecturerId,
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(width: 50),
-                    LectureDashboardTotalStudents(
-                      lecturerId: widget.lecturerId,
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    NewlySubmitedModules(
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: NewlySubmitedModules(
                       lecturerId: widget.lecturerId,
                       changePageWithCourseId: widget.changePageWithCourseId,
                     ),
-                  ],
-                )
-              ],
+                  ),
+                ],
+              ),
             ),
-            Spacer(),
-            Container(
-              color: Colors.white,
-              width: MyUtility(context).width * 0.22,
-              height: MyUtility(context).height - 80,
-              child: Center(
-                child: Column(
-                  children: [
-                    Container(
-                      color: Colors.white,
-                      width: MyUtility(context).width * 0.22,
-                      height: MyUtility(context).height * 0.7,
-                      child: const DashCalendarNotices(),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      blurRadius: 4,
+                      spreadRadius: 2,
                     ),
-                    // Padding(
-                    //   padding: const EdgeInsets.all(10.0),
-                    //   child: Divider(
-                    //     color: Mycolors().offWhite,
-                    //     thickness: 5,
-                    //   ),
-                    // ),
-                    // const Row(
-                    //   children: [
-                    //     Spacer(),
-                    //     SizedBox(width: 15),
-                    //     Text(
-                    //       'Today\'s Reminders',
-                    //       style: TextStyle(
-                    //           fontSize: 20,
-                    //           color: Colors.black,
-                    //           fontWeight: FontWeight.bold),
-                    //     ),
-                    //     Spacer(),
-                    //     Icon(
-                    //       Icons.add,
-                    //       size: 30,
-                    //     )
-                    //   ],
-                    // ),
-                    // Padding(
-                    //   padding: const EdgeInsets.all(10.0),
-                    //   child: Container(
-                    //     height: MyUtility(context).height * 0.05,
-                    //     decoration: BoxDecoration(
-                    //         color: Mycolors().offWhite,
-                    //         borderRadius: BorderRadius.circular(6)),
-                    //     child: Text(
-                    //       widget.reminder,
-                    //       style: TextStyle(
-                    //           fontSize: 20,
-                    //           color: Colors.black,
-                    //           fontWeight: FontWeight.bold),
-                    //     ),
-                    //   ),
-                    // )
                   ],
                 ),
+                child: const DashCalendarNotices(),
               ),
-            )
+            ),
           ],
         ),
       ),

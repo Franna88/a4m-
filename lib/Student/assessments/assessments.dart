@@ -10,10 +10,10 @@ class AssessmentsMain extends StatefulWidget {
   final String studentId;
 
   const AssessmentsMain({
-    Key? key,
+    super.key,
     required this.changePageWithCourseId,
     required this.studentId,
-  }) : super(key: key);
+  });
 
   @override
   State<AssessmentsMain> createState() => _AssessmentsMainState();

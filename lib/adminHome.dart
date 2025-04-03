@@ -89,8 +89,8 @@ class _AdminHomeState extends State<AdminHome> {
     ];
 
     return AdminMainNavBar(
-      child: pages[pageIndex],
       changePage: changePage,
+      child: pages[pageIndex],
     );
   }
 }

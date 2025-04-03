@@ -1,14 +1,10 @@
-import 'package:a4m/CommonComponents/buttons/navButtons.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
-import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:a4m/LandingPage/LandingPageMain.dart';
 import 'package:a4m/CommonComponents/EditProfile/EditProfileDialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_network/image_network.dart';
-import 'package:a4m/CommonComponents/dialogs/submitUserReportDialog.dart';
-import 'package:a4m/CommonComponents/dialogs/submitCourseReviewDialog.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class StudentNavBar extends StatefulWidget {

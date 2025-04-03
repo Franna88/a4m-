@@ -58,7 +58,7 @@ class _ChatReviewMessageBoxState extends State<ChatReviewMessageBox> {
               ],
             ),
           ),
-          Container(
+          SizedBox(
             width: MyUtility(context).width - 580,
             height: MyUtility(context).height - 211,
             child: Padding(

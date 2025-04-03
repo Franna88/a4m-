@@ -12,14 +12,14 @@ class AddModuleListItem extends StatelessWidget {
   final ValueChanged<bool?>? onCheckboxChanged;
 
   const AddModuleListItem({
-    Key? key,
+    super.key,
     required this.text,
     required this.onEdit,
     required this.onDelete,
     this.showCheckbox = false,
     this.checkboxValue,
     this.onCheckboxChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

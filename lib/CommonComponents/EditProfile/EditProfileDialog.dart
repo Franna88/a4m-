@@ -16,10 +16,10 @@ class EditProfileDialog extends StatefulWidget {
   final String userType;
 
   const EditProfileDialog({
-    Key? key,
+    super.key,
     required this.userId,
     required this.userType,
-  }) : super(key: key);
+  });
 
   @override
   State<EditProfileDialog> createState() => _EditProfileDialogState();

@@ -57,7 +57,7 @@ class _A4mMembersListState extends State<A4mMembersList>
     int crossAxisCount =
         (screenWidth ~/ 400).clamp(1, 6); // Minimum 1, maximum 6
 
-    return Container(
+    return SizedBox(
       width: MyUtility(context).width - 320,
       height: MyUtility(context).height - 80,
       child: Padding(

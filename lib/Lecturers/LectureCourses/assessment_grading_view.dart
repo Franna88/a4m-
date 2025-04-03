@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:a4m/Constants/myColors.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AssessmentGradingView extends StatefulWidget {
   final String courseId;
@@ -13,7 +15,7 @@ class AssessmentGradingView extends StatefulWidget {
   final String? currentComment;
 
   const AssessmentGradingView({
-    Key? key,
+    super.key,
     required this.courseId,
     required this.moduleId,
     required this.studentId,
@@ -21,43 +23,62 @@ class AssessmentGradingView extends StatefulWidget {
     required this.fileUrl,
     this.currentMark,
     this.currentComment,
-  }) : super(key: key);
+  });
 
   @override
   State<AssessmentGradingView> createState() => _AssessmentGradingViewState();
 }
 
 class _AssessmentGradingViewState extends State<AssessmentGradingView> {
-  final _markController = TextEditingController();
-  final _commentController = TextEditingController();
-  bool isLoading = false;
-  String? error;
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _markController;
+  late TextEditingController _commentController;
+  bool _isSubmitting = false;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _markController.text = widget.currentMark?.toString() ?? '';
-    _commentController.text = widget.currentComment ?? '';
+    _markController =
+        TextEditingController(text: widget.currentMark?.toString() ?? '');
+    _commentController =
+        TextEditingController(text: widget.currentComment ?? '');
   }
 
-  Future<void> _gradeSubmission() async {
-    if (_markController.text.isEmpty) {
-      setState(() => error = 'Please enter a mark');
-      return;
-    }
+  @override
+  void dispose() {
+    _markController.dispose();
+    _commentController.dispose();
+    super.dispose();
+  }
 
-    final mark = double.tryParse(_markController.text);
-    if (mark == null) {
-      setState(() => error = 'Please enter a valid mark');
+  Future<void> _submitGrade() async {
+    print('\n=== Starting Grade Submission Process ===');
+    print('Course ID: ${widget.courseId}');
+    print('Module ID: ${widget.moduleId}');
+    print('Student ID: ${widget.studentId}');
+    print('Assessment Name: ${widget.assessmentName}');
+
+    if (!_formKey.currentState!.validate()) {
+      print('❌ Form validation failed');
       return;
     }
 
     setState(() {
-      isLoading = true;
-      error = null;
+      _isSubmitting = true;
+      _error = null;
     });
 
     try {
+      // Validate mark is a valid number
+      final mark = double.tryParse(_markController.text);
+      print('Mark Input: ${_markController.text}');
+      print('Parsed Mark: $mark');
+
+      if (mark == null || mark < 0 || mark > 100) {
+        throw Exception('Please enter a valid mark between 0 and 100');
+      }
+
       final submissionRef = FirebaseFirestore.instance
           .collection('courses')
           .doc(widget.courseId)
@@ -66,239 +87,314 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
           .collection('submissions')
           .doc(widget.studentId);
 
-      final doc = await submissionRef.get();
-      if (!doc.exists) {
+      print('\nFetching submission document...');
+      final submissionDoc = await submissionRef.get();
+
+      if (!submissionDoc.exists) {
+        print('❌ ERROR: Submission document not found');
         throw Exception('Submission document not found');
       }
 
-      final data = doc.data()!;
-      final submittedAssessments =
-          List<dynamic>.from(data['submittedAssessments'] ?? []);
+      print('✅ Submission document found');
+      final data = submissionDoc.data();
+      print('Submission Data: $data');
 
-      // Find and update the assessment
+      if (data == null) {
+        print('❌ ERROR: Submission data is null');
+        throw Exception('Submission data is null');
+      }
+
+      final submittedAssessments =
+          List<Map<String, dynamic>>.from(data['submittedAssessments'] ?? []);
+      print('Found ${submittedAssessments.length} submitted assessments');
+
       final assessmentIndex = submittedAssessments.indexWhere(
-        (assessment) => assessment['name'] == widget.assessmentName,
+        (a) => a['assessmentName'] == widget.assessmentName,
       );
 
       if (assessmentIndex == -1) {
-        throw Exception('Assessment not found in submission');
+        print('❌ ERROR: Assessment not found in submission document');
+        throw Exception('Assessment not found in submission document');
       }
 
-      submittedAssessments[assessmentIndex] = {
+      print('Found assessment at index: $assessmentIndex');
+      print(
+          'Current assessment data: ${submittedAssessments[assessmentIndex]}');
+
+      final updatedAssessment = {
         ...submittedAssessments[assessmentIndex],
         'mark': mark,
         'comment': _commentController.text,
         'gradedAt': FieldValue.serverTimestamp(),
+        'gradedBy': FirebaseAuth.instance.currentUser?.uid,
       };
+      print('Updated assessment data: $updatedAssessment');
 
+      submittedAssessments[assessmentIndex] = updatedAssessment;
+
+      print('\nUpdating Firestore document...');
       await submissionRef.update({
         'submittedAssessments': submittedAssessments,
         'lastUpdated': FieldValue.serverTimestamp(),
       });
+      print('✅ Firestore update successful');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Grade saved successfully')),
+          const SnackBar(
+            content: Text('Grade submitted successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
+        Navigator.pop(context);
       }
     } catch (e) {
-      print('Error grading submission: $e');
+      print('\n❌ ERROR in _submitGrade:');
+      print('Error: $e');
+      setState(() {
+        _error = e.toString();
+        _isSubmitting = false;
+      });
       if (mounted) {
-        setState(() => error = 'Failed to save grade: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error submitting grade: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
-    } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _viewSubmission() async {
+    print('\n=== Attempting to View Submission ===');
+    print('File URL: ${widget.fileUrl}');
+
+    try {
+      if (await canLaunch(widget.fileUrl)) {
+        print('✅ Launching file URL');
+        await launch(widget.fileUrl);
+      } else {
+        print('❌ Could not launch file URL');
+        throw 'Could not open the file';
       }
+    } catch (e) {
+      print('❌ Error opening file: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error opening file: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Grade Assessment',
-            style: GoogleFonts.poppins(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[800],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            widget.assessmentName,
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 24),
-          if (error != null)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.red[50],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.error_outline, color: Colors.red[700]),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      error!,
-                      style: GoogleFonts.poppins(
-                        color: Colors.red[700],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Grade Assessment',
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+        backgroundColor: Mycolors().darkGrey,
+      ),
+      body: SingleChildScrollView(
+        child: Container(
+          margin: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Assessment Info Card
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-          const SizedBox(height: 24),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Submission',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      height: 400,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: widget.fileUrl.endsWith('.pdf')
-                            ? const Center(
-                                child:
-                                    Text('PDF Viewer will be implemented here'),
-                              )
-                            : Image.network(
-                                widget.fileUrl,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.error_outline,
-                                          color: Colors.red[700],
-                                          size: 48,
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'Failed to load image',
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.red[700],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Grading',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _markController,
-                      decoration: InputDecoration(
-                        labelText: 'Mark',
-                        hintText: 'Enter mark',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Assessment Details',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
                         ),
-                        prefixIcon: const Icon(Icons.grade),
                       ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _commentController,
-                      decoration: InputDecoration(
-                        labelText: 'Comment',
-                        hintText: 'Enter feedback',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        prefixIcon: const Icon(Icons.comment),
-                      ),
-                      maxLines: 5,
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: isLoading ? null : _gradeSubmission,
+                      const SizedBox(height: 16),
+                      _buildInfoRow('Assessment:', widget.assessmentName),
+                      const SizedBox(height: 12),
+                      _buildInfoRow('Student ID:', widget.studentId),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: _viewSubmission,
+                        icon: const Icon(Icons.visibility),
+                        label: const Text('View Submission'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Mycolors().green,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: Mycolors().darkGrey,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
-                                ),
-                              )
-                            : Text(
-                                'Save Grade',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white,
-                                ),
-                              ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+
+                // Grading Form Card
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Grade Assessment',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _markController,
+                        decoration: InputDecoration(
+                          labelText: 'Mark',
+                          hintText: 'Enter mark (0-100)',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a mark';
+                          }
+                          final mark = double.tryParse(value);
+                          if (mark == null) {
+                            return 'Please enter a valid number';
+                          }
+                          if (mark < 0 || mark > 100) {
+                            return 'Mark must be between 0 and 100';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _commentController,
+                        decoration: InputDecoration(
+                          labelText: 'Feedback',
+                          hintText: 'Enter feedback for the student',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                        ),
+                        maxLines: 4,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please provide feedback';
+                          }
+                          return null;
+                        },
+                      ),
+                      if (_error != null) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          _error!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isSubmitting ? null : _submitGrade,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Mycolors().green,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: _isSubmitting
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  ),
+                                )
+                              : const Text('Submit Grade'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 120,
+          child: Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[600],
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

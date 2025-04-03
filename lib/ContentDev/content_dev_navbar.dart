@@ -155,7 +155,7 @@ class _AdminMainNavBarState extends State<ContentDevNavBar> {
                     PopupMenuButton(
                       icon: _profileImageUrl != null &&
                               _profileImageUrl!.isNotEmpty
-                          ? Container(
+                          ? SizedBox(
                               width: 36,
                               height: 36,
                               child: ClipRRect(

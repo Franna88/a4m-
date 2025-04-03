@@ -251,7 +251,7 @@ class _FacilitatorBrowseCoursesState extends State<FacilitatorBrowseCourses> {
     int crossAxisCount =
         (screenWidth ~/ 300).clamp(1, 6); // Adjusted for tight layout
 
-    return Container(
+    return SizedBox(
       height: MyUtility(context).height - 50,
       width: screenWidth,
       child: Padding(
