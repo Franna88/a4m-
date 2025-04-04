@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -7,6 +8,8 @@ import '../../Themes/text_style.dart';
 import '../../CommonComponents/buttons/slimButtons.dart';
 import '../../myutility.dart';
 import '../commonUi/studentModuleContainer.dart';
+import '../commonUi/pdfViewer.dart';
+import '../ReviewAssessments/CourseEvaluation/CourseEvaluationForm.dart';
 
 class StudentViewCourse extends StatefulWidget {
   final String courseId; // Pass the selected course's ID
@@ -19,11 +22,33 @@ class StudentViewCourse extends StatefulWidget {
 
 class _StudentViewCourseState extends State<StudentViewCourse> {
   late Future<List<Map<String, dynamic>>> _modulesFuture;
+  late Future<Map<String, dynamic>> _courseFuture;
 
   @override
   void initState() {
     super.initState();
     _modulesFuture = fetchModules();
+    _courseFuture = fetchCourseDetails();
+  }
+
+  Future<Map<String, dynamic>> fetchCourseDetails() async {
+    try {
+      DocumentSnapshot courseDoc = await FirebaseFirestore.instance
+          .collection('courses')
+          .doc(widget.courseId)
+          .get();
+
+      if (courseDoc.exists) {
+        return {
+          'id': courseDoc.id,
+          ...courseDoc.data() as Map<String, dynamic>
+        };
+      }
+      return {};
+    } catch (e) {
+      debugPrint('Error fetching course details: $e');
+      return {};
+    }
   }
 
   // Fetch modules for the current course
@@ -89,6 +114,58 @@ class _StudentViewCourseState extends State<StudentViewCourse> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  FutureBuilder<Map<String, dynamic>>(
+                    future: _courseFuture,
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const CircularProgressIndicator();
+                      }
+
+                      final courseData = snapshot.data!;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                courseData['courseName'] ?? 'Course Details',
+                                style: MyTextStyles(context).subHeaderBlack,
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => Dialog(
+                                      child: CourseEvaluationForm(
+                                        courseId: widget.courseId,
+                                        courseName: courseData['courseName'] ??
+                                            'Unknown Course',
+                                        studentId: FirebaseAuth
+                                                .instance.currentUser?.uid ??
+                                            '',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.rate_review),
+                                label: const Text('Evaluate Course'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Mycolors().darkTeal,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      );
+                    },
+                  ),
                   // Header
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -164,8 +241,24 @@ class _StudentViewCourseState extends State<StudentViewCourse> {
                                           null) {
                                         debugPrint(
                                             'Opening Student Guide PDF: ${module['studentGuidePdfUrl']}');
-                                        _launchUrl(
-                                            module['studentGuidePdfUrl']!);
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => Scaffold(
+                                              appBar: AppBar(
+                                                title: Text('Student Guide'),
+                                                backgroundColor:
+                                                    Mycolors().darkGrey,
+                                              ),
+                                              body: StudentPdfViewer(
+                                                pdfUrl: module[
+                                                    'studentGuidePdfUrl']!,
+                                                title: 'Student Guide',
+                                                showDownloadButton: false,
+                                              ),
+                                            ),
+                                          ),
+                                        );
                                       } else {
                                         debugPrint(
                                             'Student Guide PDF URL is null');
@@ -175,7 +268,24 @@ class _StudentViewCourseState extends State<StudentViewCourse> {
                                       if (module['testSheetPdfUrl'] != null) {
                                         debugPrint(
                                             'Opening Test Sheet PDF: ${module['testSheetPdfUrl']}');
-                                        _launchUrl(module['testSheetPdfUrl']!);
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => Scaffold(
+                                              appBar: AppBar(
+                                                title: Text('Test Sheet'),
+                                                backgroundColor:
+                                                    Mycolors().darkGrey,
+                                              ),
+                                              body: StudentPdfViewer(
+                                                pdfUrl:
+                                                    module['testSheetPdfUrl']!,
+                                                title: 'Test Sheet',
+                                                showDownloadButton: true,
+                                              ),
+                                            ),
+                                          ),
+                                        );
                                       } else {
                                         debugPrint(
                                             'Test Sheet PDF URL is null');
@@ -185,8 +295,24 @@ class _StudentViewCourseState extends State<StudentViewCourse> {
                                       if (module['assessmentsPdfUrl'] != null) {
                                         debugPrint(
                                             'Opening Assessments PDF: ${module['assessmentsPdfUrl']}');
-                                        _launchUrl(
-                                            module['assessmentsPdfUrl']!);
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => Scaffold(
+                                              appBar: AppBar(
+                                                title: Text('Assessment'),
+                                                backgroundColor:
+                                                    Mycolors().darkGrey,
+                                              ),
+                                              body: StudentPdfViewer(
+                                                pdfUrl: module[
+                                                    'assessmentsPdfUrl']!,
+                                                title: 'Assessment',
+                                                showDownloadButton: true,
+                                              ),
+                                            ),
+                                          ),
+                                        );
                                       } else {
                                         debugPrint(
                                             'Assessments PDF URL is null');

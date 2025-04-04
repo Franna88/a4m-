@@ -102,7 +102,7 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                 TableCell(
                   child: TableStructure(
                     child: Text(
-                      'Approve',
+                      widget.status == 'removed' ? 'Restore' : 'Approve',
                       style: GoogleFonts.montserrat(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -177,37 +177,41 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                             onPressed: () {
                               widget.changePage(9, {
                                 'courseId': course.id,
-                                'isEdited': true,
+                                'isEdited': isEdited,
                               });
                             },
                             customWidth: 100,
                           ),
-                          const SizedBox(width: 10), // Space between buttons
-                          IconButton(
-                            icon: Icon(Icons.info, color: Colors.blue),
-                            onPressed: () {
-                              _showChangesDialog(context,
-                                  course.data() as Map<String, dynamic>);
-                            },
-                          ),
+                          if (widget.status != 'removed')
+                            Row(
+                              children: [
+                                const SizedBox(
+                                    width: 10), // Space between buttons
+                                IconButton(
+                                  icon: Icon(Icons.info, color: Colors.blue),
+                                  onPressed: () {
+                                    _showChangesDialog(context,
+                                        course.data() as Map<String, dynamic>);
+                                  },
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                     ),
                   ),
 
-                  // Approve/Decline Buttons
+                  // Approve/Decline/Restore Buttons
                   TableCell(
                     child: TableStructure(
                       child: Container(
                         constraints: const BoxConstraints(minWidth: 350),
-                        child: (widget.status ==
-                                'approved') // Check if the course is approved
+                        child: widget.status == 'approved'
                             ? Center(
                                 child: Text(
                                   (data['isUpdated'] == true) ? 'Updated' : '',
                                   style: GoogleFonts.montserrat(
-                                    color:
-                                        Colors.red, // Highlight updated courses
+                                    color: Colors.red,
                                     fontWeight: FontWeight.w600,
                                     fontSize: 14,
                                   ),
@@ -216,35 +220,49 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  // Show Approve/Decline only if it's 'pending' (edited) or 'pending_approval'
-                                  if (widget.status == 'pending_approval' ||
-                                      isEdited)
+                                  if (widget.status == 'removed')
                                     SizedBox(
                                       width: 100,
                                       child: SlimButtons(
-                                        buttonText: 'Approve',
+                                        buttonText: 'Restore',
                                         buttonColor: Mycolors().blue,
                                         onPressed: () {
-                                          _approveCourse(course.id, isEdited);
+                                          _restoreCourse(course.id);
                                         },
                                         customWidth: 100,
                                       ),
-                                    ),
-                                  if (widget.status == 'pending_approval' ||
+                                    )
+                                  else if (widget.status ==
+                                          'pending_approval' ||
                                       isEdited)
-                                    const SizedBox(width: 8),
-                                  if (widget.status == 'pending_approval' ||
-                                      isEdited)
-                                    SizedBox(
-                                      width: 100,
-                                      child: SlimButtons(
-                                        buttonText: 'Decline',
-                                        buttonColor: Mycolors().red,
-                                        onPressed: () {
-                                          _declineCourse(course.id, isEdited);
-                                        },
-                                        customWidth: 100,
-                                      ),
+                                    Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 100,
+                                          child: SlimButtons(
+                                            buttonText: 'Approve',
+                                            buttonColor: Mycolors().blue,
+                                            onPressed: () {
+                                              _approveCourse(
+                                                  course.id, isEdited);
+                                            },
+                                            customWidth: 100,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        SizedBox(
+                                          width: 100,
+                                          child: SlimButtons(
+                                            buttonText: 'Decline',
+                                            buttonColor: Mycolors().red,
+                                            onPressed: () {
+                                              _declineCourse(
+                                                  course.id, isEdited);
+                                            },
+                                            customWidth: 100,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                 ],
                               ),
@@ -450,6 +468,26 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to decline course: $e')),
+      );
+    }
+  }
+
+  Future<void> _restoreCourse(String courseId) async {
+    try {
+      FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+      // Update the course status to 'approved'
+      await firestore
+          .collection('courses')
+          .doc(courseId)
+          .update({'status': 'approved'});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Course restored successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to restore course: $e')),
       );
     }
   }

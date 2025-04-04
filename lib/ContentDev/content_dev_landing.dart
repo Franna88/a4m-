@@ -68,7 +68,10 @@ class _ContentDevHomeState extends State<ContentDevHome> {
         changePageIndex: changePageIndex,
         moduleIndex: selectedModuleIndex,
       ),
-      AdminMessagesMain(),
+      AdminMessagesMain(
+        userId: widget.contentDevId,
+        userRole: 'content_dev',
+      ),
     ];
   }
 

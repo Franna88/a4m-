@@ -1,12 +1,7 @@
-import 'package:a4m/Admin/AdminMessaging/adminMessaging.dart';
-import 'package:a4m/Admin/AdminMessaging/ui/adminMessagingItems/FacilitatorList/facilitatorList.dart';
-import 'package:a4m/Admin/AdminMessaging/ui/adminMessagingItems/LecturerList/LecturerList.dart';
-import 'package:a4m/Admin/AdminMessaging/ui/adminMessagingItems/adminInbox.dart';
-import 'package:a4m/Admin/AdminMessaging/ui/adminMessagingItems/contentDevList/contentDevList.dart';
-import 'package:a4m/Admin/AdminMessaging/ui/adminMessagingItems/importantMessages/adminImportantMessages.dart';
-import 'package:a4m/Admin/AdminMessaging/ui/adminMessagingItems/studentList/studentList.dart';
-import 'package:a4m/Lecturers/LectureMessages/lecture_message_navbar.dart';
+import 'package:a4m/Admin/AdminMessaging/adminMessagesMain.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:a4m/services/messaging_service.dart';
 
 class LectureMessages extends StatefulWidget {
   const LectureMessages({super.key});
@@ -16,26 +11,32 @@ class LectureMessages extends StatefulWidget {
 }
 
 class _LectureMessagesState extends State<LectureMessages> {
-  var pageIndex = 0;
-
-  var pages = [
-    AdminInbox(),
-    AdminImportantMessages(),
-    ContentDevList(),
-    LecturerList(),
-    StudentList(),
-    FacilitatorList(),
-  ];
-
-  void changePage(int value) {
-    setState(() {
-      pageIndex = value;
-    });
-  }
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final MessagingService _messagingService = MessagingService();
 
   @override
   Widget build(BuildContext context) {
-    return LectureMessageNavbar(
-        changePage: changePage, child: pages[pageIndex]);
+    // Use the authenticated user ID for the lecturer
+    final String lecturerId = _auth.currentUser?.uid ?? '';
+
+    if (lecturerId.isEmpty) {
+      return const Center(
+        child: Text('You must be logged in to view messages.'),
+      );
+    }
+
+    // Get selected chat information from the messaging service
+    final selectedChatId = _messagingService.selectedChatId;
+    final selectedOtherUserId = _messagingService.selectedOtherUserId;
+    final selectedOtherUserName = _messagingService.selectedOtherUserName;
+    final selectedUserType = _messagingService.selectedUserType;
+
+    return AdminMessagesMain(
+      userId: lecturerId,
+      userRole: 'lecturer',
+      initialSelectedUserId: selectedOtherUserId,
+      initialSelectedUserName: selectedOtherUserName,
+      initialSelectedUserType: selectedUserType,
+    );
   }
 }

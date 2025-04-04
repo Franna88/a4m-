@@ -72,6 +72,14 @@ class _CompSuggestionsNavState extends State<CompSuggestionsNav> {
                   onTap: () => _handleItemClick(3),
                   isActive: activeIndex == 3,
                 ),
+                const SizedBox(
+                  height: 20,
+                ),
+                AlternateNavButtons(
+                  buttonText: 'Course Reviews',
+                  onTap: () => _handleItemClick(4),
+                  isActive: activeIndex == 4,
+                ),
               ],
             ),
           ),

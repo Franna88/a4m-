@@ -10,6 +10,7 @@ import 'package:a4m/Student/assessments/SubmitAssessments/SubmitAssessment.dart'
 import 'package:a4m/Student/assessments/SubmitModuleAssessments/SubmitModuleAssessments.dart';
 import 'package:a4m/Student/assessments/assessments.dart';
 import 'package:a4m/Student/commonUi/studentNavBar.dart';
+import 'package:a4m/Student/ReviewAssessments/CourseEvaluation/CourseEvaluationPage.dart';
 import 'package:flutter/material.dart';
 
 class StudentMain extends StatefulWidget {
@@ -40,42 +41,46 @@ class _StudentMainState extends State<StudentMain> {
       MyCoursesMain(
         changePageWithCourseId: changePageWithCourseId,
         studentId: widget.studentId,
-      ),
+      ), // 0
       BrowseAvailableContainer(
         studentId: widget.studentId,
-      ),
+      ), // 1
       AssessmentsMain(
         changePageWithCourseId: changePageWithCourseId,
         studentId: widget.studentId,
-      ),
+      ), // 2
       Reviewedcourses(
         changePageWithCourseId: changePageWithCourseId,
         studentId: widget.studentId,
-      ),
-      CertificatesMainStudent(),
+      ), // 3 - Results
+      CertificatesMainStudent(), // 4
       SubmitAssessment(
         courseId: selectedCourseId,
         moduleId: moduleId,
         studentId: widget.studentId,
-      ),
+      ), // 5
       MarkedAssessment(
         courseId: selectedCourseId,
         moduleId: moduleId,
         studentId: widget.studentId,
-      ),
+      ), // 6
       StudentViewCourse(
         courseId: selectedCourseId,
-      ),
+      ), // 7 - Course Module View
       SubmitModuleAssessments(
         changePageWithCourseId: changePageWithCourseId,
         selectedCourseId: selectedCourseId,
         studentID: widget.studentId,
-      ),
+      ), // 8
+      AdminMessagesMain(
+        userId: widget.studentId,
+        userRole: 'student',
+      ), // 9 - Messages
       ReviewAssessments(
         changePageWithCourseId: changePageWithCourseId,
         courseId: selectedCourseId,
-      ),
-      AdminMessagesMain(),
+      ), // 10 - Review Assessments
+      const CourseEvaluationPage(), // 11 - Course Evaluation
     ];
 
     return StudentNavBar(

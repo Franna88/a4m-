@@ -105,7 +105,7 @@ class ReviewAssessmentsItem extends StatelessWidget {
                       ),
                       OnHoverButton(
                         onTap: onTap,
-                        buttonText: 'Review Assessments',
+                        buttonText: 'View Results',
                       )
                     ],
                   )

@@ -31,7 +31,7 @@ class _ReviewedcoursesState extends State<Reviewedcourses> {
         child: ReviewedCoursesList(
           studentId: widget.studentId,
           onTap: (courseId) {
-            widget.changePageWithCourseId(9, courseId);
+            widget.changePageWithCourseId(10, courseId);
           },
         ),
       ),
@@ -51,7 +51,7 @@ class _ReviewedcoursesState extends State<Reviewedcourses> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CategoryNameStack(text: 'Reviewed Assessments'),
+          CategoryNameStack(text: 'Results'),
           const SizedBox(height: 15),
           SizedBox(
             height: 50,

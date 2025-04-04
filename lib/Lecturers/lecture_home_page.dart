@@ -62,7 +62,10 @@ class _LectureHomePageState extends State<LectureHomePage> {
         },
         lecturerId: widget.lecturerId,
       ),
-      LectureStudent(),
+      LectureStudent(
+        lecturerId: widget.lecturerId,
+        changePage: changePage,
+      ),
       LecturePresentations(),
       LectureMessages(),
       ViewModulesComplete(

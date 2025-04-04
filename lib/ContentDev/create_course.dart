@@ -15,6 +15,7 @@ import 'dart:typed_data';
 import 'dart:html' as html;
 
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CreateCourse extends StatefulWidget {
   Function(int, {int? moduleIndex}) changePageIndex;
@@ -38,6 +39,9 @@ class _CreateCourseState extends State<CreateCourse> {
   Uint8List? _selectedImage;
   bool isLoading = false;
   String? _selectedImageUrl;
+  Uint8List? _selectedPreviewPdf;
+  String? _selectedPreviewPdfUrl;
+  String? _selectedPreviewPdfName;
 
   @override
   void initState() {
@@ -77,6 +81,8 @@ class _CreateCourseState extends State<CreateCourse> {
               pendingData['courseDescription'] ?? '';
           _selectedImageUrl =
               pendingData['courseImageUrl'] ?? _selectedImageUrl;
+          _selectedPreviewPdfUrl = pendingData['previewPdfUrl'];
+          _selectedPreviewPdfName = pendingData['previewPdfName'];
 
           print("⚠️ Loading pending course edits for review.");
         });
@@ -105,6 +111,11 @@ class _CreateCourseState extends State<CreateCourse> {
               data['courseImageUrl'] != null) {
             _selectedImageUrl = data['courseImageUrl'];
           }
+          if (data.containsKey('previewPdfUrl') &&
+              data['previewPdfUrl'] != null) {
+            _selectedPreviewPdfUrl = data['previewPdfUrl'];
+            _selectedPreviewPdfName = data['previewPdfName'];
+          }
 
           print("✅ Loaded course data from Firestore.");
         });
@@ -125,67 +136,148 @@ class _CreateCourseState extends State<CreateCourse> {
     });
 
     try {
+      final storage = FirebaseStorage.instance;
       final firestore = FirebaseFirestore.instance;
-      DocumentSnapshot liveDoc =
-          await firestore.collection('courses').doc(widget.courseId).get();
-      Map<String, dynamic> liveData =
-          liveDoc.exists ? liveDoc.data() as Map<String, dynamic> : {};
+      final user = FirebaseAuth.instance.currentUser;
 
+      if (user == null) {
+        throw Exception('No user logged in');
+      }
+
+      // Track changes
       List<String> changeList = [];
 
-      // Track changes properly
-      if (_courseNameController.text.trim() !=
-          (liveData['courseName'] ?? '').trim()) {
-        changeList.add("Updated Course Name: ${_courseNameController.text}");
-      }
-      if (_coursePriceController.text.trim() !=
-          (liveData['coursePrice'] ?? '').trim()) {
-        changeList.add("Updated Course Price: ${_coursePriceController.text}");
-      }
-      if (_courseCategoryController.text.trim() !=
-          (liveData['courseCategory'] ?? '').trim()) {
-        changeList
-            .add("Updated Course Category: ${_courseCategoryController.text}");
-      }
-      if (_courseDescriptionController.text.trim() !=
-          (liveData['courseDescription'] ?? '').trim()) {
-        changeList.add("Updated Course Description");
+      // Get existing course data first
+      Map<String, dynamic>? existingData;
+      if (widget.courseId != null) {
+        DocumentSnapshot existingDoc =
+            await firestore.collection('courses').doc(widget.courseId).get();
+        if (existingDoc.exists) {
+          existingData = existingDoc.data() as Map<String, dynamic>;
+        }
       }
 
-      // Handle the course image.
-      String newImageUrl;
+      // Handle course image upload
+      String? newImageUrl = _selectedImageUrl;
       if (_selectedImage != null) {
-        final imageRef = FirebaseStorage.instance
+        final ref = storage
             .ref()
             .child('courses/${DateTime.now().millisecondsSinceEpoch}.png');
-        final uploadTask = imageRef.putData(_selectedImage!);
+        final uploadTask = ref.putData(_selectedImage!);
         final snapshot = await uploadTask;
         newImageUrl = await snapshot.ref.getDownloadURL();
         changeList.add("Updated Course Image");
-      } else {
-        newImageUrl = _selectedImageUrl ?? liveData['courseImageUrl'] ?? '';
+      } else if (existingData != null &&
+          existingData['courseImageUrl'] != null) {
+        newImageUrl = existingData['courseImageUrl'];
       }
 
-      // Save to pendingCourses
-      await firestore.collection('pendingCourses').doc(widget.courseId).set({
+      // Helper function to handle PDF upload (similar to module implementation)
+      Future<Map<String, String?>> uploadPdf(Uint8List? pdfData,
+          String? existingUrl, String? existingName, String fileName) async {
+        if (pdfData == null) {
+          print(
+              'uploadPdf: No new PDF data, keeping existing URL: $existingUrl');
+          return {
+            'url': existingUrl,
+            'name': existingName
+          }; // Keep existing data
+        }
+
+        print('uploadPdf: Starting upload of new PDF');
+        // Use the original file name if available, otherwise use the default name
+        String actualFileName = _selectedPreviewPdfName ?? '${fileName}.pdf';
+        print('uploadPdf: Using filename: $actualFileName');
+
+        final ref = storage.ref().child(
+            'course_previews/${DateTime.now().millisecondsSinceEpoch}_$actualFileName');
+        print('uploadPdf: Storage reference path: ${ref.fullPath}');
+
+        final uploadTask = ref.putData(pdfData);
+        final snapshot = await uploadTask;
+        final url = await snapshot.ref.getDownloadURL();
+        print('uploadPdf: Upload complete. New URL: $url');
+
+        return {'url': url, 'name': actualFileName};
+      }
+
+      // Handle preview PDF upload using the helper function
+      Map<String, String?> pdfData = await uploadPdf(_selectedPreviewPdf,
+          _selectedPreviewPdfUrl, _selectedPreviewPdfName, 'preview');
+
+      String? previewPdfUrl = pdfData['url'];
+      String? previewPdfName = pdfData['name'];
+
+      // Track PDF changes
+      if (_selectedPreviewPdf != null) {
+        changeList.add("Updated Preview PDF");
+      }
+
+      // Compare changes for existing course
+      if (existingData != null) {
+        if (_courseNameController.text != existingData['courseName']) {
+          changeList.add("Updated Course Name: ${_courseNameController.text}");
+        }
+        if (_coursePriceController.text != existingData['coursePrice']) {
+          changeList
+              .add("Updated Course Price: ${_coursePriceController.text}");
+        }
+        if (_courseCategoryController.text != existingData['courseCategory']) {
+          changeList.add(
+              "Updated Course Category: ${_courseCategoryController.text}");
+        }
+        if (_courseDescriptionController.text !=
+            existingData['courseDescription']) {
+          changeList.add("Updated Course Description");
+        }
+      }
+
+      // Prepare course data
+      final Map<String, dynamic> courseData = {
         'courseName': _courseNameController.text,
         'coursePrice': _coursePriceController.text,
         'courseCategory': _courseCategoryController.text,
         'courseDescription': _courseDescriptionController.text,
         'courseImageUrl': newImageUrl,
-        'status': 'pending',
-        'editedAt': FieldValue.serverTimestamp(),
-        'changes': changeList.isNotEmpty ? changeList : ["No changes made"],
-      });
+        'createdBy': user.uid,
+      };
 
-      print("✅ Course edit submitted for review with changes: $changeList");
+      // Only add preview PDF fields if we have data
+      if (previewPdfUrl != null) {
+        courseData['previewPdfUrl'] = previewPdfUrl;
+        courseData['previewPdfName'] = previewPdfName;
+      }
+
+      if (widget.courseId == null) {
+        // New course
+        courseData['status'] = 'pending_approval';
+        courseData['createdAt'] = FieldValue.serverTimestamp();
+        await firestore.collection('courses').doc().set(courseData);
+        print("✅ New course created successfully");
+      } else {
+        // Edit existing course
+        courseData['status'] = 'pending';
+        courseData['editedAt'] = FieldValue.serverTimestamp();
+        courseData['changes'] = changeList;
+
+        // For edits, save to pendingCourses
+        await firestore
+            .collection('pendingCourses')
+            .doc(widget.courseId)
+            .set(courseData);
+        print("✅ Course edit submitted for review with changes: $changeList");
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Edit submitted for review!')),
+        SnackBar(
+            content: Text(widget.courseId == null
+                ? 'Course created successfully!'
+                : 'Edit submitted for review!')),
       );
     } catch (e) {
-      print("❌ Error saving course edits: $e");
+      print("❌ Error saving course: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to submit edit.')),
+        SnackBar(content: Text('Failed to save course: ${e.toString()}')),
       );
     }
 
@@ -265,6 +357,27 @@ class _CreateCourseState extends State<CreateCourse> {
     });
   }
 
+  void _pickPreviewPdf() async {
+    html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+    uploadInput.accept = 'application/pdf';
+    uploadInput.click();
+
+    uploadInput.onChange.listen((e) async {
+      final files = uploadInput.files;
+      if (files != null && files.isNotEmpty) {
+        final file = files[0];
+        final reader = html.FileReader();
+        reader.readAsArrayBuffer(file);
+        reader.onLoadEnd.listen((e) {
+          setState(() {
+            _selectedPreviewPdf = reader.result as Uint8List;
+            _selectedPreviewPdfName = file.name;
+          });
+        });
+      }
+    });
+  }
+
   void _clearCourseData() {
     final courseModel = Provider.of<CourseModel>(context, listen: false);
 
@@ -279,6 +392,9 @@ class _CreateCourseState extends State<CreateCourse> {
       _courseDescriptionController.clear();
       _selectedImage = null;
       _selectedImageUrl = null;
+      _selectedPreviewPdf = null;
+      _selectedPreviewPdfUrl = null;
+      _selectedPreviewPdfName = null;
     });
 
     print("🆕 New course initialized, clearing old course data.");
@@ -321,7 +437,7 @@ class _CreateCourseState extends State<CreateCourse> {
                       Container(
                           color: Colors.white,
                           width: MyUtility(context).width,
-                          height: MyUtility(context).height * 0.78,
+                          height: MyUtility(context).height * 0.79,
                           child: Padding(
                             padding: const EdgeInsets.all(30.0),
                             child: Column(
@@ -437,36 +553,41 @@ class _CreateCourseState extends State<CreateCourse> {
                                     ),
                                   ),
                                 ),
-                                Spacer(),
-                                SlimButtons(
-                                  buttonText: 'Next',
-                                  buttonColor: Colors.white,
-                                  borderColor: Color.fromRGBO(203, 210, 224, 1),
-                                  textColor: Mycolors().green,
-                                  onPressed: () {
-                                    if (_validateInputs()) {
-                                      final courseModel =
-                                          Provider.of<CourseModel>(context,
-                                              listen: false);
-                                      courseModel.setCourseName(
-                                          _courseNameController.text);
-                                      courseModel.setCoursePrice(
-                                          _coursePriceController.text);
-                                      courseModel.setCourseCategory(
-                                          _courseCategoryController.text);
-                                      courseModel.setCourseDescription(
-                                          _courseDescriptionController.text);
-                                      courseModel
-                                          .setCourseImage(_selectedImage);
-
-                                      widget.changePageIndex(3,
-                                          moduleIndex:
-                                              0); // Always start from first module
-                                    }
-                                  },
-                                  customWidth: 85,
-                                  customHeight: 35,
-                                )
+                                SizedBox(height: 20), // Add spacing
+                                Container(
+                                  margin: EdgeInsets.only(bottom: 20),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      ElevatedButton(
+                                        onPressed: _pickPreviewPdf,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Mycolors().blue,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 20, vertical: 10),
+                                        ),
+                                        child: Text(
+                                          _selectedPreviewPdf != null ||
+                                                  _selectedPreviewPdfUrl != null
+                                              ? 'Preview PDF Added'
+                                              : 'Add Preview PDF',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      ),
+                                      SlimButtons(
+                                        buttonText: 'Next',
+                                        buttonColor: Colors.white,
+                                        borderColor:
+                                            Color.fromRGBO(203, 210, 224, 1),
+                                        textColor: Mycolors().green,
+                                        onPressed: _handleNext,
+                                        customWidth: 85,
+                                        customHeight: 35,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
                           ))
@@ -489,5 +610,50 @@ class _CreateCourseState extends State<CreateCourse> {
       return false;
     }
     return true;
+  }
+
+  void _handleNext() async {
+    if (_validateInputs()) {
+      setState(() {
+        isLoading = true;
+      });
+
+      try {
+        // First save to Firebase
+        await _saveCourseEdits();
+
+        // Then update the CourseModel
+        final courseModel = Provider.of<CourseModel>(context, listen: false);
+        courseModel.setCourseName(_courseNameController.text);
+        courseModel.setCoursePrice(_coursePriceController.text);
+        courseModel.setCourseCategory(_courseCategoryController.text);
+        courseModel.setCourseDescription(_courseDescriptionController.text);
+        courseModel.setCourseImage(_selectedImage);
+        courseModel.setCourseImageUrl(_selectedImageUrl);
+
+        // Update preview PDF data
+        if (_selectedPreviewPdf != null) {
+          courseModel.setPreviewPdf(
+              _selectedPreviewPdf, _selectedPreviewPdfName);
+        } else if (_selectedPreviewPdfUrl != null) {
+          courseModel.setPreviewPdfUrl(_selectedPreviewPdfUrl);
+          if (_selectedPreviewPdfName != null) {
+            courseModel.setPreviewPdf(null, _selectedPreviewPdfName);
+          }
+        }
+
+        // Navigate to next page
+        widget.changePageIndex(3, moduleIndex: 0);
+      } catch (e) {
+        print("❌ Error in _handleNext: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save course: ${e.toString()}')),
+        );
+      } finally {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 }

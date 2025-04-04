@@ -126,7 +126,7 @@ class _StudentModuleContainerState extends State<StudentModuleContainer> {
                 Padding(
                   padding: const EdgeInsets.all(15),
                   child: InkWell(
-                    onTap: widget.studentGuidePdfUrl,
+                    onTap: widget.testSheetPdfUrl,
                     child: DisplayCardIcons(
                       icon: Icons.class_,
                       count: widget.assessmentAmount,

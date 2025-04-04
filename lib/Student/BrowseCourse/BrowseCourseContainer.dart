@@ -5,13 +5,15 @@ import 'package:a4m/CommonComponents/displayCardIcons.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 
 class BrowseCourseContainer extends StatelessWidget {
-  final String imagePath; // URL for the course image
+  final String imagePath;
   final String courseName;
   final String description;
   final String price;
-  final int moduleCount; // Static or fetched value for modules
-  final int assessmentCount; // Static or fetched value for assessments
-  final int studentCount; // Static or fetched value for students
+  final int moduleCount;
+  final int assessmentCount;
+  final int studentCount;
+  final String? previewPdfUrl;
+  final VoidCallback? onPreviewPressed;
 
   const BrowseCourseContainer({
     super.key,
@@ -22,6 +24,8 @@ class BrowseCourseContainer extends StatelessWidget {
     required this.moduleCount,
     required this.assessmentCount,
     required this.studentCount,
+    this.previewPdfUrl,
+    this.onPreviewPressed,
   });
 
   @override
@@ -39,24 +43,21 @@ class BrowseCourseContainer extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image with Gradient and Price Tag
             Stack(
               children: [
-                // Course Image
                 ClipRRect(
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(15),
                     topRight: Radius.circular(15),
                   ),
                   child: ImageNetwork(
-                    image: imagePath, // URL for the image
-                    height: 180, // Preserves your UI dimensions
+                    image: imagePath,
+                    height: 180,
                     width: 320,
                     fitAndroidIos: BoxFit.cover,
                     fitWeb: BoxFitWeb.cover,
                   ),
                 ),
-                // Green Gradient Overlay
                 Positioned.fill(
                   child: ClipRRect(
                     borderRadius: const BorderRadius.only(
@@ -67,8 +68,8 @@ class BrowseCourseContainer extends StatelessWidget {
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Color(0x00ECF5DE), // Transparent green
-                            Color(0x8F8AB747), // Visible green
+                            Color(0x00ECF5DE),
+                            Color(0x8F8AB747),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -77,32 +78,65 @@ class BrowseCourseContainer extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Price Tag
                 Positioned(
                   bottom: 10,
                   left: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 5,
-                      horizontal: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      color: Mycolors().darkTeal,
-                    ),
-                    child: Text(
-                      price,
-                      style: GoogleFonts.montserrat(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 5,
+                          horizontal: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(5),
+                          color: Mycolors().darkTeal,
+                        ),
+                        child: Text(
+                          price,
+                          style: GoogleFonts.montserrat(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
-                    ),
+                      if (previewPdfUrl != null && previewPdfUrl!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(5),
+                              color: Colors.white,
+                            ),
+                            child: TextButton.icon(
+                              onPressed: onPreviewPressed,
+                              icon: const Icon(Icons.visibility,
+                                  size: 16, color: Colors.black87),
+                              label: Text(
+                                'Preview',
+                                style: GoogleFonts.montserrat(
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
             ),
-            // Course Name
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
@@ -113,7 +147,6 @@ class BrowseCourseContainer extends StatelessWidget {
                 ),
               ),
             ),
-            // Description
             Padding(
               padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
               child: Text(
@@ -128,7 +161,6 @@ class BrowseCourseContainer extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            // Divider
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Container(
@@ -137,11 +169,9 @@ class BrowseCourseContainer extends StatelessWidget {
                 color: const Color.fromARGB(255, 189, 189, 189),
               ),
             ),
-            // Icons Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                // Student Count
                 Padding(
                   padding: const EdgeInsets.all(15),
                   child: DisplayCardIcons(
@@ -150,7 +180,6 @@ class BrowseCourseContainer extends StatelessWidget {
                     tooltipText: 'Students',
                   ),
                 ),
-                // Assessment Count
                 Padding(
                   padding: const EdgeInsets.all(15),
                   child: DisplayCardIcons(
@@ -159,7 +188,6 @@ class BrowseCourseContainer extends StatelessWidget {
                     tooltipText: 'Assessments',
                   ),
                 ),
-                // Module Count
                 Padding(
                   padding: const EdgeInsets.all(15),
                   child: DisplayCardIcons(
