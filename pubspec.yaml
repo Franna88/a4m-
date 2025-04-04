@@ -55,6 +55,8 @@ dependencies:
   webview_flutter_platform_interface: ^2.10.0
   syncfusion_flutter_pdfviewer: ^29.1.35
   cached_network_image: ^3.3.0
+  flutter_local_notifications: ^16.3.2
+  timezone: ^0.9.2
 
   # Certificate generation dependencies
   pdf: ^3.10.0

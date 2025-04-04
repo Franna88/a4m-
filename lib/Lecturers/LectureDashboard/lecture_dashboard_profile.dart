@@ -1,6 +1,7 @@
 import 'package:a4m/myutility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:image_network/image_network.dart';
 
 class LectureDashboardProfile extends StatefulWidget {
   final String lecturerId;
@@ -37,7 +38,8 @@ class _LectureDashboardProfileState extends State<LectureDashboardProfile> {
         var lecturerData = lecturerDoc.data();
         setState(() {
           userName = lecturerData?['name'] ?? 'Unknown Lecturer';
-          profileImageUrl = lecturerData?['profileImageUrl'] ?? profileImageUrl;
+          profileImageUrl =
+              lecturerData?['profileImageUrl'] ?? 'images/person2.png';
         });
       } else {
         setState(() {
@@ -82,10 +84,31 @@ class _LectureDashboardProfileState extends State<LectureDashboardProfile> {
             height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              image: DecorationImage(
-                image: NetworkImage(profileImageUrl),
-                fit: BoxFit.cover,
-              ),
+              border: Border.all(color: Colors.grey.shade200, width: 2),
+            ),
+            child: ClipOval(
+              child: profileImageUrl.startsWith('http')
+                  ? ImageNetwork(
+                      image: profileImageUrl,
+                      height: 80,
+                      width: 80,
+                      duration: 500,
+                      onLoading: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      onError: Container(
+                        decoration: const BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage('images/person2.png'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Image.asset(
+                      profileImageUrl,
+                      fit: BoxFit.cover,
+                    ),
             ),
           ),
           Text(

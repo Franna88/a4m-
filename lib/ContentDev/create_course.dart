@@ -437,7 +437,7 @@ class _CreateCourseState extends State<CreateCourse> {
                       Container(
                           color: Colors.white,
                           width: MyUtility(context).width,
-                          height: MyUtility(context).height * 0.79,
+                          height: MyUtility(context).height * 0.83,
                           child: Padding(
                             padding: const EdgeInsets.all(30.0),
                             child: Column(

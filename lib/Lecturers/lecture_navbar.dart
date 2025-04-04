@@ -26,12 +26,16 @@ class _LectureNavbarState extends State<LectureNavbar> {
   late int activeIndex;
   String? _profileImageUrl;
   final String _userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  int _totalStudents = 0;
+  int _activeCourses = 0;
+  int _pendingReviews = 0;
 
   @override
   void initState() {
     super.initState();
     activeIndex = widget.initialIndex;
     _fetchUserProfileImage();
+    _fetchMetrics();
   }
 
   @override
@@ -59,6 +63,79 @@ class _LectureNavbarState extends State<LectureNavbar> {
       }
     } catch (e) {
       print('Error fetching user profile image: $e');
+    }
+  }
+
+  Future<void> _fetchMetrics() async {
+    try {
+      final coursesSnapshot =
+          await FirebaseFirestore.instance.collection('courses').get();
+      Set<String> uniqueStudentIds = {};
+      int pendingReviews = 0;
+      int activeCourses = 0;
+
+      for (var courseDoc in coursesSnapshot.docs) {
+        final courseData = courseDoc.data();
+        final assignedLecturers =
+            courseData['assignedLecturers'] as List<dynamic>?;
+
+        if (assignedLecturers != null) {
+          bool isAssigned = assignedLecturers.any((lecturer) =>
+              lecturer is Map<String, dynamic> && lecturer['id'] == _userId);
+
+          if (isAssigned) {
+            activeCourses++;
+
+            // Count unique students
+            final students = courseData['students'] as List<dynamic>?;
+            if (students != null) {
+              for (var student in students) {
+                if (student is Map<String, dynamic> &&
+                    student['studentId'] != null) {
+                  uniqueStudentIds.add(student['studentId'].toString());
+                }
+              }
+            }
+
+            // Count pending reviews
+            final moduleSnapshot = await FirebaseFirestore.instance
+                .collection('courses')
+                .doc(courseDoc.id)
+                .collection('modules')
+                .get();
+
+            for (var moduleDoc in moduleSnapshot.docs) {
+              final submissionsSnapshot =
+                  await moduleDoc.reference.collection('submissions').get();
+
+              for (var submission in submissionsSnapshot.docs) {
+                final submissionData = submission.data();
+                final assessments =
+                    submissionData['submittedAssessments'] as List<dynamic>?;
+
+                if (assessments != null) {
+                  pendingReviews += assessments
+                      .where((assessment) =>
+                          assessment is Map<String, dynamic> &&
+                          (!assessment.containsKey('mark') ||
+                              assessment['mark'] == null))
+                      .length;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _totalStudents = uniqueStudentIds.length;
+          _activeCourses = activeCourses;
+          _pendingReviews = pendingReviews;
+        });
+      }
+    } catch (e) {
+      print('Error fetching metrics: $e');
     }
   }
 
@@ -246,31 +323,33 @@ class _LectureNavbarState extends State<LectureNavbar> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildQuickStat(
-                  'Active Courses',
-                  '3',
-                  Icons.school_outlined,
-                ),
-                const SizedBox(width: 16),
-                _buildQuickStat(
-                  'Total Students',
-                  '150',
-                  Icons.people_outline,
-                ),
-                const SizedBox(width: 16),
-                _buildQuickStat(
-                  'Pending Reviews',
-                  '8',
-                  Icons.assignment_outlined,
-                ),
-              ],
+          if (activeIndex == 0) ...[
+            const SizedBox(height: 20),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildQuickStat(
+                    'Active Courses',
+                    _activeCourses.toString(),
+                    Icons.school_outlined,
+                  ),
+                  const SizedBox(width: 16),
+                  _buildQuickStat(
+                    'Total Students',
+                    _totalStudents.toString(),
+                    Icons.people_outline,
+                  ),
+                  const SizedBox(width: 16),
+                  _buildQuickStat(
+                    'Pending Reviews',
+                    _pendingReviews.toString(),
+                    Icons.assignment_outlined,
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

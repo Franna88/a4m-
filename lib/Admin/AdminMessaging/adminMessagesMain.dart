@@ -11,6 +11,7 @@ import 'ui/adminMessagingItems/LecturerList/LecturerList.dart';
 import 'ui/adminMessagingItems/contentDevList/contentDevList.dart';
 import 'ui/adminMessagingItems/importantMessages/adminImportantMessages.dart';
 import 'ui/adminMessagingItems/studentList/studentList.dart';
+import 'ui/adminMessagingItems/AdminList/adminList.dart';
 
 class AdminMessagesMain extends StatefulWidget {
   final String? userId; // Optional user ID
@@ -150,6 +151,14 @@ class _AdminMessagesMainState extends State<AdminMessagesMain> {
         onFacilitatorSelected: handleUserSelected,
       ));
       pageNames.add('Facilitators');
+    }
+
+    if (canChatWith('admin')) {
+      pages.add(AdminList(
+        onAdminSelected: handleUserSelected,
+        currentUserId: currentUserId,
+      ));
+      pageNames.add('Admins');
     }
 
     // Ensure pageIndex is valid

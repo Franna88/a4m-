@@ -70,20 +70,7 @@ class _LectureDashboardState extends State<LectureDashboard> {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      blurRadius: 4,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: const DashCalendarNotices(),
-              ),
+              child: const DashCalendarNotices(),
             ),
           ],
         ),

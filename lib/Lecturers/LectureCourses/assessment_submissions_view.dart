@@ -23,13 +23,285 @@ class AssessmentSubmissionsView extends StatefulWidget {
 
 class _AssessmentSubmissionsViewState extends State<AssessmentSubmissionsView> {
   List<Map<String, dynamic>> submissions = [];
+  List<Map<String, dynamic>> filteredSubmissions = [];
   bool isLoading = true;
   String? error;
+  String searchQuery = '';
+  String statusFilter = 'All';
+  String sortBy = 'date';
+  bool sortAscending = false;
+
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     fetchSubmissions();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterAndSortSubmissions() {
+    List<Map<String, dynamic>> result = List.from(submissions);
+
+    // Apply search
+    if (searchQuery.isNotEmpty) {
+      result = result.where((submission) {
+        return submission['studentName']
+                .toString()
+                .toLowerCase()
+                .contains(searchQuery.toLowerCase()) ||
+            submission['assessmentName']
+                .toString()
+                .toLowerCase()
+                .contains(searchQuery.toLowerCase());
+      }).toList();
+    }
+
+    // Apply status filter
+    if (statusFilter != 'All') {
+      result = result
+          .where((submission) => submission['status'] == statusFilter)
+          .toList();
+    }
+
+    // Apply sorting
+    result.sort((a, b) {
+      if (sortBy == 'date') {
+        final aDate = a['submittedAt'] as Timestamp;
+        final bDate = b['submittedAt'] as Timestamp;
+        return sortAscending ? aDate.compareTo(bDate) : bDate.compareTo(aDate);
+      } else if (sortBy == 'name') {
+        return sortAscending
+            ? a['studentName'].toString().compareTo(b['studentName'].toString())
+            : b['studentName']
+                .toString()
+                .compareTo(a['studentName'].toString());
+      }
+      return 0;
+    });
+
+    setState(() {
+      filteredSubmissions = result;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(),
+          const Divider(height: 1),
+          _buildFilters(),
+          _buildTableHeader(),
+          if (isLoading)
+            const Expanded(
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (error != null)
+            Expanded(
+              child: Center(
+                child: Text(
+                  error!,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    color: Colors.red,
+                  ),
+                ),
+              ),
+            )
+          else if (filteredSubmissions.isEmpty)
+            Expanded(
+              child: Center(
+                child: Text(
+                  searchQuery.isEmpty && statusFilter == 'All'
+                      ? 'No submissions found'
+                      : 'No submissions match your filters',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: _buildSubmissionsTable(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.grey[700],
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          const SizedBox(width: 16),
+          Text(
+            'Assessment Submissions',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilters() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.grey[50],
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search by student name or assessment...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value;
+                  });
+                  _filterAndSortSubmissions();
+                },
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          _buildFilterDropdown(),
+          const SizedBox(width: 16),
+          _buildSortDropdown(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterDropdown() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: DropdownButton<String>(
+        value: statusFilter,
+        items: [
+          'All',
+          'Pending Review',
+          'Partially Graded',
+          'Graded',
+          'In Progress'
+        ]
+            .map((status) => DropdownMenuItem(
+                  value: status,
+                  child: Text(status),
+                ))
+            .toList(),
+        onChanged: (value) {
+          if (value != null) {
+            setState(() {
+              statusFilter = value;
+            });
+            _filterAndSortSubmissions();
+          }
+        },
+        style: GoogleFonts.poppins(
+          color: Colors.grey[800],
+          fontSize: 14,
+        ),
+        underline: const SizedBox(),
+        icon: const Icon(Icons.filter_list),
+      ),
+    );
+  }
+
+  Widget _buildSortDropdown() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          DropdownButton<String>(
+            value: sortBy,
+            items: [
+              DropdownMenuItem(
+                value: 'date',
+                child: Text('Sort by Date', style: GoogleFonts.poppins()),
+              ),
+              DropdownMenuItem(
+                value: 'name',
+                child: Text('Sort by Name', style: GoogleFonts.poppins()),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  sortBy = value;
+                });
+                _filterAndSortSubmissions();
+              }
+            },
+            style: GoogleFonts.poppins(
+              color: Colors.grey[800],
+              fontSize: 14,
+            ),
+            underline: const SizedBox(),
+          ),
+          IconButton(
+            icon: Icon(
+              sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
+              size: 20,
+            ),
+            onPressed: () {
+              setState(() {
+                sortAscending = !sortAscending;
+              });
+              _filterAndSortSubmissions();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _filterAndSortSubmissions();
   }
 
   Future<void> fetchSubmissions() async {
@@ -128,10 +400,14 @@ class _AssessmentSubmissionsViewState extends State<AssessmentSubmissionsView> {
             '- ${submission['studentName']}: ${submission['assessmentName']} (${submission['status']})');
       }
 
-      setState(() {
-        submissions = tempSubmissions;
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          submissions = tempSubmissions;
+          filteredSubmissions = tempSubmissions;
+          isLoading = false;
+        });
+        _filterAndSortSubmissions();
+      }
     } catch (e, stackTrace) {
       print('\n❌ ERROR in fetchSubmissions:');
       print('Error: $e');
@@ -205,79 +481,6 @@ class _AssessmentSubmissionsViewState extends State<AssessmentSubmissionsView> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(),
-          const Divider(height: 1),
-          _buildTableHeader(),
-          if (isLoading)
-            const Expanded(
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            )
-          else if (error != null)
-            Expanded(
-              child: Center(
-                child: Text(
-                  error!,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    color: Colors.red,
-                  ),
-                ),
-              ),
-            )
-          else if (submissions.isEmpty)
-            Expanded(
-              child: Center(
-                child: Text(
-                  'No submissions found',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ),
-            )
-          else
-            Expanded(
-              child: _buildSubmissionsTable(),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      color: Colors.grey[700],
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            'Assessment Submissions',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildTableHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -340,9 +543,9 @@ class _AssessmentSubmissionsViewState extends State<AssessmentSubmissionsView> {
 
   Widget _buildSubmissionsTable() {
     return ListView.builder(
-      itemCount: submissions.length,
+      itemCount: filteredSubmissions.length,
       itemBuilder: (context, index) {
-        final submission = submissions[index];
+        final submission = filteredSubmissions[index];
         return _buildSubmissionRow(submission);
       },
     );

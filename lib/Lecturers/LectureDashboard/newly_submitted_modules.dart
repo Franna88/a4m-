@@ -1,4 +1,5 @@
 import 'package:a4m/Constants/myColors.dart';
+import 'package:a4m/Lecturers/LectureDashboard/dashboard_card.dart';
 import 'package:a4m/Lecturers/LectureDashboard/reusable_dash_module_container.dart';
 import 'package:a4m/myutility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -139,103 +140,72 @@ class _NewlySubmitedModulesState extends State<NewlySubmitedModules> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: MyUtility(context).width * 0.52,
+    return DashboardCard(
+      title: 'Newly Submitted',
       height: MyUtility(context).height * 0.31,
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            blurRadius: 2.0,
-            spreadRadius: 2.0,
-            offset: const Offset(0, 3),
+      width: MyUtility(context).width * 0.52,
+      actions: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: Mycolors().green.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Newly Submitted',
-                style: TextStyle(
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Mycolors().green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${recentSubmissions.length} submissions',
-                  style: TextStyle(
-                    fontSize: 14.0,
-                    fontWeight: FontWeight.w600,
-                    color: Mycolors().green,
-                  ),
-                ),
-              ),
-            ],
+          child: Text(
+            '${recentSubmissions.length} submissions',
+            style: TextStyle(
+              fontSize: 14.0,
+              fontWeight: FontWeight.w600,
+              color: Mycolors().green,
+            ),
           ),
-          const SizedBox(height: 16.0),
-          Expanded(
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : recentSubmissions.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.assignment_outlined,
-                              size: 48,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No newly submitted modules found',
-                              style: TextStyle(
-                                fontSize: 16.0,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.separated(
-                        itemCount: recentSubmissions.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final module = recentSubmissions[index];
-                          return ReusableDashModuleContainer(
-                            name: module['name'],
-                            moduleName: module['moduleName'],
-                            moduleNumber: module['moduleNumber'],
-                            moduleType: module['moduleType'],
-                            onTap: () {
-                              widget.changePageWithCourseId(
-                                6,
-                                courseId: module['courseId'],
-                                moduleId: '',
-                              );
-                            },
-                          );
-                        },
+        ),
+      ],
+      content: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : recentSubmissions.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.assignment_outlined,
+                        size: 48,
+                        color: Colors.grey[400],
                       ),
-          ),
-        ],
-      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No newly submitted modules found',
+                        style: TextStyle(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  itemCount: recentSubmissions.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final module = recentSubmissions[index];
+                    return ReusableDashModuleContainer(
+                      name: module['name'],
+                      moduleName: module['moduleName'],
+                      moduleNumber: module['moduleNumber'],
+                      moduleType: module['moduleType'],
+                      onTap: () {
+                        widget.changePageWithCourseId(
+                          6,
+                          courseId: module['courseId'],
+                          moduleId: '',
+                        );
+                      },
+                    );
+                  },
+                ),
     );
   }
 }

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:a4m/Constants/myColors.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:a4m/Lecturers/commonUi/lecturerPdfViewer.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 
 class AssessmentGradingView extends StatefulWidget {
   final String courseId;
@@ -35,6 +38,8 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
   late TextEditingController _commentController;
   bool _isSubmitting = false;
   String? _error;
+  String? _markedPdfUrl;
+  bool _isUploadingPdf = false;
 
   @override
   void initState() {
@@ -50,6 +55,62 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
     _markController.dispose();
     _commentController.dispose();
     super.dispose();
+  }
+
+  Future<void> _uploadMarkedPdf() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (result != null) {
+        setState(() {
+          _isUploadingPdf = true;
+        });
+
+        final file = result.files.first;
+        final fileName = '${widget.moduleId}_${widget.studentId}_marked.pdf';
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('courses/${widget.courseId}/marked_assessments/$fileName');
+
+        if (file.bytes != null) {
+          // Web platform
+          await storageRef.putData(file.bytes!);
+        } else if (file.path != null) {
+          // Mobile/Desktop platforms
+          await storageRef.putFile(File(file.path!));
+        }
+
+        _markedPdfUrl = await storageRef.getDownloadURL();
+
+        setState(() {
+          _isUploadingPdf = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Marked PDF uploaded successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isUploadingPdf = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error uploading PDF: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _submitGrade() async {
@@ -70,13 +131,41 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
     });
 
     try {
-      // Validate mark is a valid number
       final mark = double.tryParse(_markController.text);
       print('Mark Input: ${_markController.text}');
       print('Parsed Mark: $mark');
 
       if (mark == null || mark < 0 || mark > 100) {
         throw Exception('Please enter a valid mark between 0 and 100');
+      }
+
+      // First, upload the marked PDF if it exists
+      String? markedPdfUrl;
+      if (_markedPdfUrl == null) {
+        FilePickerResult? result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['pdf'],
+        );
+
+        if (result != null) {
+          final file = result.files.first;
+          final fileName = '${widget.moduleId}_${widget.studentId}_marked.pdf';
+          final storageRef = FirebaseStorage.instance
+              .ref()
+              .child('courses/${widget.courseId}/marked_assessments/$fileName');
+
+          if (file.bytes != null) {
+            // Web platform
+            await storageRef.putData(file.bytes!);
+          } else if (file.path != null) {
+            // Mobile/Desktop platforms
+            await storageRef.putFile(File(file.path!));
+          }
+
+          markedPdfUrl = await storageRef.getDownloadURL();
+        }
+      } else {
+        markedPdfUrl = _markedPdfUrl;
       }
 
       final submissionRef = FirebaseFirestore.instance
@@ -125,8 +214,10 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
         ...submittedAssessments[assessmentIndex],
         'mark': mark,
         'comment': _commentController.text,
-        'gradedAt': FieldValue.serverTimestamp(),
+        'gradedAt': DateTime.now()
+            .toIso8601String(), // Use ISO string instead of serverTimestamp
         'gradedBy': FirebaseAuth.instance.currentUser?.uid,
+        if (markedPdfUrl != null) 'markedPdfUrl': markedPdfUrl,
       };
       print('Updated assessment data: $updatedAssessment');
 
@@ -166,27 +257,26 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
     }
   }
 
-  Future<void> _viewSubmission() async {
-    print('\n=== Attempting to View Submission ===');
-    print('File URL: ${widget.fileUrl}');
-
-    try {
-      if (await canLaunch(widget.fileUrl)) {
-        print('✅ Launching file URL');
-        await launch(widget.fileUrl);
-      } else {
-        print('❌ Could not launch file URL');
-        throw 'Could not open the file';
-      }
-    } catch (e) {
-      print('❌ Error opening file: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error opening file: $e'),
-          backgroundColor: Colors.red,
+  void _viewSubmission() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: Text(
+              'View Submission',
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
+            backgroundColor: Mycolors().darkGrey,
+          ),
+          body: LecturerPdfViewer(
+            pdfUrl: widget.fileUrl,
+            title: 'Student Submission',
+            showDownloadButton: true,
+          ),
         ),
-      );
-    }
+      ),
+    );
   }
 
   @override
@@ -282,31 +372,51 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      TextFormField(
-                        controller: _markController,
-                        decoration: InputDecoration(
-                          labelText: 'Mark',
-                          hintText: 'Enter mark (0-100)',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 100, // Fixed width for mark field
+                            child: TextFormField(
+                              controller: _markController,
+                              decoration: InputDecoration(
+                                labelText: 'Mark',
+                                hintText: '0-100',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                              ),
+                              keyboardType: TextInputType.number,
+                              textAlign: TextAlign.center,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Required';
+                                }
+                                final mark = double.tryParse(value);
+                                if (mark == null) {
+                                  return 'Invalid';
+                                }
+                                if (mark < 0 || mark > 100) {
+                                  return '0-100';
+                                }
+                                return null;
+                              },
+                            ),
                           ),
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a mark';
-                          }
-                          final mark = double.tryParse(value);
-                          if (mark == null) {
-                            return 'Please enter a valid number';
-                          }
-                          if (mark < 0 || mark > 100) {
-                            return 'Mark must be between 0 and 100';
-                          }
-                          return null;
-                        },
+                          const SizedBox(width: 8),
+                          Text(
+                            '%',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 20),
                       TextFormField(
@@ -328,6 +438,7 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
                           return null;
                         },
                       ),
+                      const SizedBox(height: 20),
                       if (_error != null) ...[
                         const SizedBox(height: 16),
                         Text(
@@ -336,31 +447,86 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
                         ),
                       ],
                       const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isSubmitting ? null : _submitGrade,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Mycolors().green,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                      Row(
+                        children: [
+                          // Upload Marked PDF Button
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed:
+                                  _isUploadingPdf ? null : _uploadMarkedPdf,
+                              icon: const Icon(Icons.upload_file),
+                              label: Text(
+                                _markedPdfUrl != null
+                                    ? 'PDF Uploaded'
+                                    : 'Upload PDF',
+                                style: GoogleFonts.poppins(),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Mycolors().darkGrey,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
                             ),
                           ),
-                          child: _isSubmitting
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white),
-                                  ),
-                                )
-                              : const Text('Submit Grade'),
-                        ),
+                          const SizedBox(width: 16),
+                          // Submit Grade Button
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _isSubmitting ? null : _submitGrade,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Mycolors().green,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: _isSubmitting
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.white),
+                                      ),
+                                    )
+                                  : Text(
+                                      'Submit Grade',
+                                      style: GoogleFonts.poppins(),
+                                    ),
+                            ),
+                          ),
+                        ],
                       ),
+                      if (_isUploadingPdf)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Mycolors().green),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Uploading PDF...',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.grey[600],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),

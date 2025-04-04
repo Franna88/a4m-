@@ -76,9 +76,17 @@ class _LectureMessageNavbarState extends State<LectureMessageNavbar> {
                   height: 20,
                 ),
                 AlternateNavButtons(
-                  buttonText: 'Admin',
+                  buttonText: 'Facilitators',
                   onTap: () => _handleItemClick(5),
                   isActive: activeIndex == 5,
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                AlternateNavButtons(
+                  buttonText: 'Admins',
+                  onTap: () => _handleItemClick(6),
+                  isActive: activeIndex == 6,
                 ),
               ],
             ),

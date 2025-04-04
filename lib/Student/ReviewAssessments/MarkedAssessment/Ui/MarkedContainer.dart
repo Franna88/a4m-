@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../commonUi/pdfViewer.dart';
+import '../../../../Constants/myColors.dart';
 
 class MarkedContainer extends StatefulWidget {
   final String courseId;
@@ -89,6 +91,7 @@ class _MarkedContainerState extends State<MarkedContainer> {
             'fileUrl': assessment['fileUrl'],
             'gradedAt': assessment['gradedAt'],
             'gradedBy': assessment['gradedBy'],
+            'markedPdfUrl': assessment['markedPdfUrl'] ?? '',
           };
           print('Processed marked assessment: $markedAssessment');
 
@@ -124,18 +127,31 @@ class _MarkedContainerState extends State<MarkedContainer> {
     }
   }
 
-  Future<void> _viewSubmission(String fileUrl) async {
+  Future<void> _viewSubmission(String fileUrl,
+      {bool isGradedPdf = false}) async {
     print('\n=== Attempting to View Submission ===');
     print('File URL: $fileUrl');
 
     try {
-      if (await canLaunch(fileUrl)) {
-        print('✅ Launching file URL');
-        await launch(fileUrl);
-      } else {
-        print('❌ Could not launch file URL');
-        throw 'Could not open the file';
-      }
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+            appBar: AppBar(
+              title: Text(
+                isGradedPdf ? 'Graded Assessment' : 'Original Submission',
+                style: GoogleFonts.poppins(color: Colors.white),
+              ),
+              backgroundColor: Mycolors().darkGrey,
+            ),
+            body: StudentPdfViewer(
+              pdfUrl: fileUrl,
+              title: isGradedPdf ? 'Graded Assessment' : 'Original Submission',
+              showDownloadButton: true,
+            ),
+          ),
+        ),
+      );
     } catch (e) {
       print('❌ Error opening file: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -199,15 +215,28 @@ class _MarkedContainerState extends State<MarkedContainer> {
                   ),
               ],
             ),
-            trailing: assessment['fileUrl'].isNotEmpty
-                ? IconButton(
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (assessment['fileUrl'].isNotEmpty)
+                  IconButton(
                     icon: const Icon(Icons.visibility),
                     onPressed: () async {
                       await _viewSubmission(assessment['fileUrl']);
                     },
                     tooltip: 'View Submission',
-                  )
-                : null,
+                  ),
+                if (assessment['markedPdfUrl']?.isNotEmpty == true)
+                  IconButton(
+                    icon: const Icon(Icons.grade),
+                    onPressed: () async {
+                      await _viewSubmission(assessment['markedPdfUrl'],
+                          isGradedPdf: true);
+                    },
+                    tooltip: 'View Graded PDF',
+                  ),
+              ],
+            ),
           ),
         );
       },

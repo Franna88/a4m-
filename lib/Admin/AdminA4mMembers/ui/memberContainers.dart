@@ -9,6 +9,8 @@ class MemberContainers extends StatefulWidget {
   final bool? isLecturer;
   final bool? isContentDev;
   final bool? isFacilitator;
+  final bool? isStudent;
+  final bool? isAdmin;
   final String image;
   final String name;
   final String number;
@@ -23,6 +25,8 @@ class MemberContainers extends StatefulWidget {
     this.isLecturer,
     this.isContentDev,
     this.isFacilitator,
+    this.isStudent,
+    this.isAdmin,
     required this.image,
     required this.name,
     required this.number,

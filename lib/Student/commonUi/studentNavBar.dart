@@ -242,32 +242,34 @@ class _StudentNavBarState extends State<StudentNavBar> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          // Quick Stats in SingleChildScrollView for horizontal scrolling if needed
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildQuickStat(
-                  'Active Courses',
-                  '3',
-                  Icons.school_outlined,
-                ),
-                const SizedBox(width: 16),
-                _buildQuickStat(
-                  'Pending Assignments',
-                  '5',
-                  Icons.assignment_outlined,
-                ),
-                const SizedBox(width: 16),
-                _buildQuickStat(
-                  'Completed Modules',
-                  '12',
-                  Icons.check_circle_outline,
-                ),
-              ],
+          // Only show quick stats on My Course page (index 0)
+          if (activeIndex == 0) ...[
+            const SizedBox(height: 20),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildQuickStat(
+                    'Active Courses',
+                    '3',
+                    Icons.school_outlined,
+                  ),
+                  const SizedBox(width: 16),
+                  _buildQuickStat(
+                    'Pending Assignments',
+                    '5',
+                    Icons.assignment_outlined,
+                  ),
+                  const SizedBox(width: 16),
+                  _buildQuickStat(
+                    'Completed Modules',
+                    '12',
+                    Icons.check_circle_outline,
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

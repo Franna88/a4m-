@@ -437,29 +437,6 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
                                                         TextOverflow.ellipsis,
                                                   ),
                                                 ),
-                                                Container(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                    horizontal: 12,
-                                                    vertical: 4,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.orange
-                                                        .withOpacity(0.1),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            20),
-                                                  ),
-                                                  child: Text(
-                                                    '${module['assessmentsPdfUrl'] != null ? 1 : 0} Assessment',
-                                                    style: GoogleFonts.poppins(
-                                                      fontSize: 12,
-                                                      color: Colors.orange[700],
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                ),
                                               ],
                                             ),
                                             const SizedBox(height: 8),
@@ -477,38 +454,97 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
                                             ),
                                             const SizedBox(height: 16),
                                             // Action Buttons
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                // Assessment Button
-                                                if (module['assessmentsPdfUrl'] !=
-                                                        null ||
-                                                    module['testSheetPdfUrl'] !=
-                                                        null)
-                                                  _buildActionButton(
-                                                    icon: Icons.grade,
-                                                    label: 'View Submissions',
-                                                    onTap: () =>
-                                                        _showAssessmentMarking(
-                                                      module['id'],
-                                                      module['moduleName'],
+                                            SingleChildScrollView(
+                                              scrollDirection: Axis.horizontal,
+                                              child: Row(
+                                                children: [
+                                                  // Student Guide
+                                                  if (module[
+                                                          'studentGuidePdfUrl'] !=
+                                                      null)
+                                                    _buildActionButton(
+                                                      icon:
+                                                          Icons.school_outlined,
+                                                      label: 'Student Guide',
+                                                      onTap: () => _openPdf(
+                                                        module[
+                                                            'studentGuidePdfUrl'],
+                                                        'Student Guide',
+                                                      ),
                                                     ),
-                                                  ),
-                                                // View Module Button
-                                                _buildActionButton(
-                                                  icon: Icons.visibility,
-                                                  label: 'View Module',
-                                                  onTap: () {
-                                                    widget.changePage(
-                                                      7,
-                                                      courseId: widget.courseId,
-                                                      moduleId: module['id'],
-                                                    );
-                                                  },
-                                                ),
-                                              ],
+                                                  if (module[
+                                                          'studentGuidePdfUrl'] !=
+                                                      null)
+                                                    const SizedBox(width: 8),
+                                                  // Lecturer Guide
+                                                  if (module[
+                                                          'lecturerGuidePdfUrl'] !=
+                                                      null)
+                                                    _buildActionButton(
+                                                      icon: Icons
+                                                          .description_outlined,
+                                                      label: 'Lecturer Guide',
+                                                      onTap: () => _openPdf(
+                                                        module[
+                                                            'lecturerGuidePdfUrl'],
+                                                        'Lecturer Guide',
+                                                      ),
+                                                    ),
+                                                  if (module[
+                                                          'lecturerGuidePdfUrl'] !=
+                                                      null)
+                                                    const SizedBox(width: 8),
+                                                  // Test Sheet
+                                                  if (module[
+                                                          'testSheetPdfUrl'] !=
+                                                      null)
+                                                    _buildActionButton(
+                                                      icon: Icons.quiz_outlined,
+                                                      label: 'Test',
+                                                      onTap: () => _openPdf(
+                                                        module[
+                                                            'testSheetPdfUrl'],
+                                                        'Test Sheet',
+                                                      ),
+                                                    ),
+                                                  if (module[
+                                                          'testSheetPdfUrl'] !=
+                                                      null)
+                                                    const SizedBox(width: 8),
+                                                  // Assessments
+                                                  if (module[
+                                                          'assessmentsPdfUrl'] !=
+                                                      null)
+                                                    _buildActionButton(
+                                                      icon: Icons
+                                                          .assignment_outlined,
+                                                      label: 'Assessment',
+                                                      onTap: () => _openPdf(
+                                                        module[
+                                                            'assessmentsPdfUrl'],
+                                                        'Assessment',
+                                                      ),
+                                                    ),
+                                                  if (module[
+                                                          'assessmentsPdfUrl'] !=
+                                                      null)
+                                                    const SizedBox(width: 8),
+                                                  // Answer Sheet
+                                                  if (module[
+                                                          'answerSheetPdfUrl'] !=
+                                                      null)
+                                                    _buildActionButton(
+                                                      icon: Icons
+                                                          .check_circle_outline,
+                                                      label: 'Answers',
+                                                      onTap: () => _openPdf(
+                                                        module[
+                                                            'answerSheetPdfUrl'],
+                                                        'Answer Sheet',
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
                                             ),
                                           ],
                                         ),

@@ -32,7 +32,7 @@ class MessagingService {
       'student': ['lecturer', 'admin'],
       'lecturer': ['student', 'lecturer', 'admin', 'facilitator'],
       'content_dev': ['admin'],
-      'admin': ['student', 'lecturer', 'content_dev', 'facilitator'],
+      'admin': ['student', 'lecturer', 'content_dev', 'facilitator', 'admin'],
       'facilitator': ['lecturer', 'facilitator', 'admin'],
     };
 
@@ -49,6 +49,11 @@ class MessagingService {
 
     // Special case: lecturers can communicate with each other
     if (normalized1 == 'lecturer' && normalized2 == 'lecturer') {
+      return true;
+    }
+
+    // Special case: admins can communicate with each other
+    if (normalized1 == 'admin' && normalized2 == 'admin') {
       return true;
     }
 
