@@ -337,8 +337,7 @@ class _CreateModuleState extends State<CreateModule> {
         existingModule.moduleName = _moduleNameController.text;
         existingModule.moduleDescription = _moduleDescriptionController.text;
         existingModule.moduleImage = _selectedImage;
-        existingModule.moduleImageUrl =
-            _selectedImageUrl; // <-- Update the image URL here
+        existingModule.moduleImageUrl = _selectedImageUrl;
         existingModule.modulePdf = _selectedPdf;
         existingModule.modulePdfName = _selectedPdfName;
 
@@ -365,8 +364,7 @@ class _CreateModuleState extends State<CreateModule> {
           moduleName: _moduleNameController.text,
           moduleDescription: _moduleDescriptionController.text,
           moduleImage: _selectedImage,
-          moduleImageUrl:
-              _selectedImageUrl, // <-- Assign the module image URL here too
+          moduleImageUrl: _selectedImageUrl,
           modulePdf: _selectedPdf,
           modulePdfName: _selectedPdfName,
           studentGuidePdf: _studentGuidePdf,
@@ -395,6 +393,20 @@ class _CreateModuleState extends State<CreateModule> {
         SnackBar(content: Text('Module saved successfully!')),
       );
     }
+  }
+
+  void _addNewModule() {
+    final courseModel = Provider.of<CourseModel>(context, listen: false);
+    _clearInputs();
+    setState(() {
+      _currentModuleIndex = courseModel.modules.length;
+    });
+    courseModel.addModule(Module(
+      moduleName: '',
+      moduleDescription: '',
+      id: FirebaseFirestore.instance.collection('modules').doc().id,
+    ));
+    print("➕ New module template created");
   }
 
   void _clearInputs() {
@@ -835,106 +847,155 @@ class _CreateModuleState extends State<CreateModule> {
         width: MyUtility(context).width - 280,
         height: MyUtility(context).height - 80,
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(20.0),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Mycolors().darkTeal,
-                      borderRadius: BorderRadius.circular(10),
+                // Modern Header with gradient
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Mycolors().darkTeal, Mycolors().blue],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
                     ),
-                    height: MyUtility(context).height * 0.06,
-                    width: MyUtility(context).width,
-                    child: Center(
-                      child: Text(
-                        'Create Module',
-                        style: MyTextStyles(context).headerWhite,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
                       ),
+                    ],
+                  ),
+                  height: MyUtility(context).height * 0.08,
+                  width: MyUtility(context).width,
+                  child: Center(
+                    child: Text(
+                      'Create Module',
+                      style: MyTextStyles(context).headerWhite.copyWith(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
                   ),
                 ),
+                SizedBox(height: 20),
+                // Main Content Card
                 Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(20.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(30.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.3,
-                              child: ContentDevTextfields(
-                                inputController: _moduleNameController,
-                                headerText: 'Module Name',
-                                keyboardType: '',
-                              ),
-                            ),
-                            Spacer(),
-                            SlimButtons(
-                              buttonText: 'Save Module',
-                              textColor: Mycolors().darkGrey,
-                              buttonColor: Colors.white,
-                              borderColor: Mycolors().darkGrey,
-                              onPressed: _setModule,
-                              customWidth: 125,
-                              customHeight: 40,
-                            ),
-                            SizedBox(width: 30),
-                            // SlimButtons(
-//                              buttonText: 'Assessments',
-//                              textColor: Mycolors().darkGrey,
-//                              buttonColor: Colors.white,
-//                              borderColor: Mycolors().darkGrey,
-//                              onPressed: () {
-//                                if (_currentModuleIndex != null) {
-//                                  print(
-//                                      'Navigating to assessments for module index: $_currentModuleIndex');
-//                                  widget.changePageIndex(5,
-//                                      moduleIndex: _currentModuleIndex);
-//                                } else {
-//                                  ScaffoldMessenger.of(context).showSnackBar(
-//                                    SnackBar(
-//                                        content: Text(
-//                                            'Please set a module before adding assessments.')),
-//                                  );
-//                                }
-//                              },
-//                              customWidth: 125,
-//                              customHeight: 40,
-//                            ),
-                            SizedBox(width: 30),
-                            SlimButtons(
-                              buttonText: 'Add New Module',
-                              textColor: Mycolors().darkGrey,
-                              buttonColor: Colors.white,
-                              borderColor: Mycolors().darkGrey,
-                              onPressed: () {
-                                _clearInputs();
-                                setState(() {
-                                  _currentModuleIndex =
-                                      courseModel.modules.length;
-                                });
-                                courseModel.addModule(Module(
-                                  moduleName: '',
-                                  moduleDescription: '',
-                                  id: '',
-                                ));
-                              },
-                              customWidth: 150,
-                              customHeight: 40,
-                            ),
-                          ],
-                        ),
-                      ),
+                      // Module Navigation and Controls
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          Text(
+                            'Module ${currentIndex} of $totalModules',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Mycolors().darkGrey,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: _addNewModule,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Mycolors().blue,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                icon: Icon(Icons.add),
+                                label: Text('Add New Module'),
+                              ),
+                              SizedBox(width: 10),
+                              ElevatedButton.icon(
+                                onPressed: _navigateToPreviousModule,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Mycolors().darkGrey,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    side:
+                                        BorderSide(color: Mycolors().darkGrey),
+                                  ),
+                                ),
+                                icon: Icon(Icons.arrow_back),
+                                label: Text('Previous'),
+                              ),
+                              SizedBox(width: 10),
+                              ElevatedButton.icon(
+                                onPressed: _navigateToNextModule,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Mycolors().darkGrey,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    side:
+                                        BorderSide(color: Mycolors().darkGrey),
+                                  ),
+                                ),
+                                icon: Icon(Icons.arrow_forward),
+                                label: Text('Next'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 30),
+                      // Module Name and Save Button
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ContentDevTextfields(
+                              inputController: _moduleNameController,
+                              headerText: 'Module Name',
+                              keyboardType: '',
+                            ),
+                          ),
+                          SizedBox(width: 20),
+                          ElevatedButton.icon(
+                            onPressed: _setModule,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Mycolors().blue,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: Icon(Icons.save, color: Colors.white),
+                            label: Text('Save Module',
+                                style: TextStyle(color: Colors.white)),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 30),
+                      // Module Content Section
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Image Upload Section
                           InkWell(
                             onTap: _pickImage,
                             child: Container(
@@ -942,251 +1003,209 @@ class _CreateModuleState extends State<CreateModule> {
                               width: MediaQuery.of(context).size.width * 0.3,
                               decoration: BoxDecoration(
                                 color: Mycolors().offWhite,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(
+                                  color: Colors.grey.withOpacity(0.3),
+                                ),
                               ),
                               child: _selectedImage != null
-                                  ? Image.memory(
-                                      _selectedImage!,
-                                      fit: BoxFit.cover,
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(15),
+                                      child: Image.memory(
+                                        _selectedImage!,
+                                        fit: BoxFit.cover,
+                                      ),
                                     )
                                   : (_selectedImageUrl != null &&
                                           _selectedImageUrl!.isNotEmpty)
-                                      ? ImageNetwork(
-                                          key: ValueKey(_selectedImageUrl),
-                                          image: _selectedImageUrl!,
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.3,
-                                          height: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              0.3,
+                                      ? ClipRRect(
                                           borderRadius:
-                                              BorderRadius.circular(10),
-                                          fitWeb: BoxFitWeb.cover,
-                                          fitAndroidIos: BoxFit.cover,
-                                          onLoading: Center(
-                                              child:
-                                                  CircularProgressIndicator()),
-                                        )
-                                      : Center(
-                                          child: Icon(
-                                            Icons.image,
-                                            size: 50,
-                                            color: Mycolors().darkGrey,
+                                              BorderRadius.circular(15),
+                                          child: ImageNetwork(
+                                            key: ValueKey(_selectedImageUrl),
+                                            image: _selectedImageUrl!,
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.3,
+                                            height: MediaQuery.of(context)
+                                                    .size
+                                                    .height *
+                                                0.3,
+                                            borderRadius:
+                                                BorderRadius.circular(15),
+                                            fitWeb: BoxFitWeb.cover,
+                                            fitAndroidIos: BoxFit.cover,
+                                            onLoading: Center(
+                                                child:
+                                                    CircularProgressIndicator(
+                                              color: Mycolors().blue,
+                                            )),
                                           ),
+                                        )
+                                      : Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons
+                                                  .add_photo_alternate_outlined,
+                                              size: 50,
+                                              color: Mycolors().darkGrey,
+                                            ),
+                                            SizedBox(height: 10),
+                                            Text(
+                                              'Click to upload module image',
+                                              style: TextStyle(
+                                                color: Mycolors().darkGrey,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                             ),
                           ),
-                          Spacer(),
-                          Column(
-                            children: [
-                              // Student Guide PDF Button
-                              SlimButtons(
-                                buttonText: 'Upload Student Guide',
-                                buttonColor: _studentGuidePdf != null
-                                    ? Mycolors().green
-                                    : Colors.white,
-                                borderColor: _studentGuidePdf != null
-                                    ? Mycolors().green
-                                    : Mycolors().darkGrey,
-                                textColor: _studentGuidePdf != null
-                                    ? Colors.white
-                                    : Mycolors().darkGrey,
-                                onPressed: () => _pickPdf('Student Guide'),
-                                customWidth: 180,
-                                customHeight: 40,
-                              ),
-                              SizedBox(height: 10),
-
-                              // Facilitator Guide PDF Button
-                              SlimButtons(
-                                buttonText: 'Upload Facilitator Guide',
-                                buttonColor: _facilitatorGuidePdf != null
-                                    ? Mycolors().green
-                                    : Colors.white,
-                                borderColor: _facilitatorGuidePdf != null
-                                    ? Mycolors().green
-                                    : Mycolors().darkGrey,
-                                textColor: _facilitatorGuidePdf != null
-                                    ? Colors.white
-                                    : Mycolors().darkGrey,
-                                onPressed: () => _pickPdf('Facilitator Guide'),
-                                customWidth: 180,
-                                customHeight: 40,
-                              ),
-                              SizedBox(height: 10),
-
-                              // Answer Sheet PDF Button
-                              SlimButtons(
-                                buttonText: 'Upload Answer Sheet',
-                                buttonColor: _answerSheetPdf != null
-                                    ? Mycolors().green
-                                    : Colors.white,
-                                borderColor: _answerSheetPdf != null
-                                    ? Mycolors().green
-                                    : Mycolors().darkGrey,
-                                textColor: _answerSheetPdf != null
-                                    ? Colors.white
-                                    : Mycolors().darkGrey,
-                                onPressed: () => _pickPdf('Answer Sheet'),
-                                customWidth: 180,
-                                customHeight: 40,
-                              ),
-                              SizedBox(height: 10),
-
-                              // Activities PDF Button
-                              SlimButtons(
-                                buttonText: 'Upload Activities',
-                                buttonColor: _activitiesPdf != null
-                                    ? Mycolors().green
-                                    : Colors.white,
-                                borderColor: _activitiesPdf != null
-                                    ? Mycolors().green
-                                    : Mycolors().darkGrey,
-                                textColor: _activitiesPdf != null
-                                    ? Colors.white
-                                    : Mycolors().darkGrey,
-                                onPressed: () => _pickPdf('Activities'),
-                                customWidth: 180,
-                                customHeight: 40,
-                              ),
-                              SizedBox(height: 10),
-
-                              // Assessments PDF Button
-                              SlimButtons(
-                                buttonText: 'Upload Assessments',
-                                buttonColor: _assessmentsPdf != null
-                                    ? Mycolors().green
-                                    : Colors.white,
-                                borderColor: _assessmentsPdf != null
-                                    ? Mycolors().green
-                                    : Mycolors().darkGrey,
-                                textColor: _assessmentsPdf != null
-                                    ? Colors.white
-                                    : Mycolors().darkGrey,
-                                onPressed: () => _pickPdf('Assessments'),
-                                customWidth: 180,
-                                customHeight: 40,
-                              ),
-                              SizedBox(height: 10),
-
-                              // Test Sheet PDF Button
-                              SlimButtons(
-                                buttonText: 'Upload Test Sheet',
-                                buttonColor: _testSheetPdf != null
-                                    ? Mycolors().green
-                                    : Colors.white,
-                                borderColor: _testSheetPdf != null
-                                    ? Mycolors().green
-                                    : Mycolors().darkGrey,
-                                textColor: _testSheetPdf != null
-                                    ? Colors.white
-                                    : Mycolors().darkGrey,
-                                onPressed: () => _pickPdf('Test Sheet'),
-                                customWidth: 180,
-                                customHeight: 40,
-                              ),
-                            ],
+                          SizedBox(width: 30),
+                          // PDF Upload Section
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Module Documents',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: Mycolors().darkGrey,
+                                  ),
+                                ),
+                                SizedBox(height: 20),
+                                Wrap(
+                                  spacing: 10,
+                                  runSpacing: 10,
+                                  children: [
+                                    _buildPdfButton(
+                                        'Student Guide', _studentGuidePdf),
+                                    _buildPdfButton('Facilitator Guide',
+                                        _facilitatorGuidePdf),
+                                    _buildPdfButton(
+                                        'Answer Sheet', _answerSheetPdf),
+                                    _buildPdfButton(
+                                        'Activities', _activitiesPdf),
+                                    _buildPdfButton(
+                                        'Assessments', _assessmentsPdf),
+                                    _buildPdfButton(
+                                        'Test Sheet', _testSheetPdf),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
-                        child: Center(
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.82,
-                            child: ContentDevTextfields(
-                              headerText: 'Module Description',
-                              inputController: _moduleDescriptionController,
-                              keyboardType: '',
-                              maxLines: 9,
+                      SizedBox(height: 30),
+                      // Module Description
+                      ContentDevTextfields(
+                        headerText: 'Module Description',
+                        inputController: _moduleDescriptionController,
+                        keyboardType: '',
+                        maxLines: 9,
+                      ),
+                      SizedBox(height: 30),
+                      // Module PDF Upload
+                      Row(
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () => _pickPdf('Module PDF'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Mycolors().blue,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: Icon(
+                              _selectedPdf != null
+                                  ? Icons.check_circle
+                                  : Icons.upload_file,
+                              color: Colors.white,
+                            ),
+                            label: Text(
+                              _selectedPdf != null
+                                  ? 'Module PDF Added'
+                                  : 'Add Module PDF',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          if (_selectedPdfName != null) ...[
+                            SizedBox(width: 20),
+                            Expanded(
+                              child: Container(
+                                padding: EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Mycolors().offWhite,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.picture_as_pdf,
+                                        color: Mycolors().darkTeal),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        _selectedPdfName!,
+                                        style: TextStyle(
+                                            color: Mycolors().darkGrey),
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        final blob = html.Blob([_selectedPdf!]);
+                                        final url =
+                                            html.Url.createObjectUrlFromBlob(
+                                                blob);
+                                        final anchor =
+                                            html.AnchorElement(href: url)
+                                              ..setAttribute(
+                                                  "download",
+                                                  _selectedPdfName ??
+                                                      'module_content.pdf')
+                                              ..click();
+                                        html.Url.revokeObjectUrl(url);
+                                      },
+                                      child: Text('View PDF'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      SizedBox(height: 40),
+                      // Submit Button
+                      Center(
+                        child: ElevatedButton.icon(
+                          onPressed: _saveToFirebase,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Mycolors().green,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 30, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          icon: Icon(Icons.send, color: Colors.white),
+                          label: Text(
+                            'Submit for Review',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                      ),
-                      SizedBox(height: 20),
-                      SlimButtons(
-                        buttonText: 'Add Content (PDF)',
-                        buttonColor: Colors.white,
-                        borderColor: Mycolors().darkGrey,
-                        textColor: Mycolors().darkGrey,
-                        onPressed: () => _pickPdf('Module PDF'),
-                        customWidth: 150,
-                        customHeight: 40,
-                      ),
-                      if (_selectedPdfName != null)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.picture_as_pdf,
-                                color: Mycolors().darkTeal,
-                                size: 30,
-                              ),
-                              SizedBox(width: 10),
-                              Text(
-                                'Selected PDF: $_selectedPdfName',
-                                style: MyTextStyles(context).mediumBlack,
-                              ),
-                              Spacer(),
-                              TextButton(
-                                onPressed: () {
-                                  final blob = html.Blob([_selectedPdf!]);
-                                  final url =
-                                      html.Url.createObjectUrlFromBlob(blob);
-                                  final anchor = html.AnchorElement(href: url)
-                                    ..setAttribute(
-                                        "download",
-                                        _selectedPdfName ??
-                                            'module_content.pdf')
-                                    ..click();
-                                  html.Url.revokeObjectUrl(url);
-                                },
-                                child: Text('Download/View PDF'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      SizedBox(height: 30),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          SlimButtons(
-                            buttonText: 'Previous Module',
-                            buttonColor: Colors.white,
-                            borderColor: Mycolors().darkGrey,
-                            textColor: Mycolors().darkGrey,
-                            onPressed: _navigateToPreviousModule,
-                            customWidth: 150,
-                            customHeight: 40,
-                          ),
-                          Text(
-                            '$currentIndex / $totalModules',
-                            style: MyTextStyles(context).mediumBlack,
-                          ),
-                          SlimButtons(
-                            buttonText: 'Next Module',
-                            buttonColor: Colors.white,
-                            borderColor: Mycolors().darkGrey,
-                            textColor: Mycolors().darkGrey,
-                            onPressed: _navigateToNextModule,
-                            customWidth: 150,
-                            customHeight: 40,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 30),
-                      SlimButtons(
-                        buttonText: 'Submit for review',
-                        buttonColor: Mycolors().green,
-                        borderColor: Mycolors().green,
-                        textColor: Colors.white,
-                        onPressed: _saveToFirebase,
-                        customWidth: 180,
-                        customHeight: 50,
                       ),
                     ],
                   ),
@@ -1196,6 +1215,26 @@ class _CreateModuleState extends State<CreateModule> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPdfButton(String title, Uint8List? pdfData) {
+    return ElevatedButton.icon(
+      onPressed: () => _pickPdf(title),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: pdfData != null ? Mycolors().green : Colors.white,
+        foregroundColor: pdfData != null ? Colors.white : Mycolors().darkGrey,
+        elevation: 0,
+        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(
+            color: pdfData != null ? Mycolors().green : Mycolors().darkGrey,
+          ),
+        ),
+      ),
+      icon: Icon(pdfData != null ? Icons.check_circle : Icons.upload_file),
+      label: Text(title),
     );
   }
 }

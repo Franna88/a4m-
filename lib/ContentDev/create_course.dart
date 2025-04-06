@@ -406,8 +406,9 @@ class _CreateCourseState extends State<CreateCourse> {
       color: Mycolors().offWhite,
       child: isLoading
           ? Center(
-              child:
-                  CircularProgressIndicator()) // Show loader while fetching data
+              child: CircularProgressIndicator(
+              color: Mycolors().blue,
+            ))
           : SizedBox(
               width: MyUtility(context).width - 280,
               height: MyUtility(context).height - 80,
@@ -417,180 +418,229 @@ class _CreateCourseState extends State<CreateCourse> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Mycolors().blue,
-                            borderRadius: BorderRadius.circular(10),
+                      // Modern Header with gradient
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Mycolors().blue, Mycolors().darkTeal],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
                           ),
-                          height: MyUtility(context).height * 0.06,
-                          width: MyUtility(context).width,
-                          child: Center(
-                            child: Text(
-                              'Create Course',
-                              style: MyTextStyles(context).headerWhite,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: Offset(0, 5),
                             ),
+                          ],
+                        ),
+                        height: MyUtility(context).height * 0.08,
+                        width: MyUtility(context).width,
+                        child: Center(
+                          child: Text(
+                            'Create Course',
+                            style: MyTextStyles(context).headerWhite.copyWith(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w600,
+                                ),
                           ),
                         ),
                       ),
+                      SizedBox(height: 20),
+                      // Main Content Card
                       Container(
+                        decoration: BoxDecoration(
                           color: Colors.white,
-                          width: MyUtility(context).width,
-                          height: MyUtility(context).height * 0.83,
-                          child: Padding(
-                            padding: const EdgeInsets.all(30.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    InkWell(
-                                      onTap: _pickImage,
-                                      child: Container(
-                                        height:
-                                            MyUtility(context).height * 0.38,
-                                        width: MyUtility(context).width * 0.3,
-                                        decoration: BoxDecoration(
-                                          color: Mycolors().offWhite,
-                                          borderRadius:
-                                              BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        width: MyUtility(context).width,
+                        child: Padding(
+                          padding: const EdgeInsets.all(30.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Image Upload Section
+                                  InkWell(
+                                    onTap: _pickImage,
+                                    child: Container(
+                                      height: MyUtility(context).height * 0.38,
+                                      width: MyUtility(context).width * 0.3,
+                                      decoration: BoxDecoration(
+                                        color: Mycolors().offWhite,
+                                        borderRadius: BorderRadius.circular(15),
+                                        border: Border.all(
+                                          color: Colors.grey.withOpacity(0.3),
                                         ),
-                                        child: _selectedImage != null
-                                            ? Image.memory(
+                                      ),
+                                      child: _selectedImage != null
+                                          ? ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                              child: Image.memory(
                                                 _selectedImage!,
                                                 fit: BoxFit.cover,
-                                              )
-                                            : (_selectedImageUrl != null &&
-                                                    _selectedImageUrl!
-                                                        .isNotEmpty)
-                                                ? ImageNetwork(
+                                              ),
+                                            )
+                                          : (_selectedImageUrl != null &&
+                                                  _selectedImageUrl!.isNotEmpty)
+                                              ? ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(15),
+                                                  child: ImageNetwork(
                                                     image: _selectedImageUrl!,
                                                     width: MyUtility(context)
                                                             .width *
-                                                        0.3, //  Fixed width
+                                                        0.3,
                                                     height: MyUtility(context)
                                                             .height *
-                                                        0.38, //  Fixed height
+                                                        0.38,
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                            10),
-                                                    fitWeb: BoxFitWeb
-                                                        .cover, //  Ensures correct scaling
+                                                            15),
+                                                    fitWeb: BoxFitWeb.cover,
                                                     fitAndroidIos: BoxFit.cover,
                                                     onLoading: Center(
                                                         child:
-                                                            CircularProgressIndicator()), //  Shows loader
-                                                  )
-                                                : Center(
-                                                    child: Icon(
-                                                      Icons.image,
+                                                            CircularProgressIndicator(
+                                                      color: Mycolors().blue,
+                                                    )),
+                                                  ),
+                                                )
+                                              : Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons
+                                                          .add_photo_alternate_outlined,
                                                       size: 50,
                                                       color:
                                                           Mycolors().darkGrey,
                                                     ),
-                                                  ),
-                                      ),
-                                    ),
-                                    Spacer(),
-                                    SizedBox(
-                                      height: MyUtility(context).height * 0.38,
-                                      width: MyUtility(context).width * 0.3,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          SizedBox(
-                                            width:
-                                                MyUtility(context).width * 0.3,
-                                            child: ContentDevTextfields(
-                                              headerText: 'Course Name',
-                                              inputController:
-                                                  _courseNameController,
-                                              keyboardType: '',
-                                            ),
-                                          ),
-                                          SizedBox(
-                                            width:
-                                                MyUtility(context).width * 0.3,
-                                            child: ContentDevTextfields(
-                                              headerText: 'Course Price',
-                                              inputController:
-                                                  _coursePriceController,
-                                              keyboardType: 'intType',
-                                            ),
-                                          ),
-                                          SizedBox(
-                                            width:
-                                                MyUtility(context).width * 0.3,
-                                            child: ContentDevTextfields(
-                                              headerText: 'Course Category',
-                                              inputController:
-                                                  _courseCategoryController,
-                                              keyboardType: '',
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  ],
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 12.0),
-                                  child: Center(
-                                    child: SizedBox(
-                                      width: MyUtility(context).width * 0.8,
-                                      child: ContentDevTextfields(
-                                        headerText: 'Course Description',
-                                        inputController:
-                                            _courseDescriptionController,
-                                        keyboardType: '',
-                                        maxLines: 7,
-                                      ),
+                                                    SizedBox(height: 10),
+                                                    Text(
+                                                      'Click to upload course image',
+                                                      style: TextStyle(
+                                                        color:
+                                                            Mycolors().darkGrey,
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                     ),
                                   ),
-                                ),
-                                SizedBox(height: 20), // Add spacing
-                                Container(
-                                  margin: EdgeInsets.only(bottom: 20),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      ElevatedButton(
-                                        onPressed: _pickPreviewPdf,
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Mycolors().blue,
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 20, vertical: 10),
+                                  SizedBox(width: 30),
+                                  // Course Details Section
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        ContentDevTextfields(
+                                          headerText: 'Course Name',
+                                          inputController:
+                                              _courseNameController,
+                                          keyboardType: '',
                                         ),
-                                        child: Text(
-                                          _selectedPreviewPdf != null ||
-                                                  _selectedPreviewPdfUrl != null
-                                              ? 'Preview PDF Added'
-                                              : 'Add Preview PDF',
+                                        SizedBox(height: 20),
+                                        ContentDevTextfields(
+                                          headerText: 'Course Price',
+                                          inputController:
+                                              _coursePriceController,
+                                          keyboardType: 'intType',
+                                        ),
+                                        SizedBox(height: 20),
+                                        ContentDevTextfields(
+                                          headerText: 'Course Category',
+                                          inputController:
+                                              _courseCategoryController,
+                                          keyboardType: '',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 30),
+                              // Course Description
+                              ContentDevTextfields(
+                                headerText: 'Course Description',
+                                inputController: _courseDescriptionController,
+                                keyboardType: '',
+                                maxLines: 7,
+                              ),
+                              SizedBox(height: 30),
+                              // Preview PDF and Next Button
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  ElevatedButton.icon(
+                                    onPressed: _pickPreviewPdf,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Mycolors().blue,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 20, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    icon: Icon(
+                                      _selectedPreviewPdf != null ||
+                                              _selectedPreviewPdfUrl != null
+                                          ? Icons.check_circle
+                                          : Icons.upload_file,
+                                      color: Colors.white,
+                                    ),
+                                    label: Text(
+                                      _selectedPreviewPdf != null ||
+                                              _selectedPreviewPdfUrl != null
+                                          ? 'Preview PDF Added'
+                                          : 'Add Preview PDF',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: _handleNext,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Mycolors().green,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 30, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Next',
                                           style: TextStyle(color: Colors.white),
                                         ),
-                                      ),
-                                      SlimButtons(
-                                        buttonText: 'Next',
-                                        buttonColor: Colors.white,
-                                        borderColor:
-                                            Color.fromRGBO(203, 210, 224, 1),
-                                        textColor: Mycolors().green,
-                                        onPressed: _handleNext,
-                                        customWidth: 85,
-                                        customHeight: 35,
-                                      ),
-                                    ],
+                                        SizedBox(width: 8),
+                                        Icon(Icons.arrow_forward,
+                                            color: Colors.white),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ))
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -619,10 +669,7 @@ class _CreateCourseState extends State<CreateCourse> {
       });
 
       try {
-        // First save to Firebase
-        await _saveCourseEdits();
-
-        // Then update the CourseModel
+        // Update the CourseModel without saving to Firebase
         final courseModel = Provider.of<CourseModel>(context, listen: false);
         courseModel.setCourseName(_courseNameController.text);
         courseModel.setCoursePrice(_coursePriceController.text);
