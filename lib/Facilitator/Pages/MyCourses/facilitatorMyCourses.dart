@@ -1,4 +1,5 @@
 import 'package:a4m/Facilitator/Pages/MyCourses/ui/facilitatorCourseContainers.dart';
+import 'package:a4m/Facilitator/Pages/MyCourses/facilitatorViewCourse.dart';
 import 'package:a4m/LandingPage/CourseListPage/ui/categoryNameStack.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +10,13 @@ import '../../../CommonComponents/inputFields/mySearchBar.dart';
 
 class FacilitatorMyCourses extends StatefulWidget {
   final String facilitatorId;
-  const FacilitatorMyCourses({super.key, required this.facilitatorId});
+  final GlobalKey<NavigatorState> navigatorKey;
+
+  const FacilitatorMyCourses({
+    super.key,
+    required this.facilitatorId,
+    required this.navigatorKey,
+  });
 
   @override
   State<FacilitatorMyCourses> createState() => _FacilitatorMyCoursesState();
@@ -103,6 +110,14 @@ class _FacilitatorMyCoursesState extends State<FacilitatorMyCourses> {
     }
   }
 
+  void _navigateToCourseView(String courseId) {
+    widget.navigatorKey.currentState?.push(
+      MaterialPageRoute(
+        builder: (context) => FacilitatorViewCourse(courseId: courseId),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final courseSearch = TextEditingController();
@@ -111,77 +126,100 @@ class _FacilitatorMyCoursesState extends State<FacilitatorMyCourses> {
     int crossAxisCount =
         (screenWidth ~/ 300).clamp(1, 6); // Adjusted for tight layout
 
-    return SizedBox(
-      height: MyUtility(context).height - 50,
-      width: screenWidth,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CategoryNameStack(text: 'My Courses'),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: 350,
-              child: MySearchBar(
-                textController: courseSearch,
-                hintText: 'Search Course',
+    return Navigator(
+      key: widget.navigatorKey,
+      onGenerateRoute: (settings) {
+        return MaterialPageRoute(
+          builder: (context) => SizedBox(
+            height: MyUtility(context).height - 50,
+            width: screenWidth,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CategoryNameStack(text: 'My Courses'),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: 350,
+                    child: MySearchBar(
+                      textController: courseSearch,
+                      hintText: 'Search Course',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                LayoutGrid(
+                                  columnSizes: List.generate(
+                                    crossAxisCount,
+                                    (_) => const FlexibleTrackSize(1),
+                                  ),
+                                  rowSizes: List.generate(
+                                    (facilitatorCourses.length / crossAxisCount)
+                                        .ceil(),
+                                    (_) => auto,
+                                  ),
+                                  columnGap: 8,
+                                  rowGap: 15,
+                                  children: facilitatorCourses
+                                      .map(
+                                        (course) => Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            onTap: () => _navigateToCourseView(
+                                                course['courseId']),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                            child: FacilitatorCourseContainers(
+                                              isAssignStudent: true,
+                                              courseName:
+                                                  course['courseName'] ??
+                                                      'Unknown',
+                                              courseDescription:
+                                                  course['courseDescription'] ??
+                                                      '',
+                                              totalStudents:
+                                                  course['studentCount']
+                                                          ?.toString() ??
+                                                      '0',
+                                              totalAssesments:
+                                                  course['assessmentCount']
+                                                          ?.toString() ??
+                                                      '0',
+                                              totalModules:
+                                                  course['moduleCount']
+                                                          ?.toString() ??
+                                                      '0',
+                                              courseImage: course[
+                                                      'courseImageUrl'] ??
+                                                  'https://via.placeholder.com/150',
+                                              coursePrice:
+                                                  'R ${course['coursePrice']?.toString() ?? '0'}',
+                                              facilitatorId:
+                                                  widget.facilitatorId,
+                                              courseId: course['courseId'],
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                                const SizedBox(height: 10),
+                              ],
+                            ),
+                          ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          LayoutGrid(
-                            columnSizes: List.generate(
-                              crossAxisCount,
-                              (_) => FlexibleTrackSize(1),
-                            ),
-                            rowSizes: List.generate(
-                              (facilitatorCourses.length / crossAxisCount)
-                                  .ceil(),
-                              (_) => auto,
-                            ),
-                            columnGap: 8,
-                            rowGap: 15,
-                            children: facilitatorCourses
-                                .map(
-                                  (course) => FacilitatorCourseContainers(
-                                    isAssignStudent: true,
-                                    courseName:
-                                        course['courseName'] ?? 'Unknown',
-                                    courseDescription:
-                                        course['courseDescription'] ?? '',
-                                    totalStudents:
-                                        course['studentCount']?.toString() ??
-                                            '0',
-                                    totalAssesments:
-                                        course['assessmentCount']?.toString() ??
-                                            '0',
-                                    totalModules:
-                                        course['moduleCount']?.toString() ??
-                                            '0',
-                                    courseImage: course['courseImageUrl'] ??
-                                        'https://via.placeholder.com/150',
-                                    coursePrice:
-                                        'R ${course['coursePrice']?.toString() ?? '0'}',
-                                    facilitatorId: widget.facilitatorId,
-                                    courseId: course['courseId'],
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                          const SizedBox(height: 10),
-                        ],
-                      ),
-                    ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

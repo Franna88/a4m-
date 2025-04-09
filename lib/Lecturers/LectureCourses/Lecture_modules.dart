@@ -39,6 +39,7 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
   bool showModuleCompleteList = false;
   String? selectedModuleId;
   String? selectedModuleName;
+  bool isHovered = false;
 
   final List<String> filterOptions = [
     'All',
@@ -337,216 +338,234 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.grey.withOpacity(0.1),
-                                        spreadRadius: 1,
-                                        blurRadius: 10,
+                                        spreadRadius: isHovered ? 2 : 1,
+                                        blurRadius: isHovered ? 15 : 10,
                                         offset: const Offset(0, 3),
                                       ),
                                     ],
                                   ),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      onTap: () {
-                                        widget.changePage(
-                                          7,
-                                          courseId: widget.courseId,
-                                          moduleId: module['id'],
-                                        );
-                                      },
-                                      borderRadius: BorderRadius.circular(16),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            // Module Image
-                                            Container(
-                                              height: 160,
-                                              width: double.infinity,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                color: Colors.grey[200],
-                                              ),
-                                              child: ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                child: module[
-                                                            'moduleImageUrl'] !=
-                                                        null
-                                                    ? ImageNetwork(
-                                                        image: module[
-                                                            'moduleImageUrl'],
-                                                        height: 160,
-                                                        width: 400,
-                                                        duration: 100,
-                                                        fitAndroidIos:
-                                                            BoxFit.cover,
-                                                        fitWeb: BoxFitWeb.cover,
-                                                        onLoading: Container(
-                                                          color:
-                                                              Colors.grey[200],
-                                                          child: const Center(
-                                                            child:
-                                                                CircularProgressIndicator(),
-                                                          ),
-                                                        ),
-                                                        onError: Container(
-                                                          color:
-                                                              Colors.grey[200],
-                                                          child: const Icon(
-                                                            Icons.error_outline,
-                                                            color: Colors.red,
-                                                            size: 32,
-                                                          ),
-                                                        ),
-                                                      )
-                                                    : Container(
-                                                        color:
-                                                            Mycolors().darkGrey,
-                                                        child: const Center(
-                                                          child: Icon(
-                                                            Icons.book,
-                                                            size: 48,
-                                                            color: Colors.white,
-                                                          ),
-                                                        ),
-                                                      ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 16),
-                                            // Module Header
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Expanded(
-                                                  child: Text(
-                                                    module['moduleName'] ??
-                                                        'Unnamed Module',
-                                                    style: GoogleFonts.poppins(
-                                                      fontSize: 18,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: Colors.grey[800],
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
+                                  child: MouseRegion(
+                                    onEnter: (_) =>
+                                        setState(() => isHovered = true),
+                                    onExit: (_) =>
+                                        setState(() => isHovered = false),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () {
+                                          widget.changePage(
+                                            7,
+                                            courseId: widget.courseId,
+                                            moduleId: module['id'],
+                                          );
+                                        },
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(16),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              // Module Image
+                                              Container(
+                                                height: 160,
+                                                width: double.infinity,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  color: Colors.grey[200],
                                                 ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 8),
-                                            // Module Description
-                                            Text(
-                                              module['moduleDescription'] ??
-                                                  'No description available',
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 14,
-                                                color: Colors.grey[600],
-                                                height: 1.5,
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  child:
+                                                      module['moduleImageUrl'] !=
+                                                              null
+                                                          ? ImageNetwork(
+                                                              image: module[
+                                                                  'moduleImageUrl'],
+                                                              height: 160,
+                                                              width: 400,
+                                                              duration: 100,
+                                                              fitAndroidIos:
+                                                                  BoxFit.cover,
+                                                              fitWeb: BoxFitWeb
+                                                                  .cover,
+                                                              onLoading:
+                                                                  Container(
+                                                                color: Colors
+                                                                    .grey[200],
+                                                                child:
+                                                                    const Center(
+                                                                  child:
+                                                                      CircularProgressIndicator(),
+                                                                ),
+                                                              ),
+                                                              onError:
+                                                                  Container(
+                                                                color: Colors
+                                                                    .grey[200],
+                                                                child:
+                                                                    const Icon(
+                                                                  Icons
+                                                                      .error_outline,
+                                                                  color: Colors
+                                                                      .red,
+                                                                  size: 32,
+                                                                ),
+                                                              ),
+                                                            )
+                                                          : Container(
+                                                              color: Mycolors()
+                                                                  .darkGrey,
+                                                              child:
+                                                                  const Center(
+                                                                child: Icon(
+                                                                  Icons.book,
+                                                                  size: 48,
+                                                                  color: Colors
+                                                                      .white,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                ),
                                               ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 16),
-                                            // Action Buttons
-                                            SingleChildScrollView(
-                                              scrollDirection: Axis.horizontal,
-                                              child: Row(
+                                              const SizedBox(height: 16),
+                                              // Module Header
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
                                                 children: [
-                                                  // Student Guide
-                                                  if (module[
-                                                          'studentGuidePdfUrl'] !=
-                                                      null)
-                                                    _buildActionButton(
-                                                      icon:
-                                                          Icons.school_outlined,
-                                                      label: 'Student Guide',
-                                                      onTap: () => _openPdf(
-                                                        module[
-                                                            'studentGuidePdfUrl'],
-                                                        'Student Guide',
+                                                  Expanded(
+                                                    child: Text(
+                                                      module['moduleName'] ??
+                                                          'Unnamed Module',
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                        fontSize: 18,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: Colors.grey[800],
                                                       ),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
                                                     ),
-                                                  if (module[
-                                                          'studentGuidePdfUrl'] !=
-                                                      null)
-                                                    const SizedBox(width: 8),
-                                                  // Lecturer Guide
-                                                  if (module[
-                                                          'lecturerGuidePdfUrl'] !=
-                                                      null)
-                                                    _buildActionButton(
-                                                      icon: Icons
-                                                          .description_outlined,
-                                                      label: 'Lecturer Guide',
-                                                      onTap: () => _openPdf(
-                                                        module[
-                                                            'lecturerGuidePdfUrl'],
-                                                        'Lecturer Guide',
-                                                      ),
-                                                    ),
-                                                  if (module[
-                                                          'lecturerGuidePdfUrl'] !=
-                                                      null)
-                                                    const SizedBox(width: 8),
-                                                  // Test Sheet
-                                                  if (module[
-                                                          'testSheetPdfUrl'] !=
-                                                      null)
-                                                    _buildActionButton(
-                                                      icon: Icons.quiz_outlined,
-                                                      label: 'Test',
-                                                      onTap: () => _openPdf(
-                                                        module[
-                                                            'testSheetPdfUrl'],
-                                                        'Test Sheet',
-                                                      ),
-                                                    ),
-                                                  if (module[
-                                                          'testSheetPdfUrl'] !=
-                                                      null)
-                                                    const SizedBox(width: 8),
-                                                  // Assessments
-                                                  if (module[
-                                                          'assessmentsPdfUrl'] !=
-                                                      null)
-                                                    _buildActionButton(
-                                                      icon: Icons
-                                                          .assignment_outlined,
-                                                      label: 'Assessment',
-                                                      onTap: () => _openPdf(
-                                                        module[
-                                                            'assessmentsPdfUrl'],
-                                                        'Assessment',
-                                                      ),
-                                                    ),
-                                                  if (module[
-                                                          'assessmentsPdfUrl'] !=
-                                                      null)
-                                                    const SizedBox(width: 8),
-                                                  // Answer Sheet
-                                                  if (module[
-                                                          'answerSheetPdfUrl'] !=
-                                                      null)
-                                                    _buildActionButton(
-                                                      icon: Icons
-                                                          .check_circle_outline,
-                                                      label: 'Answers',
-                                                      onTap: () => _openPdf(
-                                                        module[
-                                                            'answerSheetPdfUrl'],
-                                                        'Answer Sheet',
-                                                      ),
-                                                    ),
+                                                  ),
                                                 ],
                                               ),
-                                            ),
-                                          ],
+                                              const SizedBox(height: 8),
+                                              // Module Description
+                                              Text(
+                                                module['moduleDescription'] ??
+                                                    'No description available',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 14,
+                                                  color: Colors.grey[600],
+                                                  height: 1.5,
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 16),
+                                              // Action Buttons
+                                              SingleChildScrollView(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                child: Row(
+                                                  children: [
+                                                    // Student Guide
+                                                    if (module[
+                                                            'studentGuidePdfUrl'] !=
+                                                        null)
+                                                      _buildActionButton(
+                                                        icon: Icons
+                                                            .school_outlined,
+                                                        label: 'Student Guide',
+                                                        onTap: () => _openPdf(
+                                                          module[
+                                                              'studentGuidePdfUrl'],
+                                                          'Student Guide',
+                                                        ),
+                                                      ),
+                                                    if (module[
+                                                            'studentGuidePdfUrl'] !=
+                                                        null)
+                                                      const SizedBox(width: 8),
+                                                    // Lecturer Guide
+                                                    if (module[
+                                                            'lecturerGuidePdfUrl'] !=
+                                                        null)
+                                                      _buildActionButton(
+                                                        icon: Icons
+                                                            .description_outlined,
+                                                        label: 'Lecturer Guide',
+                                                        onTap: () => _openPdf(
+                                                          module[
+                                                              'lecturerGuidePdfUrl'],
+                                                          'Lecturer Guide',
+                                                        ),
+                                                      ),
+                                                    if (module[
+                                                            'lecturerGuidePdfUrl'] !=
+                                                        null)
+                                                      const SizedBox(width: 8),
+                                                    // Test Sheet
+                                                    if (module[
+                                                            'testSheetPdfUrl'] !=
+                                                        null)
+                                                      _buildActionButton(
+                                                        icon:
+                                                            Icons.quiz_outlined,
+                                                        label: 'Test',
+                                                        onTap: () => _openPdf(
+                                                          module[
+                                                              'testSheetPdfUrl'],
+                                                          'Test Sheet',
+                                                        ),
+                                                      ),
+                                                    if (module[
+                                                            'testSheetPdfUrl'] !=
+                                                        null)
+                                                      const SizedBox(width: 8),
+                                                    // Assessments
+                                                    if (module[
+                                                            'assessmentsPdfUrl'] !=
+                                                        null)
+                                                      _buildActionButton(
+                                                        icon: Icons
+                                                            .assignment_outlined,
+                                                        label: 'Assessment',
+                                                        onTap: () => _openPdf(
+                                                          module[
+                                                              'assessmentsPdfUrl'],
+                                                          'Assessment',
+                                                        ),
+                                                      ),
+                                                    if (module[
+                                                            'assessmentsPdfUrl'] !=
+                                                        null)
+                                                      const SizedBox(width: 8),
+                                                    // Answer Sheet
+                                                    if (module[
+                                                            'answerSheetPdfUrl'] !=
+                                                        null)
+                                                      _buildActionButton(
+                                                        icon: Icons
+                                                            .check_circle_outline,
+                                                        label: 'Answers',
+                                                        onTap: () => _openPdf(
+                                                          module[
+                                                              'answerSheetPdfUrl'],
+                                                          'Answer Sheet',
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),

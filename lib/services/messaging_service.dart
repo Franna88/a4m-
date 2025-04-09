@@ -30,8 +30,14 @@ class MessagingService {
   bool canCommunicate(String role1, String role2) {
     final allowedCommunication = {
       'student': ['lecturer', 'admin'],
-      'lecturer': ['student', 'lecturer', 'admin', 'facilitator'],
-      'content_dev': ['admin'],
+      'lecturer': [
+        'student',
+        'lecturer',
+        'admin',
+        'facilitator',
+        'content_dev'
+      ],
+      'content_dev': ['admin', 'lecturer'],
       'admin': ['student', 'lecturer', 'content_dev', 'facilitator', 'admin'],
       'facilitator': ['lecturer', 'facilitator', 'admin'],
     };

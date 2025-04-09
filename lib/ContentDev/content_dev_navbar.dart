@@ -228,7 +228,7 @@ class _AdminMainNavBarState extends State<ContentDevNavBar> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Welcome back!',
+                'Content Developer',
                 style: GoogleFonts.poppins(
                   fontSize: 24,
                   fontWeight: FontWeight.w600,
@@ -425,7 +425,7 @@ class _AdminMainNavBarState extends State<ContentDevNavBar> {
                     child: Column(
                       children: [
                         _buildNavItem(
-                            Icons.create_new_folder, 'Create Course', 0),
+                            Icons.create_new_folder, 'Upload Course', 0),
                         _buildNavItem(Icons.edit, 'Edit Course', 1),
                         const SizedBox(height: 20),
                         const Divider(),

@@ -49,6 +49,8 @@ class _CreateModuleState extends State<CreateModule> {
   String? _assessmentsPdfName;
   Uint8List? _testSheetPdf;
   String? _testSheetPdfName;
+  Uint8List? _assignmentsPdf;
+  String? _assignmentsPdfName;
 
   String? _selectedImageUrl;
 
@@ -65,6 +67,8 @@ class _CreateModuleState extends State<CreateModule> {
   String? _assessmentsPdfUrl;
 
   String? _testSheetPdfUrl;
+
+  String? _assignmentsPdfUrl;
 
   bool _isLoading = false;
   final bool _isSubmittedForReview = false;
@@ -125,6 +129,7 @@ class _CreateModuleState extends State<CreateModule> {
         _activitiesPdfUrl = existingModule.activitiesPdfUrl;
         _assessmentsPdfUrl = existingModule.assessmentsPdfUrl;
         _testSheetPdfUrl = existingModule.testSheetPdfUrl;
+        _assignmentsPdfUrl = existingModule.assignmentsPdfUrl;
 
         _selectedPdfName = existingModule.modulePdfName ?? "Existing PDF";
         _studentGuidePdfName =
@@ -139,6 +144,8 @@ class _CreateModuleState extends State<CreateModule> {
             existingModule.assessmentsPdfName ?? "Existing Assessments";
         _testSheetPdfName =
             existingModule.testSheetPdfName ?? "Existing Test Sheet";
+        _assignmentsPdfName =
+            existingModule.assignmentsPdfName ?? "Existing Assignments";
 
         // Clear the local image so that the widget uses the URL image for the current module
         _selectedImage = null;
@@ -174,6 +181,7 @@ class _CreateModuleState extends State<CreateModule> {
             activitiesPdfUrl: data['activitiesPdfUrl'],
             assessmentsPdfUrl: data['assessmentsPdfUrl'],
             testSheetPdfUrl: data['testSheetPdfUrl'],
+            assignmentsPdfUrl: data['assignmentsPdfUrl'],
             modulePdfName: data['modulePdfName'],
             studentGuidePdfName: data['studentGuidePdfName'],
             facilitatorGuidePdfName: data['facilitatorGuidePdfName'],
@@ -181,6 +189,7 @@ class _CreateModuleState extends State<CreateModule> {
             activitiesPdfName: data['activitiesPdfName'],
             assessmentsPdfName: data['assessmentsPdfName'],
             testSheetPdfName: data['testSheetPdfName'],
+            assignmentsPdfName: data['assignmentsPdfName'],
           );
         }).toList();
 
@@ -217,6 +226,8 @@ class _CreateModuleState extends State<CreateModule> {
               courseModel.modules[_currentModuleIndex!].assessmentsPdfUrl;
           _testSheetPdfUrl =
               courseModel.modules[_currentModuleIndex!].testSheetPdfUrl;
+          _assignmentsPdfUrl =
+              courseModel.modules[_currentModuleIndex!].assignmentsPdfUrl;
 
           _selectedPdfName =
               courseModel.modules[_currentModuleIndex!].modulePdfName;
@@ -232,6 +243,8 @@ class _CreateModuleState extends State<CreateModule> {
               courseModel.modules[_currentModuleIndex!].assessmentsPdfName;
           _testSheetPdfName =
               courseModel.modules[_currentModuleIndex!].testSheetPdfName;
+          _assignmentsPdfName =
+              courseModel.modules[_currentModuleIndex!].assignmentsPdfName;
 
           // Clear the local image state here as well
           _selectedImage = null;
@@ -307,9 +320,13 @@ class _CreateModuleState extends State<CreateModule> {
                 _assessmentsPdf = pdfData;
                 _assessmentsPdfName = pdfName;
                 break;
-              case 'Test Sheet':
+              case 'Test':
                 _testSheetPdf = pdfData;
                 _testSheetPdfName = pdfName;
+                break;
+              case 'Assignments':
+                _assignmentsPdf = pdfData;
+                _assignmentsPdfName = pdfName;
                 break;
               case 'Module PDF':
                 _selectedPdf = pdfData;
@@ -354,6 +371,8 @@ class _CreateModuleState extends State<CreateModule> {
         existingModule.assessmentsPdfName = _assessmentsPdfName;
         existingModule.testSheetPdf = _testSheetPdf;
         existingModule.testSheetPdfName = _testSheetPdfName;
+        existingModule.assignmentsPdf = _assignmentsPdf;
+        existingModule.assignmentsPdfName = _assignmentsPdfName;
 
         courseModel.updateModule(_currentModuleIndex!, existingModule);
         print("✅ Module updated at index: $_currentModuleIndex");
@@ -379,6 +398,8 @@ class _CreateModuleState extends State<CreateModule> {
           assessmentsPdfName: _assessmentsPdfName,
           testSheetPdf: _testSheetPdf,
           testSheetPdfName: _testSheetPdfName,
+          assignmentsPdf: _assignmentsPdf,
+          assignmentsPdfName: _assignmentsPdfName,
         );
 
         courseModel.addModule(newModule);
@@ -431,6 +452,8 @@ class _CreateModuleState extends State<CreateModule> {
       _assessmentsPdfName = null;
       _testSheetPdf = null;
       _testSheetPdfName = null;
+      _assignmentsPdf = null;
+      _assignmentsPdfName = null;
     });
   }
 
@@ -589,6 +612,9 @@ class _CreateModuleState extends State<CreateModule> {
               if (module.testSheetPdf != null) {
                 moduleChangeList.add("Updated Test Sheet");
               }
+              if (module.assignmentsPdf != null) {
+                moduleChangeList.add("Updated Assignments");
+              }
             }
           } catch (e) {
             print("Error fetching existing module data: $e");
@@ -647,6 +673,8 @@ class _CreateModuleState extends State<CreateModule> {
             module.assessmentsPdf, module.assessmentsPdfUrl, 'assessments');
         String? testSheetPdfUrl = await uploadPdf(
             module.testSheetPdf, module.testSheetPdfUrl, 'test_sheet');
+        String? assignmentsPdfUrl = await uploadPdf(
+            module.assignmentsPdf, module.assignmentsPdfUrl, 'assignments');
 
         // If there are changes, add to moduleChanges list
         if (moduleChangeList.isNotEmpty) {
@@ -676,6 +704,8 @@ class _CreateModuleState extends State<CreateModule> {
           'assessmentsPdfName': module.assessmentsPdfName,
           'testSheetPdfUrl': testSheetPdfUrl,
           'testSheetPdfName': module.testSheetPdfName,
+          'assignmentsPdfUrl': assignmentsPdfUrl,
+          'assignmentsPdfName': module.assignmentsPdfName,
           'questions': module.questions.map((q) => q.toMap()).toList(),
           'tasks': module.tasks.map((t) => t.toMap()).toList(),
           'assignments': module.assignments.map((a) => a.toMap()).toList(),
@@ -762,7 +792,8 @@ class _CreateModuleState extends State<CreateModule> {
         "Answer Sheet": _answerSheetPdf,
         "Activities": _activitiesPdf,
         "Assessments": _assessmentsPdf,
-        "Test Sheet": _testSheetPdf
+        "Test": _testSheetPdf,
+        "Assignments": _assignmentsPdf
       };
 
       for (String key in pdfFiles.keys) {
@@ -791,6 +822,8 @@ class _CreateModuleState extends State<CreateModule> {
       existingModule.assessmentsPdfName = _assessmentsPdfName;
       existingModule.testSheetPdf = _testSheetPdf;
       existingModule.testSheetPdfName = _testSheetPdfName;
+      existingModule.assignmentsPdf = _assignmentsPdf;
+      existingModule.assignmentsPdfName = _assignmentsPdfName;
 
       // **Attach changes to module**
       existingModule.changes = moduleChangeList;
@@ -873,7 +906,7 @@ class _CreateModuleState extends State<CreateModule> {
                   width: MyUtility(context).width,
                   child: Center(
                     child: Text(
-                      'Create Module',
+                      'Upload Module',
                       style: MyTextStyles(context).headerWhite.copyWith(
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
@@ -1094,8 +1127,9 @@ class _CreateModuleState extends State<CreateModule> {
                                         'Activities', _activitiesPdf),
                                     _buildPdfButton(
                                         'Assessments', _assessmentsPdf),
+                                    _buildPdfButton('Test', _testSheetPdf),
                                     _buildPdfButton(
-                                        'Test Sheet', _testSheetPdf),
+                                        'Assignments', _assignmentsPdf),
                                   ],
                                 ),
                               ],
@@ -1106,82 +1140,10 @@ class _CreateModuleState extends State<CreateModule> {
                       SizedBox(height: 30),
                       // Module Description
                       ContentDevTextfields(
-                        headerText: 'Module Description',
+                        headerText: 'Module Content',
                         inputController: _moduleDescriptionController,
                         keyboardType: '',
                         maxLines: 9,
-                      ),
-                      SizedBox(height: 30),
-                      // Module PDF Upload
-                      Row(
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () => _pickPdf('Module PDF'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Mycolors().blue,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            icon: Icon(
-                              _selectedPdf != null
-                                  ? Icons.check_circle
-                                  : Icons.upload_file,
-                              color: Colors.white,
-                            ),
-                            label: Text(
-                              _selectedPdf != null
-                                  ? 'Module PDF Added'
-                                  : 'Add Module PDF',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                          if (_selectedPdfName != null) ...[
-                            SizedBox(width: 20),
-                            Expanded(
-                              child: Container(
-                                padding: EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Mycolors().offWhite,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.picture_as_pdf,
-                                        color: Mycolors().darkTeal),
-                                    SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        _selectedPdfName!,
-                                        style: TextStyle(
-                                            color: Mycolors().darkGrey),
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        final blob = html.Blob([_selectedPdf!]);
-                                        final url =
-                                            html.Url.createObjectUrlFromBlob(
-                                                blob);
-                                        final anchor =
-                                            html.AnchorElement(href: url)
-                                              ..setAttribute(
-                                                  "download",
-                                                  _selectedPdfName ??
-                                                      'module_content.pdf')
-                                              ..click();
-                                        html.Url.revokeObjectUrl(url);
-                                      },
-                                      child: Text('View PDF'),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
                       ),
                       SizedBox(height: 40),
                       // Submit Button

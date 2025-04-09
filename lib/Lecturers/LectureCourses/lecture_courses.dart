@@ -25,6 +25,7 @@ class LectureCourses extends StatefulWidget {
 class _LectureCoursesState extends State<LectureCourses> {
   List<Map<String, dynamic>> assignedCourses = [];
   bool isLoading = true;
+  bool isHovered = false;
 
   // Fetch courses assigned to this lecturer
   Future<void> fetchAssignedCourses() async {
@@ -193,36 +194,59 @@ class _LectureCoursesState extends State<LectureCourses> {
                               columnGap: 20,
                               children: [
                                 for (var course in assignedCourses)
-                                  GestureDetector(
-                                    onTap: () {
-                                      print(
-                                          "Navigating to Modules for Course ID: ${course['id']}");
-                                      widget.changePageWithCourseId(
-                                        6,
-                                        courseId: course['id'],
-                                      );
-                                    },
-                                    child: LectureCourseContainers(
-                                      courseName: course['courseName'],
-                                      modulesComplete:
-                                          course['moduleAmount'].toString(),
-                                      courseDescription:
-                                          course['courseDescription'],
-                                      totalStudents: course['totalStudents'],
-                                      moduleAmount:
-                                          course['moduleAmount'].toString(),
-                                      assessmentAmount:
-                                          course['totalAssessments'],
-                                      courseImage: course['courseImage'],
-                                      courseId: course['id'],
-                                      onTap: () {},
-                                      changePage: (index,
-                                              {String? courseId,
-                                              String? moduleId}) =>
+                                  MouseRegion(
+                                    onEnter: (_) =>
+                                        setState(() => isHovered = true),
+                                    onExit: (_) =>
+                                        setState(() => isHovered = false),
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(0.1),
+                                            spreadRadius: isHovered ? 2 : 1,
+                                            blurRadius: isHovered ? 15 : 10,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
+                                      ),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          print(
+                                              "Navigating to Modules for Course ID: ${course['id']}");
                                           widget.changePageWithCourseId(
-                                        index,
-                                        courseId: courseId ?? course['id'],
-                                        moduleId: moduleId ?? '',
+                                            6,
+                                            courseId: course['id'],
+                                          );
+                                        },
+                                        child: LectureCourseContainers(
+                                          courseName: course['courseName'],
+                                          modulesComplete:
+                                              course['moduleAmount'].toString(),
+                                          courseDescription:
+                                              course['courseDescription'],
+                                          totalStudents:
+                                              course['totalStudents'],
+                                          moduleAmount:
+                                              course['moduleAmount'].toString(),
+                                          assessmentAmount:
+                                              course['totalAssessments'],
+                                          courseImage: course['courseImage'],
+                                          courseId: course['id'],
+                                          onTap: () {},
+                                          changePage: (index,
+                                                  {String? courseId,
+                                                  String? moduleId}) =>
+                                              widget.changePageWithCourseId(
+                                            index,
+                                            courseId: courseId ?? course['id'],
+                                            moduleId: moduleId ?? '',
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),

@@ -40,6 +40,7 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
   String? _error;
   String? _markedPdfUrl;
   bool _isUploadingPdf = false;
+  String? _studentName;
 
   @override
   void initState() {
@@ -48,6 +49,24 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
         TextEditingController(text: widget.currentMark?.toString() ?? '');
     _commentController =
         TextEditingController(text: widget.currentComment ?? '');
+    _fetchStudentName();
+  }
+
+  Future<void> _fetchStudentName() async {
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(widget.studentId)
+          .get();
+
+      if (userDoc.exists) {
+        setState(() {
+          _studentName = userDoc['name'] ?? 'Unknown Student';
+        });
+      }
+    } catch (e) {
+      print('Error fetching student name: $e');
+    }
   }
 
   @override
@@ -125,6 +144,24 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
       return;
     }
 
+    // Check if anything has changed
+    final newMark = double.tryParse(_markController.text);
+    if (newMark == widget.currentMark &&
+        _commentController.text == widget.currentComment &&
+        _markedPdfUrl == null) {
+      print('No changes detected, skipping submission');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No changes detected'),
+            backgroundColor: Colors.blue,
+          ),
+        );
+        Navigator.pop(context);
+      }
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
       _error = null;
@@ -139,32 +176,9 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
         throw Exception('Please enter a valid mark between 0 and 100');
       }
 
-      // First, upload the marked PDF if it exists
+      // First, upload the marked PDF if it exists and is new
       String? markedPdfUrl;
-      if (_markedPdfUrl == null) {
-        FilePickerResult? result = await FilePicker.platform.pickFiles(
-          type: FileType.custom,
-          allowedExtensions: ['pdf'],
-        );
-
-        if (result != null) {
-          final file = result.files.first;
-          final fileName = '${widget.moduleId}_${widget.studentId}_marked.pdf';
-          final storageRef = FirebaseStorage.instance
-              .ref()
-              .child('courses/${widget.courseId}/marked_assessments/$fileName');
-
-          if (file.bytes != null) {
-            // Web platform
-            await storageRef.putData(file.bytes!);
-          } else if (file.path != null) {
-            // Mobile/Desktop platforms
-            await storageRef.putFile(File(file.path!));
-          }
-
-          markedPdfUrl = await storageRef.getDownloadURL();
-        }
-      } else {
+      if (_markedPdfUrl != null) {
         markedPdfUrl = _markedPdfUrl;
       }
 
@@ -324,6 +338,9 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
                       ),
                       const SizedBox(height: 16),
                       _buildInfoRow('Assessment:', widget.assessmentName),
+                      const SizedBox(height: 12),
+                      _buildInfoRow(
+                          'Student Name:', _studentName ?? 'Loading...'),
                       const SizedBox(height: 12),
                       _buildInfoRow('Student ID:', widget.studentId),
                       const SizedBox(height: 16),

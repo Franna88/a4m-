@@ -34,30 +34,21 @@ class LectureCourseContainers extends StatefulWidget {
 }
 
 class _LectureCourseContainersState extends State<LectureCourseContainers> {
-  var pageIndex = 0;
   bool isHovered = false;
-
-  void changePage(int index) {
-    setState(() {
-      pageIndex = index;
-    });
-    widget.changePage(6, courseId: widget.courseId, moduleId: '');
-  }
 
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) => setState(() => isHovered = true),
       onExit: (_) => setState(() => isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(isHovered ? 0.2 : 0.1),
+              color: Colors.grey.withOpacity(0.1),
               spreadRadius: isHovered ? 2 : 1,
               blurRadius: isHovered ? 15 : 10,
               offset: const Offset(0, 3),
@@ -75,91 +66,52 @@ class _LectureCourseContainersState extends State<LectureCourseContainers> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Stack(
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      height: 180,
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          topRight: Radius.circular(16),
+                // Course Image
+                Container(
+                  height: 160,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                    color: Colors.grey[200],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                    child: ImageNetwork(
+                      image: widget.courseImage,
+                      height: 160,
+                      width: 400,
+                      duration: 100,
+                      fitAndroidIos: BoxFit.cover,
+                      fitWeb: BoxFitWeb.cover,
+                      onLoading: Container(
+                        color: Colors.grey[200],
+                        child: const Center(
+                          child: CircularProgressIndicator(),
                         ),
                       ),
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          topRight: Radius.circular(16),
-                        ),
-                        child: ImageNetwork(
-                          image: widget.courseImage,
-                          fitWeb: BoxFitWeb.cover,
-                          fitAndroidIos: BoxFit.cover,
-                          height: 180,
-                          width: 320,
-                          duration: 100,
-                          onLoading: Container(
-                            color: Colors.grey[200],
-                            height: 180,
-                            width: 320,
-                            child: const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
-                          onError: Container(
-                            color: Colors.grey[200],
-                            height: 180,
-                            width: 320,
-                            child: const Icon(Icons.error, color: Colors.red),
-                          ),
+                      onError: Container(
+                        color: Colors.grey[200],
+                        child: const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 32,
                         ),
                       ),
                     ),
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        height: 80,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [
-                              Colors.black.withOpacity(0.8),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 16,
-                      right: 16,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Mycolors().green.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '${widget.modulesComplete} Modules',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Course Name
                       Text(
                         widget.courseName,
                         style: GoogleFonts.poppins(
@@ -167,10 +119,12 @@ class _LectureCourseContainersState extends State<LectureCourseContainers> {
                           fontWeight: FontWeight.w600,
                           color: Colors.grey[800],
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
+                      // Course Description
                       SizedBox(
-                        height: 65,
+                        height: 50,
                         child: Text(
                           widget.courseDescription,
                           style: GoogleFonts.poppins(
@@ -178,22 +132,35 @@ class _LectureCourseContainersState extends State<LectureCourseContainers> {
                             color: Colors.grey[600],
                             height: 1.5,
                           ),
-                          maxLines: 3,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Divider(),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      // Stats in two rows
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildStatItem(Icons.person_outline,
-                              widget.totalStudents, 'Students'),
-                          _buildStatItem(Icons.assignment_outlined,
-                              widget.assessmentAmount, 'Assessments'),
-                          _buildStatItem(Icons.library_books_outlined,
-                              widget.moduleAmount, 'Modules'),
+                          // First row with two stats
+                          Row(
+                            children: [
+                              _buildActionButton(
+                                icon: Icons.person_outline,
+                                label: '${widget.totalStudents} Students',
+                              ),
+                              const SizedBox(width: 8),
+                              _buildActionButton(
+                                icon: Icons.assignment_outlined,
+                                label: '${widget.assessmentAmount} Assessments',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          // Second row with one stat
+                          _buildActionButton(
+                            icon: Icons.library_books_outlined,
+                            label: '${widget.moduleAmount} Modules',
+                          ),
                         ],
                       ),
                     ],
@@ -207,38 +174,35 @@ class _LectureCourseContainersState extends State<LectureCourseContainers> {
     );
   }
 
-  Widget _buildStatItem(IconData icon, String count, String label) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Mycolors().green.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Mycolors().green.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
             icon,
+            size: 16,
             color: Mycolors().green,
-            size: 20,
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          count,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[800],
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Mycolors().green,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

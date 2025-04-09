@@ -156,64 +156,99 @@ class _FacilitatorStudentProgressListState
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MyUtility(context).height * 0.62 - 80,
+      height: MyUtility(context).height * 0.55 - 80,
       width: MyUtility(context).width * 0.78 - 310,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            blurRadius: 2.0,
-            spreadRadius: 2.0,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Section
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.grey.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Student Progress',
-                  style: GoogleFonts.kanit(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                  ),
                 ),
-                IconButton(
-                  icon: Icon(Icons.add_circle_outline),
-                  onPressed: () {
-                    showStudentPopup(context, widget.facilitatorId);
-                  },
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.add_circle_outline,
+                      color: Colors.grey[700],
+                    ),
+                    onPressed: () {
+                      showStudentPopup(context, widget.facilitatorId);
+                    },
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 15),
-            Expanded(
-              child: isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : students.isEmpty
-                      ? Center(child: Text("No students found."))
-                      : ListView.builder(
-                          itemCount: students.length,
-                          itemBuilder: (context, index) {
-                            final student = students[index];
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 5),
-                              child: StudentProgressListItem(
-                                studentName: student['name'],
-                                courseName: student['course'],
-                                progress: student['progress'],
+          ),
+          // List Section
+          Expanded(
+            child: isLoading
+                ? Center(
+                    child: CircularProgressIndicator(
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Colors.grey[400]!),
+                    ),
+                  )
+                : students.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.people_outline,
+                              size: 48,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              "No students found",
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                color: Colors.grey[600],
                               ),
-                            );
-                          },
+                            ),
+                          ],
                         ),
-            ),
-          ],
-        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: students.length,
+                        itemBuilder: (context, index) {
+                          final student = students[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: StudentProgressListItem(
+                              studentName: student['name'],
+                              courseName: student['course'],
+                              progress: student['progress'],
+                            ),
+                          );
+                        },
+                      ),
+          ),
+        ],
       ),
     );
   }

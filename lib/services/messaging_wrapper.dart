@@ -98,10 +98,10 @@ extension CommunicationRules on String {
       case 'student':
         return ['student', 'lecturer', 'admin'].contains(normalizedOtherRole);
       case 'lecturer':
-        return ['student', 'lecturer', 'admin', 'facilitator']
+        return ['student', 'lecturer', 'admin', 'facilitator', 'content_dev']
             .contains(normalizedOtherRole);
       case 'content_dev':
-        return ['admin'].contains(normalizedOtherRole);
+        return ['admin', 'lecturer'].contains(normalizedOtherRole);
       case 'admin':
         return ['student', 'lecturer', 'content_dev', 'facilitator']
             .contains(normalizedOtherRole);

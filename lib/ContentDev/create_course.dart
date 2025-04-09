@@ -33,7 +33,6 @@ class CreateCourse extends StatefulWidget {
 
 class _CreateCourseState extends State<CreateCourse> {
   late TextEditingController _courseNameController;
-  late TextEditingController _coursePriceController;
   late TextEditingController _courseCategoryController;
   late TextEditingController _courseDescriptionController;
   Uint8List? _selectedImage;
@@ -42,19 +41,19 @@ class _CreateCourseState extends State<CreateCourse> {
   Uint8List? _selectedPreviewPdf;
   String? _selectedPreviewPdfUrl;
   String? _selectedPreviewPdfName;
+  String _coursePrice = '0'; // Default price set to 0
 
   @override
   void initState() {
     super.initState();
     _courseNameController = TextEditingController();
-    _coursePriceController = TextEditingController();
     _courseCategoryController = TextEditingController();
     _courseDescriptionController = TextEditingController();
 
     if (widget.courseId == null) {
-      _clearCourseData(); // 🔥 Reset data only when creating a new course
+      _clearCourseData();
     } else {
-      _fetchCourseData(); // ✅ Load course data if editing
+      _fetchCourseData();
     }
   }
 
@@ -64,7 +63,6 @@ class _CreateCourseState extends State<CreateCourse> {
     });
 
     try {
-      // Check if there's a pending edit first
       DocumentSnapshot pendingDoc = await FirebaseFirestore.instance
           .collection('pendingCourses')
           .doc(widget.courseId)
@@ -75,7 +73,7 @@ class _CreateCourseState extends State<CreateCourse> {
 
         setState(() {
           _courseNameController.text = pendingData['courseName'] ?? '';
-          _coursePriceController.text = pendingData['coursePrice'] ?? '';
+          _coursePrice = pendingData['coursePrice'] ?? '0';
           _courseCategoryController.text = pendingData['courseCategory'] ?? '';
           _courseDescriptionController.text =
               pendingData['courseDescription'] ?? '';
@@ -83,17 +81,13 @@ class _CreateCourseState extends State<CreateCourse> {
               pendingData['courseImageUrl'] ?? _selectedImageUrl;
           _selectedPreviewPdfUrl = pendingData['previewPdfUrl'];
           _selectedPreviewPdfName = pendingData['previewPdfName'];
-
-          print("⚠️ Loading pending course edits for review.");
         });
-
         setState(() {
           isLoading = false;
         });
         return;
       }
 
-      // If no pending edits, fetch the live course data
       DocumentSnapshot courseDoc = await FirebaseFirestore.instance
           .collection('courses')
           .doc(widget.courseId)
@@ -104,7 +98,7 @@ class _CreateCourseState extends State<CreateCourse> {
 
         setState(() {
           _courseNameController.text = data['courseName'] ?? '';
-          _coursePriceController.text = data['coursePrice'] ?? '';
+          _coursePrice = data['coursePrice'] ?? '0';
           _courseCategoryController.text = data['courseCategory'] ?? '';
           _courseDescriptionController.text = data['courseDescription'] ?? '';
           if (data.containsKey('courseImageUrl') &&
@@ -116,8 +110,6 @@ class _CreateCourseState extends State<CreateCourse> {
             _selectedPreviewPdfUrl = data['previewPdfUrl'];
             _selectedPreviewPdfName = data['previewPdfName'];
           }
-
-          print("✅ Loaded course data from Firestore.");
         });
       }
     } catch (e) {
@@ -218,9 +210,8 @@ class _CreateCourseState extends State<CreateCourse> {
         if (_courseNameController.text != existingData['courseName']) {
           changeList.add("Updated Course Name: ${_courseNameController.text}");
         }
-        if (_coursePriceController.text != existingData['coursePrice']) {
-          changeList
-              .add("Updated Course Price: ${_coursePriceController.text}");
+        if (_coursePrice != existingData['coursePrice']) {
+          changeList.add("Updated Course Price: $_coursePrice");
         }
         if (_courseCategoryController.text != existingData['courseCategory']) {
           changeList.add(
@@ -235,7 +226,7 @@ class _CreateCourseState extends State<CreateCourse> {
       // Prepare course data
       final Map<String, dynamic> courseData = {
         'courseName': _courseNameController.text,
-        'coursePrice': _coursePriceController.text,
+        'coursePrice': _coursePrice,
         'courseCategory': _courseCategoryController.text,
         'courseDescription': _courseDescriptionController.text,
         'courseImageUrl': newImageUrl,
@@ -332,7 +323,6 @@ class _CreateCourseState extends State<CreateCourse> {
   @override
   void dispose() {
     _courseNameController.dispose();
-    _coursePriceController.dispose();
     _courseCategoryController.dispose();
     _courseDescriptionController.dispose();
     super.dispose();
@@ -380,14 +370,10 @@ class _CreateCourseState extends State<CreateCourse> {
 
   void _clearCourseData() {
     final courseModel = Provider.of<CourseModel>(context, listen: false);
-
-    // 🗑️ Clear stored modules (Prevents old modules from being re-used)
     courseModel.modules.clear();
 
-    // 🗑️ Reset all course fields
     setState(() {
       _courseNameController.clear();
-      _coursePriceController.clear();
       _courseCategoryController.clear();
       _courseDescriptionController.clear();
       _selectedImage = null;
@@ -395,6 +381,7 @@ class _CreateCourseState extends State<CreateCourse> {
       _selectedPreviewPdf = null;
       _selectedPreviewPdfUrl = null;
       _selectedPreviewPdfName = null;
+      _coursePrice = '0';
     });
 
     print("🆕 New course initialized, clearing old course data.");
@@ -439,7 +426,7 @@ class _CreateCourseState extends State<CreateCourse> {
                         width: MyUtility(context).width,
                         child: Center(
                           child: Text(
-                            'Create Course',
+                            'Course Content Preview',
                             style: MyTextStyles(context).headerWhite.copyWith(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w600,
@@ -556,13 +543,6 @@ class _CreateCourseState extends State<CreateCourse> {
                                         ),
                                         SizedBox(height: 20),
                                         ContentDevTextfields(
-                                          headerText: 'Course Price',
-                                          inputController:
-                                              _coursePriceController,
-                                          keyboardType: 'intType',
-                                        ),
-                                        SizedBox(height: 20),
-                                        ContentDevTextfields(
                                           headerText: 'Course Category',
                                           inputController:
                                               _courseCategoryController,
@@ -576,7 +556,7 @@ class _CreateCourseState extends State<CreateCourse> {
                               SizedBox(height: 30),
                               // Course Description
                               ContentDevTextfields(
-                                headerText: 'Course Description',
+                                headerText: 'Course Content',
                                 inputController: _courseDescriptionController,
                                 keyboardType: '',
                                 maxLines: 7,
@@ -651,7 +631,6 @@ class _CreateCourseState extends State<CreateCourse> {
 
   bool _validateInputs() {
     if (_courseNameController.text.isEmpty ||
-        _coursePriceController.text.isEmpty ||
         _courseCategoryController.text.isEmpty ||
         _courseDescriptionController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -669,16 +648,14 @@ class _CreateCourseState extends State<CreateCourse> {
       });
 
       try {
-        // Update the CourseModel without saving to Firebase
         final courseModel = Provider.of<CourseModel>(context, listen: false);
         courseModel.setCourseName(_courseNameController.text);
-        courseModel.setCoursePrice(_coursePriceController.text);
+        courseModel.setCoursePrice(_coursePrice);
         courseModel.setCourseCategory(_courseCategoryController.text);
         courseModel.setCourseDescription(_courseDescriptionController.text);
         courseModel.setCourseImage(_selectedImage);
         courseModel.setCourseImageUrl(_selectedImageUrl);
 
-        // Update preview PDF data
         if (_selectedPreviewPdf != null) {
           courseModel.setPreviewPdf(
               _selectedPreviewPdf, _selectedPreviewPdfName);
@@ -689,7 +666,6 @@ class _CreateCourseState extends State<CreateCourse> {
           }
         }
 
-        // Navigate to next page
         widget.changePageIndex(3, moduleIndex: 0);
       } catch (e) {
         print("❌ Error in _handleNext: $e");

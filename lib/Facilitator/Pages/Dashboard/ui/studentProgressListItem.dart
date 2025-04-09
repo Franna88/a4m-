@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../myutility.dart';
+import 'package:image_network/image_network.dart';
 
 class StudentProgressListItem extends StatelessWidget {
   final String studentName;
@@ -17,57 +17,109 @@ class StudentProgressListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 55,
-      width: MyUtility(context).width * 0.78 - 330,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 247, 247, 247),
-        borderRadius: BorderRadius.circular(12.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            blurRadius: 2.0,
-            spreadRadius: 2.0,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Row(
-          children: [
-            const CircleAvatar(backgroundColor: Colors.grey),
-            // ImageNetwork(
-            //     image: imageUrl, // Use the passed image URL
-            //     height: 40,
-            //     width: 40,
-            //     fitWeb: BoxFitWeb.cover,
-            //     onError: const Icon(Icons.error,
-            //         size: 40, color: Colors.grey), // Handle image errors
-            //   ),
-            const SizedBox(width: 15),
-            Text(
-              studentName,
-              style:
-                  GoogleFonts.kanit(fontSize: 15, fontWeight: FontWeight.w600),
-            ),
-            const Spacer(),
-            Text(
-              courseName,
-              style: GoogleFonts.montserrat(
-                  fontSize: 13, fontWeight: FontWeight.w400),
-            ),
-            const Spacer(),
-            SizedBox(
-              width: MyUtility(context).width * 0.15,
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 8,
-                borderRadius: BorderRadius.circular(10),
-                backgroundColor: const Color.fromARGB(255, 221, 221, 221),
+      child: Row(
+        children: [
+          // Profile Image
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.grey.withOpacity(0.2),
+                width: 2,
               ),
             ),
-          ],
-        ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: ImageNetwork(
+                image: 'https://via.placeholder.com/150',
+                height: 40,
+                width: 40,
+                fitAndroidIos: BoxFit.cover,
+                fitWeb: BoxFitWeb.cover,
+                onLoading: const Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+                  ),
+                ),
+                onError: Container(
+                  color: Colors.grey[100],
+                  child: Icon(
+                    Icons.person_outline,
+                    size: 20,
+                    color: Colors.grey[400],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Student Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  studentName,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                Text(
+                  courseName,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Progress Bar
+          SizedBox(
+            width: 100,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${(progress * 100).toInt()}%',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: Colors.grey[200],
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      progress < 0.3
+                          ? Colors.red[400]!
+                          : progress < 0.7
+                              ? Colors.orange[400]!
+                              : Colors.green[400]!,
+                    ),
+                    minHeight: 8,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

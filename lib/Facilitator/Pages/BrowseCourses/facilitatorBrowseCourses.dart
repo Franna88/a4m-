@@ -269,7 +269,7 @@ class _FacilitatorBrowseCoursesState extends State<FacilitatorBrowseCourses> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CategoryNameStack(text: 'My Courses'),
+                  CategoryNameStack(text: 'Browse Courses'),
                   const SizedBox(height: 20),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
