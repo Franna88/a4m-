@@ -223,6 +223,28 @@ class _CreateCourseState extends State<CreateCourse> {
         }
       }
 
+      // Get modules from the CourseModel
+      final courseModel = Provider.of<CourseModel>(context, listen: false);
+      List<Map<String, dynamic>> modulesData = [];
+
+      // Track module changes
+      List<Map<String, dynamic>> moduleChanges = [];
+
+      // Convert modules to map format and track changes
+      for (var module in courseModel.modules) {
+        // Add module data
+        modulesData.add(module.toMap());
+
+        // Track module changes if editing
+        if (widget.courseId != null && module.changes.isNotEmpty) {
+          moduleChanges.add({
+            'moduleId': module.id,
+            'moduleName': module.moduleName,
+            'changes': module.changes,
+          });
+        }
+      }
+
       // Prepare course data
       final Map<String, dynamic> courseData = {
         'courseName': _courseNameController.text,
@@ -231,6 +253,7 @@ class _CreateCourseState extends State<CreateCourse> {
         'courseDescription': _courseDescriptionController.text,
         'courseImageUrl': newImageUrl,
         'createdBy': user.uid,
+        'modules': modulesData,
       };
 
       // Only add preview PDF fields if we have data
@@ -250,6 +273,8 @@ class _CreateCourseState extends State<CreateCourse> {
         courseData['status'] = 'pending';
         courseData['editedAt'] = FieldValue.serverTimestamp();
         courseData['changes'] = changeList;
+        courseData['moduleChanges'] = moduleChanges;
+        courseData['originalCourseId'] = widget.courseId;
 
         // For edits, save to pendingCourses
         await firestore

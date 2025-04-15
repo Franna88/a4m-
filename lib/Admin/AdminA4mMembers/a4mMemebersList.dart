@@ -5,6 +5,7 @@ import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'ui/memberContainers.dart';
 
@@ -19,6 +20,9 @@ class _A4mMembersListState extends State<A4mMembersList>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String selectedTab = 'Lecturer';
+  List<MembersDummyData> _members = [];
+  bool _isLoading = true;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -39,12 +43,59 @@ class _A4mMembersListState extends State<A4mMembersList>
         }
       });
     });
+
+    // Fetch members data when the widget initializes
+    _fetchMembersData();
+  }
+
+  Future<void> _fetchMembersData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final members = await fetchMembersData();
+      setState(() {
+        _members = members;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching members data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  // Filter members based on selected tab and search query
+  List<MembersDummyData> get _filteredMembers {
+    return _members.where((member) {
+      // Filter by tab
+      bool matchesTab = false;
+      if (selectedTab == 'Lecturer' && member.isLecturer == true) {
+        matchesTab = true;
+      } else if (selectedTab == 'ContentDev' && member.isContentDev == true) {
+        matchesTab = true;
+      } else if (selectedTab == 'Facilitators' &&
+          member.isFacilitator == true) {
+        matchesTab = true;
+      }
+
+      // Filter by search query if provided
+      if (_searchQuery.isEmpty) {
+        return matchesTab;
+      } else {
+        return matchesTab &&
+            (member.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                member.number.contains(_searchQuery));
+      }
+    }).toList();
   }
 
   @override
@@ -65,8 +116,6 @@ class _A4mMembersListState extends State<A4mMembersList>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // TabBar to filter members
-
             // Search bar and dropdown
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -84,6 +133,11 @@ class _A4mMembersListState extends State<A4mMembersList>
                   child: MySearchBar(
                     textController: memberSearch,
                     hintText: 'Search Member',
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
                   ),
                 ),
               ],
@@ -117,32 +171,44 @@ class _A4mMembersListState extends State<A4mMembersList>
             ),
             const SizedBox(height: 20),
 
-            // Scrollable grid layout
-            Expanded(
-              child: SingleChildScrollView(
-                child: LayoutGrid(
-                  columnSizes: List.generate(
-                    crossAxisCount,
-                    (_) => FlexibleTrackSize(220),
+            // Loading indicator or content
+            if (_isLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (_filteredMembers.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Text(
+                    'No ${selectedTab.toLowerCase()} found',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  rowSizes: List.generate(
-                    (memberdummyData.length / crossAxisCount).ceil(),
-                    (_) => auto,
-                  ),
-                  rowGap: 20, // Space between rows
-                  columnGap: 1, // Space between columns
-                  children: [
-                    for (var member in memberdummyData)
-                      if ((selectedTab == 'Lecturer' &&
-                              member.isLecturer == true) ||
-                          (selectedTab == 'ContentDev' &&
-                              member.isContentDev == true) ||
-                          (selectedTab == 'Facilitators' &&
-                              member.isFacilitator == true))
+                ),
+              )
+            else
+              // Scrollable grid layout
+              Expanded(
+                child: SingleChildScrollView(
+                  child: LayoutGrid(
+                    columnSizes: List.generate(
+                      crossAxisCount,
+                      (_) => FlexibleTrackSize(220),
+                    ),
+                    rowSizes: List.generate(
+                      (_filteredMembers.length / crossAxisCount).ceil(),
+                      (_) => auto,
+                    ),
+                    rowGap: 20, // Space between rows
+                    columnGap: 1, // Space between columns
+                    children: [
+                      for (var member in _filteredMembers)
                         SizedBox(
                           height: 300,
                           width: 250,
                           child: MemberContainers(
+                            key: ValueKey('${member.id}_${selectedTab}'),
                             isLecturer: member.isLecturer,
                             isContentDev: member.isContentDev,
                             isFacilitator: member.isFacilitator,
@@ -154,10 +220,10 @@ class _A4mMembersListState extends State<A4mMembersList>
                             rating: member.rating,
                           ),
                         ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../myutility.dart';
+import '../../../../Constants/myColors.dart';
 import 'studentProgressListItem.dart';
 import 'FacilitatorStudentPopup.dart';
 
@@ -185,18 +186,38 @@ class _FacilitatorStudentProgressListState
                   ),
                 ),
                 Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.add_circle_outline,
-                      color: Colors.grey[700],
+                    color: Mycolors().green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Mycolors().green,
+                      width: 1,
                     ),
-                    onPressed: () {
+                  ),
+                  child: InkWell(
+                    onTap: () {
                       showStudentPopup(context, widget.facilitatorId);
                     },
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.person_add,
+                          color: Mycolors().green,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Add Student',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Mycolors().green,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

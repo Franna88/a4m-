@@ -458,18 +458,15 @@ class _CreateModuleState extends State<CreateModule> {
   }
 
   bool _validateInputs() {
+    // Only validate required fields
     if (_moduleNameController.text.isEmpty ||
         _moduleDescriptionController.text.isEmpty ||
         (_selectedImage == null &&
-            (_selectedImageUrl == null ||
-                _selectedImageUrl!.isEmpty)) || // ✅ Allow existing image URL
-        (_selectedPdf == null &&
-            (_selectedPdfUrl == null || _selectedPdfUrl!.isEmpty))) {
-      // ✅ Allow existing PDF URL
+            (_selectedImageUrl == null || _selectedImageUrl!.isEmpty))) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
-                'Please fill all fields, select an image, and upload a PDF.')),
+                'Please fill in the module name, description, and select an image.')),
       );
       return false;
     }

@@ -35,6 +35,11 @@ class _AdminMarketingState extends State<AdminMarketing> {
       for (var doc in coursesSnapshot.docs) {
         final courseData = doc.data() as Map<String, dynamic>;
 
+        // Skip declined courses - they shouldn't appear in marketing
+        if (courseData['status'] == 'declined') {
+          continue;
+        }
+
         // Get student count
         int studentCount =
             (courseData['students'] as List<dynamic>? ?? []).length;

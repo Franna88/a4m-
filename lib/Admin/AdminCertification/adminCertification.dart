@@ -28,7 +28,7 @@ class _AdminCertificationState extends State<AdminCertification> {
             height: 20,
           ),
           Container(
-            height: MyUtility(context).height * 0.75,
+            height: MyUtility(context).height * 0.75 - 30,
             width: MyUtility(context).width - 320,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.only(

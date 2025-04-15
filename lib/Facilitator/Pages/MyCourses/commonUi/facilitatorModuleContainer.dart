@@ -13,6 +13,7 @@ class FacilitatorModuleContainer extends StatefulWidget {
   final VoidCallback assessmentsPdfUrl;
   final VoidCallback answerSheetPdfUrl;
   final VoidCallback assignmentsPdfUrl;
+  final VoidCallback studentGuidePdfUrl;
   final bool isCompleted;
 
   const FacilitatorModuleContainer({
@@ -26,6 +27,7 @@ class FacilitatorModuleContainer extends StatefulWidget {
     required this.assessmentsPdfUrl,
     required this.answerSheetPdfUrl,
     required this.assignmentsPdfUrl,
+    required this.studentGuidePdfUrl,
     this.isCompleted = false,
   });
 
@@ -252,7 +254,13 @@ class _FacilitatorModuleContainerState
               ),
             ),
             const SizedBox(width: 8),
-            const Spacer(),
+            Expanded(
+              child: _buildActionButton(
+                icon: Icons.school_outlined,
+                label: 'Student Guide',
+                onTap: widget.studentGuidePdfUrl,
+              ),
+            ),
           ],
         ),
       ],

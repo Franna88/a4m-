@@ -151,7 +151,7 @@ class _AdminMessagesMainState extends State<AdminMessagesMain> {
         onAdminSelected: handleUserSelected,
         currentUserId: currentUserId,
       ));
-      pageNames.add('Admins');
+      pageNames.add('Admin');
     }
 
     // Add facilitator's students list if the user is a facilitator

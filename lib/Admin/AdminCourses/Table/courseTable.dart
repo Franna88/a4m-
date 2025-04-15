@@ -120,7 +120,7 @@ class _CourseTableState extends State<CourseTable> {
                 _buildHeaderCell('Date Added'),
                 _buildHeaderCell('Current Price'),
                 _buildHeaderCell('Total Sales'),
-                _buildHeaderCell('Add Lecturer'),
+                _buildHeaderCell('Assign Lecturer'),
               ],
             ),
             // Data Rows
@@ -196,7 +196,7 @@ class _CourseTableState extends State<CourseTable> {
         },
         style: ElevatedButton.styleFrom(backgroundColor: Mycolors().blue),
         child: Text(
-          'Add Lecturer',
+          'Assign Lecturer',
           style: GoogleFonts.montserrat(
             color: Colors.white,
             fontSize: 12,

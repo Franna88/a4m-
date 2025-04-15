@@ -263,6 +263,25 @@ class _LectureNavbarState extends State<LectureNavbar> {
   }
 
   Widget _buildTopBar() {
+    // Define page names based on activeIndex
+    String currentPageName = '';
+    switch (activeIndex) {
+      case 0:
+        currentPageName = 'Dashboard';
+        break;
+      case 1:
+        currentPageName = 'Courses';
+        break;
+      case 2:
+        currentPageName = 'Students';
+        break;
+      case 4:
+        currentPageName = 'Messages';
+        break;
+      default:
+        currentPageName = '';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
       decoration: BoxDecoration(
@@ -286,13 +305,35 @@ class _LectureNavbarState extends State<LectureNavbar> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Lecturer',
-                    style: GoogleFonts.poppins(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[800],
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        'Lecturer',
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      if (currentPageName.isNotEmpty) ...[
+                        Text(
+                          ' > ',
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Text(
+                          currentPageName,
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Mycolors().green,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(

@@ -128,6 +128,40 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
   }
 
   Widget _buildTopBar() {
+    // Define page names based on activeIndex
+    String currentPageName = '';
+    switch (activeIndex) {
+      case 0:
+        currentPageName = 'Dashboard';
+        break;
+      case 1:
+        currentPageName = 'Assign Lecturer';
+        break;
+      case 2:
+        currentPageName = 'Pricing';
+        break;
+      case 3:
+        currentPageName = 'A4M Team';
+        break;
+      case 4:
+        currentPageName = 'Certification';
+        break;
+      case 5:
+        currentPageName = 'Course Management';
+        break;
+      case 6:
+        currentPageName = 'Evaluations';
+        break;
+      case 7:
+        currentPageName = 'Messages';
+        break;
+      case 8:
+        currentPageName = 'Curriculum Vitae';
+        break;
+      default:
+        currentPageName = '';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
       decoration: BoxDecoration(
@@ -151,13 +185,35 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Admin',
-                    style: GoogleFonts.poppins(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[800],
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        'Admin',
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      if (currentPageName.isNotEmpty) ...[
+                        Text(
+                          ' > ',
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Text(
+                          currentPageName,
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Mycolors().green,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -368,17 +424,16 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
                     child: Column(
                       children: [
                         _buildNavItem(Icons.dashboard, 'Dashboard', 0),
-                        _buildNavItem(Icons.school, 'Courses', 1),
+                        _buildNavItem(Icons.description, 'Curriculum Vitae', 8),
+                        _buildNavItem(
+                            Icons.rate_review, 'Course Management', 5),
                         _buildNavItem(Icons.attach_money, 'Pricing', 2),
-                        _buildNavItem(Icons.people, 'A4M Team', 3),
+                        _buildNavItem(Icons.person_add, 'Assign Lecturer', 1),
+                        _buildNavItem(Icons.rate_review, 'Evaluations', 6),
                         _buildNavItem(
                             Icons.card_membership, 'Certification', 4),
-                        _buildNavItem(Icons.rate_review, 'Review Courses', 5),
-                        const SizedBox(height: 20),
-                        const Divider(),
-                        _buildNavItem(Icons.rate_review, 'Evaluations', 6),
+                        _buildNavItem(Icons.people, 'A4M Team', 3),
                         _buildNavItem(Icons.message, 'Messages', 7),
-                        _buildNavItem(Icons.description, 'Curriculum Vitae', 8),
                       ],
                     ),
                   ),

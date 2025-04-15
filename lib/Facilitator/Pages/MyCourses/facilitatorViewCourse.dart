@@ -253,6 +253,11 @@ class _FacilitatorViewCourseState extends State<FacilitatorViewCourse> {
                                 module['assignmentsPdfUrl'] ?? '',
                                 'Assignments',
                               ),
+                              studentGuidePdfUrl: () => _openPdf(
+                                context,
+                                module['studentGuidePdfUrl'] ?? '',
+                                'Student Guide',
+                              ),
                             ),
                         ],
                       ),

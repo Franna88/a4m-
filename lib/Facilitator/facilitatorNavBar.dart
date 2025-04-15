@@ -8,6 +8,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_network/image_network.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:a4m/CommonComponents/buttons/CustomButton.dart';
+import 'package:a4m/Facilitator/Pages/Dashboard/ui/FacilitatorStudentPopup.dart';
 
 class FacilitatorNavBar extends StatefulWidget {
   final Function(int) changePage;
@@ -33,7 +35,9 @@ class _FacilitatorNavBarState extends State<FacilitatorNavBar> {
   // Add state variables for dashboard stats
   int _activeCourses = 0;
   int _totalStudents = 0;
+  int _monthlyStudents = 0;
   int _completedModules = 0;
+  double _studentPassRate = 0.0;
   bool _isLoadingStats = true;
 
   @override
@@ -100,17 +104,30 @@ class _FacilitatorNavBarState extends State<FacilitatorNavBar> {
           facilitatorDoc['facilitatorCourses'] ?? [];
       _activeCourses = facilitatorCourses.length;
 
-      // Get total students from facilitatorStudents subcollection
+      // Get total students and monthly students
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
+
       QuerySnapshot studentsSnapshot = await FirebaseFirestore.instance
           .collection('Users')
           .doc(_userId)
           .collection('facilitatorStudents')
           .get();
 
-      _totalStudents = studentsSnapshot.docs.length;
+      QuerySnapshot monthlySnapshot = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(_userId)
+          .collection('facilitatorStudents')
+          .where('createdAt', isGreaterThanOrEqualTo: startOfMonth)
+          .get();
 
-      // Calculate completed modules across all courses
+      _totalStudents = studentsSnapshot.docs.length;
+      _monthlyStudents = monthlySnapshot.docs.length;
+
+      // Calculate completed modules and pass rate
       int totalCompletedModules = 0;
+      int totalPassedStudents = 0;
+
       for (var course in facilitatorCourses) {
         String courseId = course['courseId'];
         QuerySnapshot moduleSnapshot = await FirebaseFirestore.instance
@@ -126,6 +143,11 @@ class _FacilitatorNavBarState extends State<FacilitatorNavBar> {
           }
         }
       }
+
+      // Calculate pass rate (for now using a placeholder calculation)
+      _studentPassRate = _totalStudents > 0
+          ? (totalPassedStudents / _totalStudents) * 100
+          : 0.0;
       _completedModules = totalCompletedModules;
 
       setState(() => _isLoadingStats = false);
@@ -206,7 +228,10 @@ class _FacilitatorNavBarState extends State<FacilitatorNavBar> {
                         _buildNavItem(Icons.dashboard, 'Dashboard', 0),
                         _buildNavItem(Icons.school, 'My Courses', 1),
                         _buildNavItem(Icons.search, 'Browse Courses', 2),
-                        _buildNavItem(Icons.people, 'Students', 3),
+                        Visibility(
+                          visible: false, // Hide the Students tab
+                          child: _buildNavItem(Icons.people, 'Students', 3),
+                        ),
                         _buildNavItem(Icons.message, 'Messages', 4),
                         const SizedBox(height: 20),
                         const Divider(),
@@ -247,6 +272,28 @@ class _FacilitatorNavBarState extends State<FacilitatorNavBar> {
   }
 
   Widget _buildTopBar() {
+    // Define page names based on activeIndex
+    String currentPageName = '';
+    switch (activeIndex) {
+      case 0:
+        currentPageName = 'Dashboard';
+        break;
+      case 1:
+        currentPageName = 'My Courses';
+        break;
+      case 2:
+        currentPageName = 'Browse Courses';
+        break;
+      case 3:
+        currentPageName = 'Students';
+        break;
+      case 4:
+        currentPageName = 'Messages';
+        break;
+      default:
+        currentPageName = '';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
       decoration: BoxDecoration(
@@ -270,13 +317,35 @@ class _FacilitatorNavBarState extends State<FacilitatorNavBar> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Facilitator',
-                    style: GoogleFonts.poppins(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[800],
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        'Facilitator',
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      if (currentPageName.isNotEmpty) ...[
+                        Text(
+                          ' > ',
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Text(
+                          currentPageName,
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Mycolors().green,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -291,16 +360,50 @@ class _FacilitatorNavBarState extends State<FacilitatorNavBar> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Mycolors().green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Mycolors().green,
+                        width: 1,
+                      ),
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        showStudentPopup(context, _userId);
+                      },
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.person_add,
+                            color: Mycolors().green,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Add Student',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Mycolors().green,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: IconButton(
-                      icon: const Icon(Icons.notifications_outlined),
-                      onPressed: () {
-                        // Handle notifications
-                      },
+                    child: Icon(
+                      Icons.notifications_outlined,
+                      size: 20,
                     ),
                   ),
                 ],
@@ -324,12 +427,20 @@ class _FacilitatorNavBarState extends State<FacilitatorNavBar> {
                     'Total Students',
                     _totalStudents.toString(),
                     Icons.people_outline,
+                    subValue: _monthlyStudents.toString(),
+                    subIcon: Icons.arrow_upward,
                   ),
                   const SizedBox(width: 16),
                   _buildQuickStat(
                     'Completed Modules',
                     _completedModules.toString(),
                     Icons.check_circle_outline,
+                  ),
+                  const SizedBox(width: 16),
+                  _buildQuickStat(
+                    'Student Pass Rate',
+                    '${_studentPassRate.toStringAsFixed(1)}%',
+                    Icons.trending_up,
                   ),
                 ],
               ),
@@ -523,7 +634,8 @@ class _FacilitatorNavBarState extends State<FacilitatorNavBar> {
     );
   }
 
-  Widget _buildQuickStat(String title, String value, IconData icon) {
+  Widget _buildQuickStat(String title, String value, IconData icon,
+      {String? subValue, IconData? subIcon}) {
     return Container(
       margin: const EdgeInsets.only(right: 16),
       padding: const EdgeInsets.all(16),
@@ -567,13 +679,39 @@ class _FacilitatorNavBarState extends State<FacilitatorNavBar> {
                             AlwaysStoppedAnimation<Color>(Mycolors().green),
                       ),
                     )
-                  : Text(
-                      value,
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[800],
-                      ),
+                  : Row(
+                      children: [
+                        Text(
+                          value,
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[800],
+                          ),
+                        ),
+                        if (subValue != null) ...[
+                          const SizedBox(width: 8),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (subIcon != null)
+                                Icon(
+                                  subIcon,
+                                  color: Mycolors().green,
+                                  size: 14,
+                                ),
+                              if (subIcon != null) const SizedBox(width: 2),
+                              Text(
+                                subValue,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
             ],
           ),

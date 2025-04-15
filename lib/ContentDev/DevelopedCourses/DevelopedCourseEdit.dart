@@ -14,6 +14,8 @@ class DevelopedCourseEdit extends StatefulWidget {
   final String courseImage;
   final Function() onTap;
   final Function(int) changePage;
+  final String? courseStatus;
+  final String? declineReason;
   const DevelopedCourseEdit(
       {super.key,
       required this.courseName,
@@ -24,7 +26,9 @@ class DevelopedCourseEdit extends StatefulWidget {
       required this.assessmentAmount,
       required this.courseImage,
       required this.onTap,
-      required this.changePage});
+      required this.changePage,
+      this.courseStatus,
+      this.declineReason});
 
   @override
   State<DevelopedCourseEdit> createState() => _DevelopedCourseEditState();
@@ -137,6 +141,28 @@ class _DevelopedCourseEditState extends State<DevelopedCourseEdit> {
                         ),
                       ),
                     ),
+                    // Status Badge
+                    if (widget.courseStatus != null)
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(widget.courseStatus!),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            _getStatusText(widget.courseStatus!),
+                            style: GoogleFonts.montserrat(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -163,6 +189,43 @@ class _DevelopedCourseEditState extends State<DevelopedCourseEdit> {
                     fontWeight: FontWeight.w600),
               ),
             ),
+            // Decline Reason (if course is declined)
+            if (widget.courseStatus == 'declined' &&
+                widget.declineReason != null)
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: InkWell(
+                  onTap: () {
+                    _showDeclineReasonDialog(context);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline,
+                            color: Colors.red.shade700, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Course Declined - Tap to view reason',
+                            style: GoogleFonts.montserrat(
+                              color: Colors.red.shade700,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             const Spacer(),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -201,6 +264,82 @@ class _DevelopedCourseEditState extends State<DevelopedCourseEdit> {
           ],
         ),
       ),
+    );
+  }
+
+  // Helper method to get status color
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'pending_approval':
+      case 'pending':
+        return Colors.orange;
+      case 'approved':
+        return Colors.green;
+      case 'declined':
+        return Colors.red;
+      case 'removed':
+        return Colors.grey;
+      default:
+        return Colors.blue;
+    }
+  }
+
+  // Helper method to get status text
+  String _getStatusText(String status) {
+    switch (status) {
+      case 'pending_approval':
+        return 'Pending';
+      case 'pending':
+        return 'Updated';
+      case 'approved':
+        return 'Approved';
+      case 'declined':
+        return 'Declined';
+      case 'removed':
+        return 'Removed';
+      default:
+        return status;
+    }
+  }
+
+  // Show decline reason dialog
+  void _showDeclineReasonDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            "Decline Reason",
+            style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Text(
+                    widget.declineReason!,
+                    style: GoogleFonts.montserrat(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Close"),
+            ),
+          ],
+        );
+      },
     );
   }
 }

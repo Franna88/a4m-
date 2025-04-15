@@ -59,7 +59,7 @@ class _CertificatesMainStudentState extends State<CertificatesMainStudent> {
               String completionDate = await getCompletionDate(doc.id) ??
                   DateTime.now().toString().split(' ')[0];
 
-              // Get certificate price (could be stored in course or fixed)
+              // Get certificate price from the course data
               String certificatePrice = data['certificatePrice'] ?? 'R 299';
 
               // Get module and assessment counts

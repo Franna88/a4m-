@@ -140,26 +140,107 @@ class _FacilitatorCourseContainersState
       barrierDismissible: false,
       builder: (BuildContext context) {
         return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
-            title: Text('Assign Student'),
-            content: SingleChildScrollView(
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+            child: Container(
+              width: 450,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20.0),
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                      'Available Licenses: ${courseInfo['availableLicenses']}'),
-                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Assign Student',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                        color: Colors.grey[600],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Mycolors().green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Mycolors().green,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: Mycolors().green,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Available Licenses: ${courseInfo['availableLicenses']}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Mycolors().green,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   DropdownButtonFormField<String>(
                     value: selectedStudentId,
                     decoration: InputDecoration(
                       labelText: 'Select Student',
-                      border: OutlineInputBorder(),
+                      labelStyle: GoogleFonts.poppins(
+                        color: Colors.grey[700],
+                        fontSize: 14,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Colors.grey[300]!,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Colors.grey[300]!,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Mycolors().green,
+                        ),
+                      ),
                     ),
                     items: students.map((student) {
                       return DropdownMenuItem<String>(
                         value: student['studentId'],
-                        child: Text(student['name']),
+                        child: Text(
+                          student['name'],
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.grey[800],
+                          ),
+                        ),
                       );
                     }).toList(),
                     onChanged: (value) {
@@ -173,192 +254,176 @@ class _FacilitatorCourseContainersState
                       });
                     },
                   ),
-                  SizedBox(height: 20),
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: 'Full Name (Name and Surname)',
-                      border: OutlineInputBorder(),
-                    ),
-                    controller: TextEditingController(text: fullName),
-                    onChanged: (value) {
-                      fullName = value;
-                    },
-                  ),
-                  SizedBox(height: 20),
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: 'ID Number (for certificate)',
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      idNumber = value;
-                    },
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          'Cancel',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        height: 40,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (selectedStudentId == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Please select a student'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+
+                            try {
+                              // Find an available license
+                              QuerySnapshot licenseSnapshot = await firestore
+                                  .collection('courseLicenses')
+                                  .where('courseId', isEqualTo: widget.courseId)
+                                  .where('facilitatorId',
+                                      isEqualTo: widget.facilitatorId)
+                                  .where('status', isEqualTo: 'available')
+                                  .limit(1)
+                                  .get();
+
+                              if (licenseSnapshot.docs.isEmpty) {
+                                throw Exception('No available licenses found');
+                              }
+
+                              // Update the license
+                              await licenseSnapshot.docs.first.reference
+                                  .update({
+                                'status': 'assigned',
+                                'assignedTo': selectedStudentId,
+                                'assignmentDate': FieldValue.serverTimestamp(),
+                              });
+
+                              // Update the course's available licenses count
+                              await firestore
+                                  .collection('Users')
+                                  .doc(widget.facilitatorId)
+                                  .update({
+                                'facilitatorCourses':
+                                    facilitatorCourses.map((course) {
+                                  if (course['courseId'] == widget.courseId) {
+                                    return {
+                                      ...course,
+                                      'availableLicenses':
+                                          course['availableLicenses'] - 1,
+                                    };
+                                  }
+                                  return course;
+                                }).toList(),
+                              });
+
+                              // Add student to the course
+                              DocumentSnapshot courseDoc = await firestore
+                                  .collection('courses')
+                                  .doc(widget.courseId)
+                                  .get();
+
+                              Map<String, dynamic> courseData =
+                                  courseDoc.data() as Map<String, dynamic>;
+                              List<dynamic> currentStudents =
+                                  courseData['students'] ?? [];
+
+                              bool studentExists = currentStudents.any(
+                                  (s) => s['studentId'] == selectedStudentId);
+
+                              if (!studentExists) {
+                                currentStudents.add({
+                                  'studentId': selectedStudentId,
+                                  'name': fullName,
+                                  'registered': true,
+                                });
+
+                                await firestore
+                                    .collection('courses')
+                                    .doc(widget.courseId)
+                                    .set({'students': currentStudents},
+                                        SetOptions(merge: true));
+
+                                DocumentReference studentRef = firestore
+                                    .collection('Users')
+                                    .doc(selectedStudentId);
+
+                                DocumentSnapshot studentDoc =
+                                    await studentRef.get();
+
+                                if (!studentDoc.exists ||
+                                    !(studentDoc.data() as Map<String, dynamic>)
+                                        .containsKey('enrolledCourses')) {
+                                  await studentRef.set({
+                                    'enrolledCourses': [],
+                                  }, SetOptions(merge: true));
+                                }
+
+                                await studentRef.update({
+                                  'enrolledCourses': FieldValue.arrayUnion([
+                                    {
+                                      'courseId': widget.courseId,
+                                      'courseName': widget.courseName,
+                                      'facilitatorId': widget.facilitatorId,
+                                      'licenseId':
+                                          licenseSnapshot.docs.first.id,
+                                      'enrollmentDate':
+                                          DateTime.now().toIso8601String(),
+                                    }
+                                  ])
+                                });
+
+                                await _fetchCourseLicenseInfo();
+                              }
+
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content:
+                                      Text('Student assigned successfully'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error assigning student: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Mycolors().green,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                          ),
+                          child: Text(
+                            'Assign Student',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  if (selectedStudentId != null) {
-                    if (fullName.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text('Please enter the student\'s full name'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-
-                    try {
-                      // Find an available license
-                      QuerySnapshot licenseSnapshot = await firestore
-                          .collection('courseLicenses')
-                          .where('courseId', isEqualTo: widget.courseId)
-                          .where('facilitatorId',
-                              isEqualTo: widget.facilitatorId)
-                          .where('status', isEqualTo: 'available')
-                          .limit(1)
-                          .get();
-
-                      if (licenseSnapshot.docs.isEmpty) {
-                        throw Exception('No available licenses found');
-                      }
-
-                      // Update the license
-                      await licenseSnapshot.docs.first.reference.update({
-                        'status': 'assigned',
-                        'assignedTo': selectedStudentId,
-                        'assignmentDate': FieldValue.serverTimestamp(),
-                        'idNumber': idNumber, // Store ID number with license
-                      });
-
-                      // Update the course's available licenses count
-                      await firestore
-                          .collection('Users')
-                          .doc(widget.facilitatorId)
-                          .update({
-                        'facilitatorCourses': facilitatorCourses.map((course) {
-                          if (course['courseId'] == widget.courseId) {
-                            return {
-                              ...course,
-                              'availableLicenses':
-                                  course['availableLicenses'] - 1,
-                            };
-                          }
-                          return course;
-                        }).toList(),
-                      });
-
-                      // Add student to the course
-                      DocumentSnapshot courseDoc = await firestore
-                          .collection('courses')
-                          .doc(widget.courseId)
-                          .get();
-
-                      // Initialize students array if it doesn't exist
-                      Map<String, dynamic> courseData =
-                          courseDoc.data() as Map<String, dynamic>;
-                      List<dynamic> currentStudents =
-                          courseData['students'] ?? [];
-
-                      // Check if student is already in the course
-                      bool studentExists = currentStudents
-                          .any((s) => s['studentId'] == selectedStudentId);
-
-                      if (!studentExists) {
-                        // Add student in the required format
-                        currentStudents.add({
-                          'studentId': selectedStudentId,
-                          'name': fullName,
-                          'idNumber': idNumber,
-                          'registered': true,
-                        });
-
-                        // Update the course document with the new students array
-                        await firestore
-                            .collection('courses')
-                            .doc(widget.courseId)
-                            .set(
-                                {
-                              'students': currentStudents,
-                            },
-                                SetOptions(
-                                    merge:
-                                        true)); // Use merge to preserve other fields
-
-                        // Update student record with full name and ID number
-                        await firestore
-                            .collection('Users')
-                            .doc(widget.facilitatorId)
-                            .collection('facilitatorStudents')
-                            .doc(selectedStudentId)
-                            .set({
-                          'name': fullName,
-                          'idNumber': idNumber,
-                        }, SetOptions(merge: true));
-
-                        // Add the course to the student's enrolled courses
-                        DocumentReference studentRef = firestore
-                            .collection('Users')
-                            .doc(selectedStudentId);
-
-                        DocumentSnapshot studentDoc = await studentRef.get();
-
-                        // Initialize enrolledCourses if it doesn't exist
-                        if (!studentDoc.exists ||
-                            !(studentDoc.data() as Map<String, dynamic>)
-                                .containsKey('enrolledCourses')) {
-                          await studentRef.set({
-                            'enrolledCourses': [],
-                          }, SetOptions(merge: true));
-                        }
-
-                        // Add the course to student's enrolled courses
-                        await studentRef.update({
-                          'enrolledCourses': FieldValue.arrayUnion([
-                            {
-                              'courseId': widget.courseId,
-                              'courseName': widget.courseName,
-                              'facilitatorId': widget.facilitatorId,
-                              'licenseId': licenseSnapshot.docs.first.id,
-                              'enrollmentDate':
-                                  DateTime.now().toIso8601String(),
-                              'idNumber': idNumber,
-                            }
-                          ])
-                        });
-
-                        // Refresh the course license info
-                        await _fetchCourseLicenseInfo();
-                      }
-
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Student assigned successfully'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error assigning student: $e'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
-                },
-                child: Text('Assign'),
-              ),
-            ],
           );
         });
       },

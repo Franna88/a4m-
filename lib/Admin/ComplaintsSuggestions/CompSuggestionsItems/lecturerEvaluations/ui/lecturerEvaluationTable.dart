@@ -5,14 +5,15 @@ import '../../../../../Themes/Constants/myColors.dart';
 import '../../../../../../TableWidgets/tableStructure.dart';
 import '../../../../../services/complaints_suggestions_service.dart';
 
-class CourseEvaluationTable extends StatefulWidget {
-  const CourseEvaluationTable({super.key});
+class LecturerEvaluationTable extends StatefulWidget {
+  const LecturerEvaluationTable({super.key});
 
   @override
-  State<CourseEvaluationTable> createState() => _CourseEvaluationTableState();
+  State<LecturerEvaluationTable> createState() =>
+      _LecturerEvaluationTableState();
 }
 
-class _CourseEvaluationTableState extends State<CourseEvaluationTable> {
+class _LecturerEvaluationTableState extends State<LecturerEvaluationTable> {
   final _service = ComplaintsSuggestionsService();
   final Map<String, String> _studentNames = {};
 
@@ -52,7 +53,7 @@ class _CourseEvaluationTableState extends State<CourseEvaluationTable> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Course Evaluation Details',
+                      'Lecturer Evaluation Details',
                       style: GoogleFonts.poppins(
                         fontSize: 24,
                         fontWeight: FontWeight.w600,
@@ -90,12 +91,10 @@ class _CourseEvaluationTableState extends State<CourseEvaluationTable> {
                 const Divider(height: 32),
 
                 // Display text responses
-                _buildResponseSection('Most Useful Aspects',
-                    evaluationData['mostUseful'] ?? 'No response provided'),
-                _buildResponseSection('Suggestions for Improvement',
-                    evaluationData['suggestions'] ?? 'No response provided'),
-                _buildResponseSection('Would Recommend?',
-                    '${evaluationData['recommendation'] ?? 'No response'}\nReason: ${evaluationData['recommendationReason'] ?? 'No reason provided'}'),
+                _buildResponseSection('Positive Feedback',
+                    evaluationData['feedback'] ?? 'No response provided'),
+                _buildResponseSection('Areas for Improvement',
+                    evaluationData['improvements'] ?? 'No response provided'),
               ],
             ),
           ),
@@ -234,7 +233,7 @@ class _CourseEvaluationTableState extends State<CourseEvaluationTable> {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('course_evaluations')
-          .where('type', isEqualTo: 'course')
+          .where('type', isEqualTo: 'lecturer')
           .orderBy('submittedAt', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
@@ -256,7 +255,7 @@ class _CourseEvaluationTableState extends State<CourseEvaluationTable> {
         if (evaluations.isEmpty) {
           return Center(
             child: Text(
-              'No course evaluations found',
+              'No lecturer evaluations found',
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 color: Colors.grey[600],

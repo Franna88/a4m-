@@ -21,23 +21,38 @@ class CourseEvaluationForm extends StatefulWidget {
 
 class _CourseEvaluationFormState extends State<CourseEvaluationForm> {
   final _formKey = GlobalKey<FormState>();
-  final Map<String, int> _ratings = {};
-  final TextEditingController _mostUsefulController = TextEditingController();
-  final TextEditingController _suggestionsController = TextEditingController();
-  final TextEditingController _recommendationController =
+  final Map<String, int> _courseRatings = {};
+  final Map<String, int> _lecturerRatings = {};
+  final TextEditingController _courseMostUsefulController =
+      TextEditingController();
+  final TextEditingController _courseSuggestionsController =
+      TextEditingController();
+  final TextEditingController _courseRecommendationController =
+      TextEditingController();
+  final TextEditingController _lecturerFeedbackController =
+      TextEditingController();
+  final TextEditingController _lecturerImprovementController =
       TextEditingController();
   bool _isSubmitting = false;
 
-  final List<String> _evaluationCriteria = [
+  final List<String> _courseEvaluationCriteria = [
     'The objectives of the training were met',
-    'The presenters were engaging',
     'The presentation materials were relevant',
     'The content of the course was organised and easy to follow',
-    'The trainers were well prepared and able to answer any questions',
     'The course length was appropriate',
     'The pace of the course was appropriate to the content and attendees',
     'The exercises/role play were helpful and relevant',
     'The venue was appropriate for the event',
+  ];
+
+  final List<String> _lecturerEvaluationCriteria = [
+    'The lecturer was well prepared for classes',
+    'The lecturer explained concepts clearly',
+    'The lecturer was engaging and enthusiastic',
+    'The lecturer encouraged student participation',
+    'The lecturer was available for consultation',
+    'The lecturer provided helpful feedback',
+    'The lecturer demonstrated thorough knowledge of the subject',
   ];
 
   @override
@@ -57,27 +72,72 @@ class _CourseEvaluationFormState extends State<CourseEvaluationForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Course Evaluation Section
               Text(
-                'Please rate your level of agreement with the following statements:',
+                'Course Evaluation',
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Mycolors().darkTeal,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Please rate your level of agreement with the following statements about the course:',
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 20),
-              ...buildEvaluationItems(),
+              ...buildEvaluationItems(
+                  _courseEvaluationCriteria, _courseRatings),
               const SizedBox(height: 30),
               buildTextQuestion(
-                'What was most useful?',
-                _mostUsefulController,
+                'What aspects of the course were most useful?',
+                _courseMostUsefulController,
               ),
               const SizedBox(height: 20),
               buildTextQuestion(
-                'What else would you like to see included in this event? Are there any other topics that you would like to be offered training courses in?',
-                _suggestionsController,
+                'What improvements would you suggest for the course?',
+                _courseSuggestionsController,
               ),
               const SizedBox(height: 20),
               buildRecommendationSection(),
+
+              const Divider(height: 60),
+
+              // Lecturer Evaluation Section
+              Text(
+                'Lecturer Evaluation',
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Mycolors().darkTeal,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Please rate your level of agreement with the following statements about the lecturer:',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ...buildEvaluationItems(
+                  _lecturerEvaluationCriteria, _lecturerRatings),
+              const SizedBox(height: 30),
+              buildTextQuestion(
+                'What did the lecturer do particularly well?',
+                _lecturerFeedbackController,
+              ),
+              const SizedBox(height: 20),
+              buildTextQuestion(
+                'What could the lecturer improve on?',
+                _lecturerImprovementController,
+              ),
+
               const SizedBox(height: 30),
               Center(
                 child: ElevatedButton(
@@ -105,8 +165,9 @@ class _CourseEvaluationFormState extends State<CourseEvaluationForm> {
     );
   }
 
-  List<Widget> buildEvaluationItems() {
-    return _evaluationCriteria.map((criteria) {
+  List<Widget> buildEvaluationItems(
+      List<String> criteria, Map<String, int> ratings) {
+    return criteria.map((criteria) {
       return Container(
         margin: const EdgeInsets.only(bottom: 20),
         padding: const EdgeInsets.all(15),
@@ -126,11 +187,11 @@ class _CourseEvaluationFormState extends State<CourseEvaluationForm> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                buildRatingOption(criteria, 'Strongly Agree', 5),
-                buildRatingOption(criteria, 'Agree', 4),
-                buildRatingOption(criteria, 'Disagree', 2),
-                buildRatingOption(criteria, 'Strongly Disagree', 1),
-                buildRatingOption(criteria, 'Not relevant', 0),
+                buildRatingOption(criteria, 'Strongly Agree', 5, ratings),
+                buildRatingOption(criteria, 'Agree', 4, ratings),
+                buildRatingOption(criteria, 'Disagree', 2, ratings),
+                buildRatingOption(criteria, 'Strongly Disagree', 1, ratings),
+                buildRatingOption(criteria, 'Not relevant', 0, ratings),
               ],
             ),
           ],
@@ -139,15 +200,16 @@ class _CourseEvaluationFormState extends State<CourseEvaluationForm> {
     }).toList();
   }
 
-  Widget buildRatingOption(String criteria, String label, int value) {
+  Widget buildRatingOption(
+      String criteria, String label, int value, Map<String, int> ratings) {
     return Column(
       children: [
         Radio<int>(
           value: value,
-          groupValue: _ratings[criteria],
+          groupValue: ratings[criteria],
           onChanged: (int? value) {
             setState(() {
-              _ratings[criteria] = value!;
+              ratings[criteria] = value!;
             });
           },
         ),
@@ -202,10 +264,10 @@ class _CourseEvaluationFormState extends State<CourseEvaluationForm> {
           children: [
             Radio<String>(
               value: 'Yes',
-              groupValue: _recommendationController.text,
+              groupValue: _courseRecommendationController.text,
               onChanged: (value) {
                 setState(() {
-                  _recommendationController.text = value!;
+                  _courseRecommendationController.text = value!;
                 });
               },
             ),
@@ -213,10 +275,10 @@ class _CourseEvaluationFormState extends State<CourseEvaluationForm> {
             const SizedBox(width: 20),
             Radio<String>(
               value: 'No',
-              groupValue: _recommendationController.text,
+              groupValue: _courseRecommendationController.text,
               onChanged: (value) {
                 setState(() {
-                  _recommendationController.text = value!;
+                  _courseRecommendationController.text = value!;
                 });
               },
             ),
@@ -244,16 +306,38 @@ class _CourseEvaluationFormState extends State<CourseEvaluationForm> {
       });
 
       try {
+        // Get student name from Users collection
+        final userDoc = await FirebaseFirestore.instance
+            .collection('Users')
+            .doc(widget.studentId)
+            .get();
+        final studentName = userDoc.data()?['name'] ?? 'Unknown Student';
+
+        // Submit course evaluation
         await FirebaseFirestore.instance.collection('course_evaluations').add({
           'courseId': widget.courseId,
           'courseName': widget.courseName,
           'studentId': widget.studentId,
-          'ratings': _ratings,
-          'mostUseful': _mostUsefulController.text,
-          'suggestions': _suggestionsController.text,
-          'recommendation': _recommendationController.text,
+          'studentName': studentName,
+          'ratings': _courseRatings,
+          'mostUseful': _courseMostUsefulController.text,
+          'suggestions': _courseSuggestionsController.text,
+          'recommendation': _courseRecommendationController.text,
           'submittedAt': FieldValue.serverTimestamp(),
-          'status': 'pending',
+          'type': 'course',
+        });
+
+        // Submit lecturer evaluation
+        await FirebaseFirestore.instance.collection('course_evaluations').add({
+          'courseId': widget.courseId,
+          'courseName': widget.courseName,
+          'studentId': widget.studentId,
+          'studentName': studentName,
+          'ratings': _lecturerRatings,
+          'feedback': _lecturerFeedbackController.text,
+          'improvements': _lecturerImprovementController.text,
+          'submittedAt': FieldValue.serverTimestamp(),
+          'type': 'lecturer',
         });
 
         if (mounted) {

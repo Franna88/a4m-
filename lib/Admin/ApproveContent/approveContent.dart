@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:a4m/CommonComponents/inputFields/myDropDownMenu.dart';
 import 'package:a4m/myutility.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'Table/approveNewContentTable.dart';
 
@@ -168,9 +169,15 @@ class _ApproveContentState extends State<ApproveContent>
                           color: Colors.black,
                         ),
                       ),
-                      child: ApproveNewContentTable(
-                        changePage: changePageWrapper,
-                        status: 'approved',
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: ApproveNewContentTable(
+                              changePage: changePageWrapper,
+                              status: 'approved',
+                            ),
+                          ),
+                        ],
                       ),
                     ),
 
