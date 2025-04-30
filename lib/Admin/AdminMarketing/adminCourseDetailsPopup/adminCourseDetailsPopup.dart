@@ -380,7 +380,7 @@ class _AdminCourseDetailsPopupState extends State<AdminCourseDetailsPopup> {
                           width: 300,
                           child: MyTextFields(
                             inputController: changePrice,
-                            headerText: 'Change Price',
+                            headerText: 'Course Price',
                             keyboardType: 'number',
                           ),
                         ),
