@@ -11,13 +11,13 @@ class TestsContainer extends StatelessWidget {
   final VoidCallback onDelete;
 
   const TestsContainer({
-    Key? key,
+    super.key,
     required this.title,
     required this.buttonText,
     required this.onAddQuestion,
     required this.onEdit,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

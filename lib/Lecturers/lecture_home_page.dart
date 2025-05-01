@@ -1,13 +1,3 @@
-import 'package:a4m/Admin/AdminA4mMembers/a4mMemebersList.dart';
-import 'package:a4m/Admin/AdminCertification/adminCertification.dart';
-import 'package:a4m/Admin/AdminCourses/adminCourseList.dart';
-import 'package:a4m/Admin/AdminMarketing/AdminMarketing.dart';
-import 'package:a4m/Admin/AdminMessaging/adminMessagesMain.dart';
-import 'package:a4m/Admin/ApproveContent/approveContent.dart';
-import 'package:a4m/Admin/Commonui/adminMainNavBar.dart';
-import 'package:a4m/Admin/ComplaintsSuggestions/compSuggestionsMain.dart';
-import 'package:a4m/Admin/CurriculumVitae/cirriculumVitae.dart';
-import 'package:a4m/Admin/Dashboard/adminDashboardMain.dart';
 import 'package:a4m/Lecturers/LectureCourses/Lecture_modules.dart';
 import 'package:a4m/Lecturers/LectureCourses/lecture_courses.dart';
 import 'package:a4m/Lecturers/LectureCourses/view_modules_complete.dart';
@@ -16,6 +6,7 @@ import 'package:a4m/Lecturers/LectureMessages/lecture_messages.dart';
 import 'package:a4m/Lecturers/LecturePresentations/lecture_presentations.dart';
 import 'package:a4m/Lecturers/LectureStudents/lecture_students.dart';
 import 'package:a4m/Lecturers/lecture_navbar.dart';
+import 'package:a4m/Lecturers/LectureCourses/assessment_submissions_view.dart';
 import 'package:flutter/material.dart';
 
 class LectureHomePage extends StatefulWidget {
@@ -32,33 +23,56 @@ class _LectureHomePageState extends State<LectureHomePage> {
   String selectedCourseId = ''; // To store the passed course ID
   String selectedModuleId = ''; // To store the passed module ID
 
-  // Modify changePage to optionally accept a courseId
+  @override
+  void initState() {
+    super.initState();
+    assert(widget.lecturerId.isNotEmpty, 'Lecturer ID must not be empty');
+    print(
+        'Initializing LectureHomePage with lecturer ID: ${widget.lecturerId}');
+  }
+
+  // Updated changePage to use named parameters consistently
   void changePage(int value, {String courseId = '', String moduleId = ''}) {
+    print(
+        "changePage called with value: $value, courseId: $courseId, moduleId: $moduleId");
+
+    if (value < 0 || value >= getPages().length) {
+      print('Invalid page index: $value');
+      return;
+    }
+
     setState(() {
       pageIndex = value;
       if (courseId.isNotEmpty) {
         selectedCourseId = courseId;
+        print("Updated selectedCourseId to: $selectedCourseId");
       }
       if (moduleId.isNotEmpty) {
         selectedModuleId = moduleId;
+        print("Updated selectedModuleId to: $selectedModuleId");
       }
       print(
-          "Updated Course ID: $selectedCourseId, Module ID: $selectedModuleId");
+          "Navigation - Page: $value, Course ID: $selectedCourseId, Module ID: $selectedModuleId");
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    var pages = [
+  List<Widget> getPages() {
+    print(
+        "Building pages with Course ID: $selectedCourseId, Module ID: $selectedModuleId");
+    return [
       LectureDashboard(
         lecturerId: widget.lecturerId,
-        changePageWithCourseId: (int newPage, String courseId) {
-          changePage(newPage, courseId: courseId); // Pass the courseId
+        changePageWithCourseId: (page,
+            {String courseId = '', String moduleId = ''}) {
+          changePage(page, courseId: courseId, moduleId: moduleId);
         },
       ),
       LectureCourses(
-        changePageWithCourseId: (int newPage, String courseId) {
-          changePage(newPage, courseId: courseId); // Pass the courseId
+        changePageWithCourseId: (int newPage,
+            {String courseId = '', String moduleId = ''}) {
+          print(
+              "LectureCourses navigation - Page: $newPage, Course ID: $courseId");
+          changePage(newPage, courseId: courseId, moduleId: moduleId);
         },
         lecturerId: widget.lecturerId,
       ),
@@ -74,12 +88,19 @@ class _LectureHomePageState extends State<LectureHomePage> {
       ),
       LectureModulesContainer(
         changePage: changePage,
-        courseId: selectedCourseId, // Use the selected courseId here
+        courseId: selectedCourseId,
+      ),
+      AssessmentSubmissionsView(
+        courseId: selectedCourseId,
+        moduleId: selectedModuleId,
       ),
     ];
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return LectureNavbar(
-      child: pages[pageIndex],
+      child: getPages()[pageIndex],
       changePage: (value) => changePage(value),
     );
   }

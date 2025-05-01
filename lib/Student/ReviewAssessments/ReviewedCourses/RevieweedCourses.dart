@@ -5,14 +5,16 @@ import 'package:a4m/Student/assessments/AssessmentTabBar.dart';
 import 'package:a4m/Student/commonUi/customTabBar.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Reviewedcourses extends StatefulWidget {
   final void Function(int newPage, String courseId) changePageWithCourseId;
   final String studentId;
 
   const Reviewedcourses(
-      {Key? key, required this.changePageWithCourseId, required this.studentId})
-      : super(key: key);
+      {super.key,
+      required this.changePageWithCourseId,
+      required this.studentId});
 
   @override
   State<Reviewedcourses> createState() => _ReviewedcoursesState();
@@ -36,41 +38,90 @@ class _ReviewedcoursesState extends State<Reviewedcourses> {
         ),
       ),
       Center(
-        child: Text('Active Page', style: TextStyle(fontSize: 24)),
+        child: ReviewedCoursesList(
+          studentId: widget.studentId,
+          onTap: (courseId) {
+            widget.changePageWithCourseId(10, courseId);
+          },
+          filterByCompletion: false,
+        ),
       ),
       Center(
-        child: Text('Completed Page', style: TextStyle(fontSize: 24)),
+        child: ReviewedCoursesList(
+          studentId: widget.studentId,
+          onTap: (courseId) {
+            widget.changePageWithCourseId(10, courseId);
+          },
+          filterByCompletion: true,
+        ),
       ),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CategoryNameStack(text: 'Results'),
-          const SizedBox(height: 15),
-          SizedBox(
-            height: 50,
-            width: 500,
-            child: AssessmentTabBar(
-              selectedIndex: _selectedIndex,
-              onTabSelected: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
+    return Container(
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Results',
+              style: GoogleFonts.poppins(
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[800],
+              ),
             ),
-          ),
-          SizedBox(
-            width: MyUtility(context).width - 360,
-            height: MyUtility(context).height - 205,
-            child: _pages[_selectedIndex],
-          ),
-        ],
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: SizedBox(
+                height: 50,
+                child: AssessmentTabBar(
+                  selectedIndex: _selectedIndex,
+                  onTabSelected: (index) {
+                    setState(() {
+                      _selectedIndex = index;
+                    });
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      spreadRadius: 1,
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: _pages[_selectedIndex],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

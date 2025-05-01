@@ -30,8 +30,8 @@ class _SubmitCourseReviewDialogState extends State<SubmitCourseReviewDialog> {
   double _courseRating = 0;
   double _lecturerRating = 0;
   bool _isSubmitting = false;
-  List<Map<String, dynamic>> _courses = [];
-  List<Map<String, dynamic>> _lecturers = [];
+  final List<Map<String, dynamic>> _courses = [];
+  final List<Map<String, dynamic>> _lecturers = [];
 
   @override
   void initState() {

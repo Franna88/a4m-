@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 
@@ -148,6 +147,10 @@ class Module with ChangeNotifier {
   String? testSheetPdfName;
   String? testSheetPdfUrl; // ✅ Firestore URL
 
+  Uint8List? assignmentsPdf;
+  String? assignmentsPdfName;
+  String? assignmentsPdfUrl; // ✅ Firestore URL
+
   List<Question> questions;
   List<Task> tasks;
   List<Assignment> assignments;
@@ -181,6 +184,9 @@ class Module with ChangeNotifier {
     this.testSheetPdf,
     this.testSheetPdfName,
     this.testSheetPdfUrl, // ✅ Firestore URL
+    this.assignmentsPdf,
+    this.assignmentsPdfName,
+    this.assignmentsPdfUrl, // ✅ Firestore URL
     this.changes = const [],
     List<Question>? questions,
     List<Task>? tasks,
@@ -285,6 +291,9 @@ class Module with ChangeNotifier {
 
       'testSheetPdfUrl': testSheetPdfUrl,
       'testSheetPdfName': testSheetPdfName,
+
+      'assignmentsPdfUrl': assignmentsPdfUrl,
+      'assignmentsPdfName': assignmentsPdfName,
 
       'questions': questions.map((q) => q.toMap()).toList(),
       'tasks': tasks.map((t) => t.toMap()).toList(),

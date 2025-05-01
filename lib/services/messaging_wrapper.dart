@@ -9,10 +9,10 @@ class MessagingWrapper extends StatefulWidget {
   final String userId;
 
   const MessagingWrapper({
-    Key? key,
+    super.key,
     required this.userRole,
     required this.userId,
-  }) : super(key: key);
+  });
 
   @override
   State<MessagingWrapper> createState() => _MessagingWrapperState();
@@ -43,7 +43,7 @@ class _MessagingWrapperState extends State<MessagingWrapper> {
 
       // Log for debugging
       print(
-          "Initializing messaging for ${_normalizedRole} with ID: ${widget.userId}");
+          "Initializing messaging for $_normalizedRole with ID: ${widget.userId}");
     } catch (e) {
       print("Error setting up user role: $e");
     } finally {
@@ -98,10 +98,10 @@ extension CommunicationRules on String {
       case 'student':
         return ['student', 'lecturer', 'admin'].contains(normalizedOtherRole);
       case 'lecturer':
-        return ['student', 'lecturer', 'admin', 'facilitator']
+        return ['student', 'lecturer', 'admin', 'facilitator', 'content_dev']
             .contains(normalizedOtherRole);
       case 'content_dev':
-        return ['admin'].contains(normalizedOtherRole);
+        return ['admin', 'lecturer'].contains(normalizedOtherRole);
       case 'admin':
         return ['student', 'lecturer', 'content_dev', 'facilitator']
             .contains(normalizedOtherRole);

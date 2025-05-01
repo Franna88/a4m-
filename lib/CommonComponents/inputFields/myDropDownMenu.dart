@@ -28,7 +28,9 @@ class MyDropDownMenu extends StatefulWidget {
 class _MyDropDownMenuState extends State<MyDropDownMenu> {
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Material(
+      color: Colors.transparent,
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -39,36 +41,39 @@ class _MyDropDownMenuState extends State<MyDropDownMenu> {
               child: Text(
                 widget.description == null ? '' : widget.description!,
                 style: GoogleFonts.lato(
-                  fontWeight:
-                      widget.isBold == null ? FontWeight.w500 : FontWeight.normal,
+                  fontWeight: widget.isBold == null
+                      ? FontWeight.w500
+                      : FontWeight.normal,
                   fontSize: 16,
                   letterSpacing: -0.5,
-                  color: Color.fromARGB(255, 0, 0, 0),
+                  color: const Color.fromARGB(255, 0, 0, 0),
                 ),
               ),
             ),
           ),
-          const SizedBox(
-            height: 5,
-          ),
+          const SizedBox(height: 5),
           Transform.scale(
             scale: 0.9,
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
                 color: Colors.white,
-                
               ),
               child: DropdownMenu<String>(
                 hintText: 'Select',
-                textStyle: GoogleFonts.inter(color: const Color.fromARGB(255, 7, 7, 7)),
-                trailingIcon: Icon(
+                textStyle: GoogleFonts.inter(
+                  color: const Color.fromARGB(255, 7, 7, 7),
+                ),
+                trailingIcon: const Icon(
                   Icons.keyboard_arrow_down,
                   color: Colors.black,
                   size: 35,
                 ),
-                selectedTrailingIcon:
-                    Icon(Icons.keyboard_arrow_up, color: Colors.black, size: 35),
+                selectedTrailingIcon: const Icon(
+                  Icons.keyboard_arrow_up,
+                  color: Colors.black,
+                  size: 35,
+                ),
                 enableFilter: false,
                 enableSearch: widget.enableSearch ?? true,
                 width: widget.customSize,
@@ -76,24 +81,27 @@ class _MyDropDownMenuState extends State<MyDropDownMenu> {
                 requestFocusOnTap: widget.focusTap ?? true,
                 label: const Text(''),
                 onSelected: (value) {
-                  setState(() {
-                    widget.textfieldController.text = value!;
-                  });
-            
-                  if (widget.onChanged != null) {
-                    widget.onChanged!();
+                  if (value != null) {
+                    setState(() {
+                      widget.textfieldController.text = value;
+                    });
+                    if (widget.onChanged != null) {
+                      widget.onChanged!(value);
+                    }
                   }
                 },
                 dropdownMenuEntries:
                     widget.items.map<DropdownMenuEntry<String>>((value) {
                   return DropdownMenuEntry<String>(
-                    value: value,
-                    label: value,
+                    value: value.toString(),
+                    label: value.toString(),
                   );
                 }).toList(),
               ),
             ),
-          )
-        ]);
+          ),
+        ],
+      ),
+    );
   }
 }

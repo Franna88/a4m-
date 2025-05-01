@@ -11,7 +11,7 @@ class ContentDevTextfields extends StatelessWidget {
   final bool readOnly; // New parameter for read-only mode
 
   const ContentDevTextfields({
-    Key? key,
+    super.key,
     required this.inputController,
     this.hintText,
     this.headerText,
@@ -19,7 +19,7 @@ class ContentDevTextfields extends StatelessWidget {
     this.isOptional,
     this.maxLines, // Added to the constructor
     this.readOnly = false, // Added with a default value of false
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

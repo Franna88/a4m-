@@ -5,6 +5,7 @@ class CustomTabBar extends StatelessWidget {
   final Function(int) onTabSelected;
 
   const CustomTabBar({
+    super.key,
     required this.selectedIndex,
     required this.onTabSelected,
   });

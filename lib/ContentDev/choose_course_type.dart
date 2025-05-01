@@ -1,6 +1,3 @@
-import 'package:a4m/Admin/Dashboard/ui/coursePerformancePieChart.dart';
-import 'package:a4m/Admin/Dashboard/ui/monthlySalesChart.dart';
-import 'package:a4m/Admin/Dashboard/ui/monthlyStatSumContainers.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Themes/text_style.dart';
 import 'package:a4m/myutility.dart';
@@ -31,23 +28,23 @@ class _AdminDashboardMainState extends State<ChooseCourseType> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Mycolors().blue,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  height: MyUtility(context).height * 0.06,
-                  width: MyUtility(context).width,
-                  child: Center(
-                    child: Text(
-                      'Please Choose an Option',
-                      style: MyTextStyles(context).headerWhite,
-                    ),
-                  ),
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(vertical: 16.0),
+              //   child: Container(
+              //     decoration: BoxDecoration(
+              //       color: Mycolors().blue,
+              //       borderRadius: BorderRadius.circular(10),
+              //     ),
+              //     height: MyUtility(context).height * 0.06,
+              //     width: MyUtility(context).width,
+              //     child: Center(
+              //       child: Text(
+              //         'Please Choose an Option',
+              //         style: MyTextStyles(context).headerWhite,
+              //       ),
+              //     ),
+              //   ),
+              // ),
               Row(
                 children: [
                   // Visibility(
@@ -88,8 +85,8 @@ class _AdminDashboardMainState extends State<ChooseCourseType> {
                   //     ),
                   //   ),
                   // ),
-                  Spacer(),
-                  GestureDetector(
+                  // Spacer(),
+                  InkWell(
                     onTap: () {
                       widget.changePageIndex(2);
                       print("Upload Course Content tapped");

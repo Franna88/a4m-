@@ -1,12 +1,6 @@
 import 'package:a4m/Constants/myColors.dart';
-import 'package:a4m/Facilitator/Pages/Dashboard/ui/circularPercentageIndicator.dart';
-import 'package:a4m/Facilitator/Pages/Dashboard/ui/facilitatorStudentPassRate.dart';
 import 'package:a4m/Facilitator/Pages/Dashboard/ui/facilitatorStudentProgressList.dart';
-import 'package:a4m/Facilitator/Pages/Dashboard/ui/facilitatorTotalStudents.dart';
 import 'package:a4m/Lecturers/LectureDashboard/dash_calendar_notices.dart';
-import 'package:a4m/Lecturers/LectureDashboard/lecture_dashboard_profile.dart';
-import 'package:a4m/Lecturers/LectureDashboard/lecture_dashboard_total_students.dart';
-import 'package:a4m/Lecturers/LectureDashboard/newly_submitted_modules.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,53 +26,64 @@ class _FacilitatorDashboardState extends State<FacilitatorDashboard> {
       width: MyUtility(context).width - 280,
       height: MyUtility(context).height - 50,
       child: Padding(
-        padding: const EdgeInsets.all(0),
+        padding: const EdgeInsets.all(16),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(15),
+            // Main Content Column
+            Expanded(
+              flex: 3,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  FacilitatorStudentProgressList(
-                    facilitatorId: widget.facilitatorId,
-                  ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      FacilitatorStudentPassRate(
-                        percentage: 50,
+                  // Student Progress Section
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            spreadRadius: 0,
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      const SizedBox(
-                        width: 15,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: FacilitatorStudentProgressList(
+                          facilitatorId: widget.facilitatorId,
+                        ),
                       ),
-                      FacilitatorTotalStudents()
-                    ],
-                  )
+                    ),
+                  ),
                 ],
               ),
             ),
-            Spacer(),
-            Container(
-              color: Colors.white,
-              width: MyUtility(context).width * 0.22,
-              height: MyUtility(context).height - 50,
-              child: Center(
-                child: Column(
-                  children: [
-                    Container(
-                      color: Colors.white,
-                      width: MyUtility(context).width * 0.22,
-                      height: MyUtility(context).height * 0.7,
-                      child: const DashCalendarNotices(),
+            const SizedBox(width: 16),
+            // Calendar Section
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      spreadRadius: 0,
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: const DashCalendarNotices(),
+                ),
               ),
-            )
+            ),
           ],
         ),
       ),

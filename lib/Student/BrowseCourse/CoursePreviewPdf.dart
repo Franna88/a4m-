@@ -13,11 +13,11 @@ class CoursePreviewPdf extends StatefulWidget {
   final VoidCallback onBack;
 
   const CoursePreviewPdf({
-    Key? key,
+    super.key,
     required this.pdfUrl,
     required this.courseName,
     required this.onBack,
-  }) : super(key: key);
+  });
 
   @override
   State<CoursePreviewPdf> createState() => _CoursePreviewPdfState();

@@ -15,7 +15,7 @@ class CourseReviewTable extends StatefulWidget {
 
 class _CourseReviewTableState extends State<CourseReviewTable> {
   final _service = ComplaintsSuggestionsService();
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   void _showDetailedReview(Map<String, dynamic> reviewData) {
     showDialog(

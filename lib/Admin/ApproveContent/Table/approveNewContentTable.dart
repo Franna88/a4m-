@@ -207,71 +207,179 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                       child: Container(
                         constraints: const BoxConstraints(minWidth: 350),
                         child: widget.status == 'approved'
-                            ? Center(
-                                child: Text(
-                                  (data['isUpdated'] == true) ? 'Updated' : '',
-                                  style: GoogleFonts.montserrat(
-                                    color: Colors.red,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (widget.status == 'removed')
-                                    SizedBox(
+                            ? Container(
+                                width: 350,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
                                       width: 100,
                                       child: SlimButtons(
-                                        buttonText: 'Restore',
-                                        buttonColor: Mycolors().blue,
+                                        buttonText: 'Remove',
+                                        buttonColor: Mycolors().red,
                                         onPressed: () {
-                                          _restoreCourse(course.id);
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              title: Text('Remove Course'),
+                                              content: Text(
+                                                  'Are you sure you want to remove "${data['courseName']}"?'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(context),
+                                                  child: Text('Cancel'),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () async {
+                                                    try {
+                                                      await FirebaseFirestore
+                                                          .instance
+                                                          .collection('courses')
+                                                          .doc(course.id)
+                                                          .update({
+                                                        'status': 'removed',
+                                                        'removedAt': FieldValue
+                                                            .serverTimestamp(),
+                                                        'removedBy': 'admin'
+                                                      });
+                                                      Navigator.pop(context);
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        SnackBar(
+                                                            content: Text(
+                                                                'Course removed successfully')),
+                                                      );
+                                                    } catch (e) {
+                                                      print(
+                                                          'Error removing course: $e');
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        SnackBar(
+                                                            content: Text(
+                                                                'Error removing course')),
+                                                      );
+                                                    }
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Mycolors().red,
+                                                  ),
+                                                  child: Text('Remove'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
                                         },
                                         customWidth: 100,
                                       ),
-                                    )
-                                  else if (widget.status ==
-                                          'pending_approval' ||
-                                      isEdited)
-                                    Row(
-                                      children: [
+                                    ),
+                                    const SizedBox(width: 20),
+                                    Container(
+                                      width: 100,
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        (data['isUpdated'] == true)
+                                            ? 'Updated'
+                                            : '',
+                                        style: GoogleFonts.montserrat(
+                                          color: Colors.red,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : widget.status == 'declined'
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: 100,
+                                        child: SlimButtons(
+                                          buttonText: 'View Reason',
+                                          buttonColor: Mycolors().peach,
+                                          onPressed: () {
+                                            _showDeclineReasonDialog(
+                                                context, data);
+                                          },
+                                          customWidth: 100,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      SizedBox(
+                                        width: 100,
+                                        child: SlimButtons(
+                                          buttonText: 'Restore',
+                                          buttonColor: Mycolors().blue,
+                                          onPressed: () {
+                                            _restoreCourse(course.id);
+                                          },
+                                          customWidth: 100,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      if (widget.status == 'removed')
                                         SizedBox(
                                           width: 100,
                                           child: SlimButtons(
-                                            buttonText: 'Approve',
+                                            buttonText: 'Restore',
                                             buttonColor: Mycolors().blue,
                                             onPressed: () {
-                                              _approveCourse(
-                                                  course.id, isEdited);
+                                              _restoreCourse(course.id);
                                             },
                                             customWidth: 100,
                                           ),
+                                        )
+                                      else if (widget.status ==
+                                              'pending_approval' ||
+                                          isEdited)
+                                        Row(
+                                          children: [
+                                            SizedBox(
+                                              width: 100,
+                                              child: SlimButtons(
+                                                buttonText: 'Approve',
+                                                buttonColor: Mycolors().blue,
+                                                onPressed: () {
+                                                  _approveCourse(
+                                                      course.id, isEdited);
+                                                },
+                                                customWidth: 100,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            SizedBox(
+                                              width: 100,
+                                              child: SlimButtons(
+                                                buttonText: 'Decline',
+                                                buttonColor: Mycolors().red,
+                                                onPressed: () {
+                                                  _declineCourse(
+                                                      course.id, isEdited);
+                                                },
+                                                customWidth: 100,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        const SizedBox(width: 8),
-                                        SizedBox(
-                                          width: 100,
-                                          child: SlimButtons(
-                                            buttonText: 'Decline',
-                                            buttonColor: Mycolors().red,
-                                            onPressed: () {
-                                              _declineCourse(
-                                                  course.id, isEdited);
-                                            },
-                                            customWidth: 100,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                ],
-                              ),
+                                    ],
+                                  ),
                       ),
                     ),
                   ),
                 ],
               );
-            }).toList(),
+            }),
           ],
         );
       },
@@ -445,21 +553,87 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
   }
 
   Future<void> _declineCourse(String courseId, bool isEdited) async {
+    // Show dialog to get decline reason
+    final TextEditingController reasonController = TextEditingController();
+
+    bool? dialogResult = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Decline Course',
+            style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Please provide a reason for declining this course:',
+                style: GoogleFonts.montserrat(),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: reasonController,
+                decoration: InputDecoration(
+                  hintText: 'Enter reason for declining...',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (reasonController.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text('Please provide a reason for declining')),
+                  );
+                  return;
+                }
+                Navigator.of(context).pop(true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Mycolors().red,
+              ),
+              child: Text('Decline'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // If user canceled or didn't provide a reason, return
+    if (dialogResult != true || reasonController.text.trim().isEmpty) {
+      return;
+    }
+
+    String declineReason = reasonController.text.trim();
+
     try {
       FirebaseFirestore firestore = FirebaseFirestore.instance;
 
       if (isEdited) {
         // For edited courses, mark them as declined in pendingCourses
-        await firestore
-            .collection('pendingCourses')
-            .doc(courseId)
-            .update({'status': 'declined'});
+        await firestore.collection('pendingCourses').doc(courseId).update({
+          'status': 'declined',
+          'declineReason': declineReason,
+          'declinedAt': FieldValue.serverTimestamp(),
+        });
       } else {
         // For new courses, mark them as declined in the courses collection
-        await firestore
-            .collection('courses')
-            .doc(courseId)
-            .update({'status': 'declined'});
+        await firestore.collection('courses').doc(courseId).update({
+          'status': 'declined',
+          'declineReason': declineReason,
+          'declinedAt': FieldValue.serverTimestamp(),
+        });
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -476,11 +650,12 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
     try {
       FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-      // Update the course status to 'approved'
-      await firestore
-          .collection('courses')
-          .doc(courseId)
-          .update({'status': 'approved'});
+      // Update the course status to 'approved' and remove the removedAt timestamp
+      await firestore.collection('courses').doc(courseId).update({
+        'status': 'approved',
+        'removedAt': FieldValue.delete(),
+        'removedBy': FieldValue.delete(),
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Course restored successfully!')),
@@ -509,7 +684,7 @@ void _showChangesDialog(BuildContext context, Map<String, dynamic> data) {
               Text("Course Changes:",
                   style: TextStyle(fontWeight: FontWeight.bold)),
               if (courseChanges != null && courseChanges.isNotEmpty)
-                ...courseChanges.map((change) => Text("- $change")).toList()
+                ...courseChanges.map((change) => Text("- $change"))
               else
                 Text("No course changes."),
               SizedBox(height: 10),
@@ -543,6 +718,96 @@ void _showChangesDialog(BuildContext context, Map<String, dynamic> data) {
                 )
               else
                 Text("No module changes."),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Close"),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void _showDeclineReasonDialog(BuildContext context, Map<String, dynamic> data) {
+  String declineReason = data['declineReason'] ?? 'No reason provided';
+  String declinedAt = 'Unknown date';
+  String removedAt = 'Unknown date';
+  String removedBy = data['removedBy'] ?? 'Unknown';
+
+  if (data['declinedAt'] != null) {
+    Timestamp timestamp = data['declinedAt'];
+    declinedAt = DateFormat('yyyy-MM-dd HH:mm').format(timestamp.toDate());
+  }
+
+  if (data['removedAt'] != null) {
+    Timestamp timestamp = data['removedAt'];
+    removedAt = DateFormat('yyyy-MM-dd HH:mm').format(timestamp.toDate());
+  }
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text(
+          data['status'] == 'removed'
+              ? "Removal Information"
+              : "Decline Reason",
+          style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (data['status'] == 'declined') ...[
+                Text(
+                  "Declined on: $declinedAt",
+                  style: GoogleFonts.montserrat(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[700],
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  "Reason:",
+                  style: GoogleFonts.montserrat(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Text(
+                    declineReason,
+                    style: GoogleFonts.montserrat(),
+                  ),
+                ),
+              ] else if (data['status'] == 'removed') ...[
+                Text(
+                  "Removed on: $removedAt",
+                  style: GoogleFonts.montserrat(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[700],
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  "Removed by: $removedBy",
+                  style: GoogleFonts.montserrat(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ],
             ],
           ),
         ),

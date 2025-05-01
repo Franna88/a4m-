@@ -1,8 +1,7 @@
-import 'package:a4m/LandingPage/CourseListPage/ui/categoryNameStack.dart';
-import 'package:a4m/Student/commonUi/customTabBar.dart';
 import 'package:a4m/Student/dummyList/allStudentCourses.dart';
-import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../Themes/Constants/myColors.dart';
 
 class MyCoursesMain extends StatefulWidget {
   final void Function(int newPage, String courseId) changePageWithCourseId;
@@ -24,57 +23,119 @@ class _MyCoursesMainState extends State<MyCoursesMain> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CategoryNameStack(text: 'My Courses'),
-          const SizedBox(height: 15),
-          SizedBox(
-            height: 50,
-            width: 500,
-            child: CustomTabBar(
-              selectedIndex: _selectedIndex,
-              onTabSelected: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
+          Text(
+            'My Courses',
+            style: GoogleFonts.poppins(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
             ),
           ),
-          SizedBox(
-            width: MyUtility(context).width - 360,
-            height: MyUtility(context).height - 205,
-            child: IndexedStack(
-              index: _selectedIndex,
-              children: [
-                // 🔹 All Courses
-                AllStudentCourses(
-                  studentId: widget.studentId,
-                  onCourseTap: (courseId) {
-                    widget.changePageWithCourseId(7, courseId);
-                  },
-                ),
-                // 🔹 Active Courses (Incomplete)
-                AllStudentCourses(
-                  studentId: widget.studentId,
-                  filterByCompletion: false, // 🔹 Show only active courses
-                  onCourseTap: (courseId) {
-                    widget.changePageWithCourseId(7, courseId);
-                  },
-                ),
-                // 🔹 Completed Courses
-                AllStudentCourses(
-                  studentId: widget.studentId,
-                  filterByCompletion: true, // 🔹 Show only completed courses
-                  onCourseTap: (courseId) {
-                    widget.changePageWithCourseId(7, courseId);
-                  },
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
+            child: Row(
+              children: [
+                _buildTab('All Courses', 0),
+                _buildTab('In Progress', 1),
+                _buildTab('Completed', 2),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: IndexedStack(
+                index: _selectedIndex,
+                sizing: StackFit.expand,
+                children: [
+                  // All Courses
+                  AllStudentCourses(
+                    studentId: widget.studentId,
+                    onCourseTap: (courseId) {
+                      widget.changePageWithCourseId(7, courseId);
+                    },
+                  ),
+                  // In Progress Courses
+                  AllStudentCourses(
+                    studentId: widget.studentId,
+                    filterByCompletion: false,
+                    onCourseTap: (courseId) {
+                      widget.changePageWithCourseId(7, courseId);
+                    },
+                  ),
+                  // Completed Courses
+                  AllStudentCourses(
+                    studentId: widget.studentId,
+                    filterByCompletion: true,
+                    onCourseTap: (courseId) {
+                      widget.changePageWithCourseId(7, courseId);
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTab(String title, int index) {
+    final isSelected = _selectedIndex == index;
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => setState(() => _selectedIndex = index),
+          borderRadius: BorderRadius.circular(8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected ? Mycolors().green : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected ? Colors.white : Colors.grey[600],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

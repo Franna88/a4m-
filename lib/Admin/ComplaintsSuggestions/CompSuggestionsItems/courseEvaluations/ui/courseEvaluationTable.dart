@@ -14,6 +14,27 @@ class CourseEvaluationTable extends StatefulWidget {
 
 class _CourseEvaluationTableState extends State<CourseEvaluationTable> {
   final _service = ComplaintsSuggestionsService();
+  final Map<String, String> _studentNames = {};
+
+  Future<String> _getStudentName(String studentId) async {
+    if (_studentNames.containsKey(studentId)) {
+      return _studentNames[studentId]!;
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(studentId)
+          .get();
+
+      final name = doc.data()?['name'] ?? 'Unknown Student';
+      _studentNames[studentId] = name;
+      return name;
+    } catch (e) {
+      print('Error fetching student name: $e');
+      return 'Unknown Student';
+    }
+  }
 
   void _showDetailedEvaluation(Map<String, dynamic> evaluationData) {
     showDialog(
@@ -47,8 +68,8 @@ class _CourseEvaluationTableState extends State<CourseEvaluationTable> {
                 const SizedBox(height: 20),
                 _buildInfoRow(
                     'Course', evaluationData['courseName'] ?? 'Unknown'),
-                _buildInfoRow(
-                    'Student ID', evaluationData['studentId'] ?? 'Unknown'),
+                _buildInfoRow('Student',
+                    evaluationData['studentName'] ?? 'Unknown Student'),
                 _buildInfoRow('Date',
                     _formatDate(evaluationData['submittedAt'] as Timestamp)),
                 const Divider(height: 32),
@@ -75,35 +96,6 @@ class _CourseEvaluationTableState extends State<CourseEvaluationTable> {
                     evaluationData['suggestions'] ?? 'No response provided'),
                 _buildResponseSection('Would Recommend?',
                     '${evaluationData['recommendation'] ?? 'No response'}\nReason: ${evaluationData['recommendationReason'] ?? 'No reason provided'}'),
-
-                const SizedBox(height: 24),
-                if (evaluationData['status'] != 'resolved')
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          _service
-                              .markEvaluationAsResolved(evaluationData['id']);
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Mycolors().darkTeal,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                        ),
-                        child: Text(
-                          'Mark as Reviewed',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
               ],
             ),
           ),
@@ -239,49 +231,53 @@ class _CourseEvaluationTableState extends State<CourseEvaluationTable> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('course_evaluations')
-            .orderBy('submittedAt', descending: true)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error loading evaluations: ${snapshot.error}',
-                style: GoogleFonts.poppins(color: Colors.red),
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('course_evaluations')
+          .where('type', isEqualTo: 'course')
+          .orderBy('submittedAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error loading evaluations: ${snapshot.error}',
+              style: GoogleFonts.poppins(color: Colors.red),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final evaluations = snapshot.data!.docs;
+
+        if (evaluations.isEmpty) {
+          return Center(
+            child: Text(
+              'No course evaluations found',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.grey[600],
               ),
-            );
-          }
+            ),
+          );
+        }
 
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final evaluations = snapshot.data!.docs;
-
-          if (evaluations.isEmpty) {
-            return Center(
-              child: Text(
-                'No course evaluations found',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
-              ),
-            );
-          }
-
-          return TableStructure(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              DataTable(
+                headingRowColor: MaterialStateProperty.all(Colors.white),
+                dataRowColor: MaterialStateProperty.all(Colors.white),
+                columnSpacing: 40,
+                horizontalMargin: 0,
                 columns: [
                   'Course',
-                  'Student ID',
+                  'Student Name',
                   'Overall Rating',
-                  'Status',
                   'Date',
                   'Actions',
                 ]
@@ -290,7 +286,8 @@ class _CourseEvaluationTableState extends State<CourseEvaluationTable> {
                             column,
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w600,
-                              color: Mycolors().navyBlue,
+                              fontSize: 14,
+                              color: Colors.grey[800],
                             ),
                           ),
                         ))
@@ -303,62 +300,66 @@ class _CourseEvaluationTableState extends State<CourseEvaluationTable> {
 
                   return DataRow(
                     cells: [
-                      DataCell(Text(data['courseName'] ?? 'Unknown')),
-                      DataCell(Text(data['studentId'] ?? 'Unknown')),
-                      DataCell(_buildRatingStars(averageRating)),
                       DataCell(
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: data['status'] == 'resolved'
-                                ? Colors.green[100]
-                                : Colors.orange[100],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            data['status'] ?? 'pending',
-                            style: GoogleFonts.poppins(
-                              color: data['status'] == 'resolved'
-                                  ? Colors.green[800]
-                                  : Colors.orange[800],
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
+                        Text(
+                          data['courseName'] ?? 'Unknown',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.grey[800],
                           ),
                         ),
                       ),
                       DataCell(
-                          Text(_formatDate(data['submittedAt'] as Timestamp))),
-                      DataCell(
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.visibility),
-                              onPressed: () => _showDetailedEvaluation(data),
-                              tooltip: 'View Details',
-                            ),
-                            if (data['status'] != 'resolved')
-                              IconButton(
-                                icon: const Icon(Icons.check_circle_outline),
-                                onPressed: () =>
-                                    _service.markEvaluationAsResolved(doc.id),
-                                tooltip: 'Mark as Reviewed',
+                        FutureBuilder<String>(
+                          future: _getStudentName(data['studentId']),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              );
+                            }
+                            return Text(
+                              snapshot.data ?? 'Unknown Student',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: Colors.grey[800],
                               ),
-                          ],
+                            );
+                          },
+                        ),
+                      ),
+                      DataCell(_buildRatingStars(averageRating)),
+                      DataCell(
+                        Text(
+                          _formatDate(data['submittedAt'] as Timestamp),
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.grey[800],
+                          ),
+                        ),
+                      ),
+                      DataCell(
+                        IconButton(
+                          icon: const Icon(
+                            Icons.visibility_outlined,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () => _showDetailedEvaluation(data),
+                          tooltip: 'View Details',
                         ),
                       ),
                     ],
                   );
                 }).toList(),
               ),
-            ),
-          );
-        },
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -369,7 +370,7 @@ class _CourseEvaluationTableState extends State<CourseEvaluationTable> {
         return Icon(
           index < rating ? Icons.star : Icons.star_border,
           color: Colors.amber,
-          size: 16,
+          size: 18,
         );
       }),
     );

@@ -59,7 +59,7 @@ class _CertificatesMainStudentState extends State<CertificatesMainStudent> {
               String completionDate = await getCompletionDate(doc.id) ??
                   DateTime.now().toString().split(' ')[0];
 
-              // Get certificate price (could be stored in course or fixed)
+              // Get certificate price from the course data
               String certificatePrice = data['certificatePrice'] ?? 'R 299';
 
               // Get module and assessment counts
@@ -220,7 +220,7 @@ class _CertificatesMainStudentState extends State<CertificatesMainStudent> {
     double screenWidth = MediaQuery.of(context).size.width;
     int crossAxisCount = (screenWidth ~/ 400).clamp(1, 6);
 
-    return Container(
+    return SizedBox(
       width: MyUtility(context).width - 320,
       height: MyUtility(context).height - 80,
       child: Padding(

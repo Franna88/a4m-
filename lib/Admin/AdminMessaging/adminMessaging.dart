@@ -95,7 +95,7 @@ class _AdminMessagingState extends State<AdminMessaging> {
           ),
           // Main Content Area
           Expanded(
-            child: Container(
+            child: SizedBox(
               width: double.infinity,
               height: contentHeight,
               child: widget.child,

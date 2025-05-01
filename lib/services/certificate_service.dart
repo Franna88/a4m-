@@ -235,7 +235,7 @@ class CertificateService {
     try {
       await FirebaseFirestore.instance
           .collection('certificates')
-          .doc('${studentId}_${courseId}')
+          .doc('${studentId}_$courseId')
           .set({
         'studentId': studentId,
         'studentName': studentName,
@@ -248,7 +248,7 @@ class CertificateService {
       print('Certificate purchase recorded successfully');
     } catch (e) {
       print('Error recording certificate purchase: $e');
-      throw e;
+      rethrow;
     }
   }
 }

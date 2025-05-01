@@ -30,9 +30,15 @@ class MessagingService {
   bool canCommunicate(String role1, String role2) {
     final allowedCommunication = {
       'student': ['lecturer', 'admin'],
-      'lecturer': ['student', 'lecturer', 'admin', 'facilitator'],
-      'content_dev': ['admin'],
-      'admin': ['student', 'lecturer', 'content_dev', 'facilitator'],
+      'lecturer': [
+        'student',
+        'lecturer',
+        'admin',
+        'facilitator',
+        'content_dev'
+      ],
+      'content_dev': ['admin', 'lecturer'],
+      'admin': ['student', 'lecturer', 'content_dev', 'facilitator', 'admin'],
       'facilitator': ['lecturer', 'facilitator', 'admin'],
     };
 
@@ -49,6 +55,11 @@ class MessagingService {
 
     // Special case: lecturers can communicate with each other
     if (normalized1 == 'lecturer' && normalized2 == 'lecturer') {
+      return true;
+    }
+
+    // Special case: admins can communicate with each other
+    if (normalized1 == 'admin' && normalized2 == 'admin') {
       return true;
     }
 
@@ -408,9 +419,7 @@ class MessagingService {
         .map((snapshot) {
       return snapshot.docs.fold<int>(
         0,
-        (sum, doc) =>
-            sum +
-            ((doc.data() as Map<String, dynamic>)['unreadCount'] as int? ?? 0),
+        (sum, doc) => sum + ((doc.data())['unreadCount'] as int? ?? 0),
       );
     });
   }

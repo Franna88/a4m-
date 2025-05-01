@@ -304,7 +304,7 @@ class ComplaintsSuggestionsService {
     int count = reviews.docs.length;
 
     for (var doc in reviews.docs) {
-      final data = doc.data() as Map<String, dynamic>;
+      final data = doc.data();
       overallTotal += (data['rating'] as num).toDouble();
       teachingTotal += (data['teachingRating'] as num).toDouble();
       communicationTotal += (data['communicationRating'] as num).toDouble();

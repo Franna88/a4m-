@@ -25,10 +25,7 @@ class HeroSection extends StatelessWidget {
             textAlign: TextAlign.center,
             'CREATING BUSINESS\nEXELLENCE AND\nSUSTAINABILITY',
             style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 60,
-              fontWeight: FontWeight.bold
-            ),
+                color: Colors.white, fontSize: 60, fontWeight: FontWeight.bold),
           ),
           const SizedBox(
             height: 30,
@@ -37,13 +34,14 @@ class HeroSection extends StatelessWidget {
             textAlign: TextAlign.center,
             'EQUIP YOURSELF TO MEET AND MAINTAIN THE HIGH\nSTANDARDS IN THE MANUFACTURING INDUSTRY.',
             style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 30,
-               fontWeight: FontWeight.bold
-            ),
+                color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 30,),
-          OnHoverSignUpButton(onTap: onTap,)
+          const SizedBox(
+            height: 30,
+          ),
+          OnHoverSignUpButton(
+            onTap: onTap,
+          )
         ],
       ),
     );

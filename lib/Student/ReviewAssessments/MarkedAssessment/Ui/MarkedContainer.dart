@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../commonUi/pdfViewer.dart';
+import '../../../../Constants/myColors.dart';
 
 class MarkedContainer extends StatefulWidget {
   final String courseId;
@@ -32,8 +34,13 @@ class _MarkedContainerState extends State<MarkedContainer> {
 
   /// 🔹 Fetch only **marked** assessments from Firestore
   Future<void> fetchMarkedAssessments() async {
+    print('\n=== Fetching Marked Assessments ===');
+    print('Course ID: ${widget.courseId}');
+    print('Module ID: ${widget.moduleId}');
+    print('Student ID: ${widget.studentId}');
+
     try {
-      final submissionRef = FirebaseFirestore.instance
+      final moduleRef = FirebaseFirestore.instance
           .collection('courses')
           .doc(widget.courseId)
           .collection('modules')
@@ -41,154 +48,198 @@ class _MarkedContainerState extends State<MarkedContainer> {
           .collection('submissions')
           .doc(widget.studentId);
 
-      final submissionDoc = await submissionRef.get();
+      print('\nFetching submission document...');
+      final submissionDoc = await moduleRef.get();
 
-      if (submissionDoc.exists) {
-        final data = submissionDoc.data();
-        if (data != null && data.containsKey('submittedAssessments')) {
-          List<dynamic> allAssessments = data['submittedAssessments'];
+      if (!submissionDoc.exists) {
+        print('❌ ERROR: Submission document not found');
+        throw Exception('Submission document not found');
+      }
 
-          // Filter out assessments that have been marked
-          List<Map<String, dynamic>> marked = allAssessments
-              .where((assessment) => assessment.containsKey('mark'))
-              .map((assessment) => {
-                    'assessmentName': assessment['assessmentName'],
-                    'fileUrl': assessment['fileUrl'],
-                    'mark': assessment['mark'],
-                    'comment': assessment['comment'],
-                  })
-              .toList();
+      print('✅ Submission document found');
+      final data = submissionDoc.data();
+      print('Submission Data: $data');
 
-          setState(() {
-            markedAssessments = marked;
-          });
+      if (data == null) {
+        print('❌ ERROR: Submission data is null');
+        throw Exception('Submission data is null');
+      }
+
+      final submittedAssessments =
+          List<Map<String, dynamic>>.from(data['submittedAssessments'] ?? []);
+      print('Found ${submittedAssessments.length} submitted assessments');
+
+      final tempMarkedAssessments = <Map<String, dynamic>>[];
+
+      for (var assessment in submittedAssessments) {
+        print('\nProcessing assessment:');
+        print('Assessment Data: $assessment');
+
+        final mark = assessment['mark'];
+        print('Mark value: $mark (Type: ${mark.runtimeType})');
+
+        // Check if assessment is graded (has a mark)
+        if (mark != null &&
+            (mark is double || (mark is String && mark.isNotEmpty))) {
+          print('✅ Assessment is graded');
+
+          final markedAssessment = {
+            'name': assessment['assessmentName'],
+            'submittedAt': assessment['submittedAt'],
+            'mark': mark.toString(),
+            'comment': assessment['comment'] ?? '',
+            'fileUrl': assessment['fileUrl'],
+            'gradedAt': assessment['gradedAt'],
+            'gradedBy': assessment['gradedBy'],
+            'markedPdfUrl': assessment['markedPdfUrl'] ?? '',
+          };
+          print('Processed marked assessment: $markedAssessment');
+
+          tempMarkedAssessments.add(markedAssessment);
+        } else {
+          print('❌ Assessment is not graded');
         }
       }
+
+      print(
+          '\nTotal marked assessments found: ${tempMarkedAssessments.length}');
+
+      if (mounted) {
+        setState(() {
+          markedAssessments = tempMarkedAssessments;
+          isLoading = false;
+        });
+      }
     } catch (e) {
-      debugPrint('Error fetching marked assessments: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
+      print('\n❌ ERROR in fetchMarkedAssessments:');
+      print('Error: $e');
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error fetching marked assessments: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _viewSubmission(String fileUrl,
+      {bool isGradedPdf = false}) async {
+    print('\n=== Attempting to View Submission ===');
+    print('File URL: $fileUrl');
+
+    try {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+            appBar: AppBar(
+              title: Text(
+                isGradedPdf ? 'Graded Assessment' : 'Original Submission',
+                style: GoogleFonts.poppins(color: Colors.white),
+              ),
+              backgroundColor: Mycolors().darkGrey,
+            ),
+            body: StudentPdfViewer(
+              pdfUrl: fileUrl,
+              title: isGradedPdf ? 'Graded Assessment' : 'Original Submission',
+              showDownloadButton: true,
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      print('❌ Error opening file: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error opening file: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (markedAssessments.isEmpty) {
+      return Center(
+        child: Text(
+          'No marked assessments found',
+          style: GoogleFonts.montserrat(
+            fontSize: 16,
+            color: Colors.grey[600],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: markedAssessments.length,
+      itemBuilder: (context, index) {
+        final assessment = markedAssessments[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: ListTile(
+            title: Text(
+              assessment['name'],
+              style: GoogleFonts.montserrat(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Module 2: $moduleName',
+                  'Submitted: ${assessment['submittedAt']}',
+                  style: GoogleFonts.montserrat(),
+                ),
+                Text(
+                  'Mark: ${assessment['mark']}',
                   style: GoogleFonts.montserrat(
-                    fontSize: 18,
+                    color: Colors.green,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: markedAssessments.isEmpty
-                      ? const Center(child: Text('No marked assessments yet.'))
-                      : ListView.builder(
-                          itemCount: markedAssessments.length,
-                          itemBuilder: (context, index) {
-                            final assessment = markedAssessments[index];
-                            return _buildMarkedAssessmentCard(assessment);
-                          },
-                        ),
-                ),
+                if (assessment['comment'].isNotEmpty)
+                  Text(
+                    'Comment: ${assessment['comment']}',
+                    style: GoogleFonts.montserrat(),
+                  ),
               ],
             ),
-          );
-  }
-
-  /// 🔹 Build the marked assessment card with **Score, Download & Popup**
-  Widget _buildMarkedAssessmentCard(Map<String, dynamic> assessment) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                assessment['assessmentName'],
-                style: GoogleFonts.montserrat(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (assessment['fileUrl'].isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.visibility),
+                    onPressed: () async {
+                      await _viewSubmission(assessment['fileUrl']);
+                    },
+                    tooltip: 'View Submission',
+                  ),
+                if (assessment['markedPdfUrl']?.isNotEmpty == true)
+                  IconButton(
+                    icon: const Icon(Icons.grade),
+                    onPressed: () async {
+                      await _viewSubmission(assessment['markedPdfUrl'],
+                          isGradedPdf: true);
+                    },
+                    tooltip: 'View Graded PDF',
+                  ),
+              ],
             ),
-            Text(
-              '${assessment['mark']}/100', // 🔹 Display score on the container
-              style: GoogleFonts.montserrat(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-            IconButton(
-              onPressed: () => _showAssessmentPopup(assessment),
-              icon: const Icon(Icons.info, color: Colors.blue),
-            ),
-            IconButton(
-              onPressed: () => _downloadAssessment(assessment['fileUrl']),
-              icon: const Icon(Icons.download, color: Colors.green),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 🔹 **Show Popup with Mark & Comment**
-  void _showAssessmentPopup(Map<String, dynamic> assessment) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Assessment Details", style: GoogleFonts.montserrat()),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Assessment: ${assessment['assessmentName']}",
-                  style: GoogleFonts.montserrat(fontWeight: FontWeight.w500)),
-              const SizedBox(height: 10),
-              Text("Score: ${assessment['mark']}/100",
-                  style: GoogleFonts.montserrat(fontSize: 16)),
-              const SizedBox(height: 10),
-              Text("Comment: ${assessment['comment']}",
-                  style: GoogleFonts.montserrat(fontSize: 16)),
-            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Close"),
-            ),
-          ],
         );
       },
     );
-  }
-
-  /// 🔹 **Download File**
-  void _downloadAssessment(String fileUrl) async {
-    if (await canLaunch(fileUrl)) {
-      await launch(fileUrl);
-    } else {
-      debugPrint('Could not open file: $fileUrl');
-    }
   }
 }

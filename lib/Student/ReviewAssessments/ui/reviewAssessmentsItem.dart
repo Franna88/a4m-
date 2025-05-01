@@ -1,10 +1,7 @@
-import 'package:a4m/CommonComponents/buttons/onHoverButton.dart';
-import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_network/image_network.dart';
-
-import '../../../CommonComponents/displayCardIcons.dart';
+import '../../../Themes/Constants/myColors.dart';
 
 class ReviewAssessmentsItem extends StatelessWidget {
   final String moduleName;
@@ -14,107 +11,297 @@ class ReviewAssessmentsItem extends StatelessWidget {
   final String assessmentCount;
   final Function() onTap;
   final bool isPassed;
-  const ReviewAssessmentsItem(
-      {super.key,
-      required this.moduleName,
-      required this.moduleImage,
-      required this.moduleDescription,
-      required this.moduleCount,
-      required this.assessmentCount,
-      required this.onTap,
-      required this.isPassed});
+
+  const ReviewAssessmentsItem({
+    super.key,
+    required this.moduleName,
+    required this.moduleImage,
+    required this.moduleDescription,
+    required this.moduleCount,
+    required this.assessmentCount,
+    required this.onTap,
+    required this.isPassed,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 800;
+
     return Container(
-      width: MyUtility(context).width - 360,
-      height: 200,
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(width: 2),
-          color: Colors.white),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Container(
-            height: 200,
-            width: 200,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(5),
-                bottomLeft: Radius.circular(5),
-              ),
-            ),
-            child: ImageNetwork(
-              image: moduleImage,
-              height: 200,
-              width: 200,
-              fitAndroidIos: BoxFit.cover,
-              fitWeb: BoxFitWeb.cover,
-              onLoading: const CircularProgressIndicator(), // Loading widget
-              onError:
-                  const Icon(Icons.error, color: Colors.red), // Error widget
-            ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
-          Container(
-            width: MyUtility(context).width - 564,
-            height: 200,
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    moduleName,
-                    style: GoogleFonts.montserrat(
-                        fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                  const SizedBox(
-                    height: 6,
-                  ),
-                  Container(
-                    width: MyUtility(context).width - 584,
-                    child: Text(
-                      moduleDescription,
-                      style: GoogleFonts.montserrat(
-                          fontWeight: FontWeight.w400, fontSize: 14),
-                    ),
-                  ),
-                  const Spacer(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: Row(
-                          children: [
-                            DisplayCardIcons(
-                                icon: Icons.format_list_numbered,
-                                count: assessmentCount,
-                                tooltipText: 'Assessments'),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        isPassed ? 'Module Passed' : 'In Progress',
-                        style: GoogleFonts.inter(
-                            color: isPassed
-                                ? Color.fromRGBO(7, 165, 55, 1)
-                                : Colors.grey,
-                            fontWeight: FontWeight.w600),
-                      ),
-                      OnHoverButton(
-                        onTap: onTap,
-                        buttonText: 'View Results',
-                      )
-                    ],
-                  )
-                ],
-              ),
-            ),
-          )
         ],
       ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: isSmallScreen
+                ? _buildMobileLayout(context)
+                : _buildDesktopLayout(context),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopLayout(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildModuleImage(),
+        const SizedBox(width: 24),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildModuleHeader(),
+              const SizedBox(height: 12),
+              _buildModuleDescription(),
+              const SizedBox(height: 24),
+              _buildModuleStats(),
+              const SizedBox(height: 24),
+              _buildViewResultsButton(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildModuleImage(),
+        const SizedBox(height: 16),
+        _buildModuleHeader(),
+        const SizedBox(height: 12),
+        _buildModuleDescription(),
+        const SizedBox(height: 16),
+        _buildModuleStats(),
+        const SizedBox(height: 16),
+        _buildViewResultsButton(),
+      ],
+    );
+  }
+
+  Widget _buildModuleImage() {
+    return Stack(
+      children: [
+        Container(
+          width: 160,
+          height: 160,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: ImageNetwork(
+              image: moduleImage,
+              height: 160,
+              width: 160,
+              fitAndroidIos: BoxFit.cover,
+              fitWeb: BoxFitWeb.cover,
+              onLoading: Container(
+                color: Colors.grey[200],
+                child: Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Mycolors().green),
+                  ),
+                ),
+              ),
+              onError: Container(
+                color: Colors.grey[200],
+                child: Icon(Icons.error, color: Colors.red),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(12),
+                bottomRight: Radius.circular(12),
+              ),
+            ),
+            child: FractionallySizedBox(
+              widthFactor: isPassed ? 1.0 : 0.0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isPassed ? Mycolors().green : Colors.orange,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(12),
+                    bottomRight: Radius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModuleHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            moduleName,
+            style: GoogleFonts.poppins(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 4,
+          ),
+          decoration: BoxDecoration(
+            color: isPassed
+                ? Mycolors().green.withOpacity(0.1)
+                : Colors.orange.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            isPassed ? 'Passed' : 'In Progress',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: isPassed ? Mycolors().green : Colors.orange,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModuleDescription() {
+    return Text(
+      moduleDescription,
+      style: GoogleFonts.poppins(
+        fontSize: 14,
+        color: Colors.grey[600],
+        height: 1.5,
+      ),
+      maxLines: 3,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildModuleStats() {
+    return Wrap(
+      spacing: 24,
+      runSpacing: 12,
+      children: [
+        _buildStatItem(
+          Icons.library_books_outlined,
+          '$moduleCount Module',
+          Colors.blue,
+        ),
+        _buildStatItem(
+          Icons.assignment_outlined,
+          '$assessmentCount Assessments',
+          Colors.orange,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildViewResultsButton() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Mycolors().green,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 12,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'View Results',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.arrow_forward, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(IconData icon, String text, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: color,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: Colors.grey[700],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

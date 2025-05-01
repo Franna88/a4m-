@@ -1,5 +1,9 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -19,13 +23,60 @@ class _FacilitatorSignUpState extends State<FacilitatorSignUp> {
   final passwordController = TextEditingController();
   final nameController = TextEditingController();
   final phoneNumController = TextEditingController();
-  final companyNameController = TextEditingController();
-  final companyEmailController = TextEditingController();
 
-  bool isFirstStep = true;
+  File? cvFile; // Mobile/Desktop
+  Uint8List? cvFileBytes; // Web: store the file as bytes
+  String? cvFileName;
+
   bool isLoading = false;
 
+  Future<void> _pickCVFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        if (kIsWeb) {
+          final fileBytes = result.files.single.bytes;
+          if (fileBytes != null) {
+            setState(() {
+              cvFileBytes = fileBytes;
+              cvFileName =
+                  result.files.single.name; // Save file name for reference
+            });
+            print('File picked successfully (web): $cvFileName');
+          } else {
+            _showErrorDialog('CV upload was cancelled or failed.');
+          }
+        } else {
+          final filePath = result.files.single.path;
+          if (filePath != null) {
+            setState(() {
+              cvFile = File(filePath);
+            });
+            print(
+                'File picked successfully (mobile): ${result.files.single.name}');
+          } else {
+            _showErrorDialog('CV upload was cancelled or failed.');
+          }
+        }
+      } else {
+        _showErrorDialog('CV upload was cancelled or failed.');
+      }
+    } catch (e) {
+      print('Error during file pick: $e');
+      _showErrorDialog('An error occurred while picking the file.');
+    }
+  }
+
   Future<void> _signUpFacilitator() async {
+    if ((!kIsWeb && cvFile == null) || (kIsWeb && cvFileBytes == null)) {
+      _showErrorDialog('Please upload your CV before signing up.');
+      return;
+    }
+
     setState(() {
       isLoading = true;
     });
@@ -35,20 +86,15 @@ class _FacilitatorSignUpState extends State<FacilitatorSignUp> {
       String password = passwordController.text.trim();
       String name = nameController.text.trim();
       String phoneNumber = phoneNumController.text.trim();
-      String companyName = companyNameController.text.trim();
-      String companyEmail = companyEmailController.text.trim();
 
       if (email.isEmpty ||
           password.isEmpty ||
-          phoneNumber.isEmpty ||
-          companyName.isEmpty ||
-          companyEmail.isEmpty) {
-        _showErrorDialog('please fill in all required fields');
-        setState(
-          () {
-            isLoading = false;
-          },
-        );
+          name.isEmpty ||
+          phoneNumber.isEmpty) {
+        _showErrorDialog('Please fill in all required fields');
+        setState(() {
+          isLoading = false;
+        });
         return;
       }
 
@@ -56,17 +102,39 @@ class _FacilitatorSignUpState extends State<FacilitatorSignUp> {
           .createUserWithEmailAndPassword(email: email, password: password);
       String uid = userCredential.user!.uid;
 
-      // save facilitator profile
+      // Upload CV
+      final fileName = '$uid.pdf';
+      final storageRef = FirebaseStorage.instance.ref().child('CVs/$fileName');
+
+      String cvUrl;
+      if (kIsWeb) {
+        // Web: Upload using bytes
+        UploadTask uploadTask = storageRef.putData(cvFileBytes!);
+        TaskSnapshot storageSnapshot = await uploadTask;
+        cvUrl = await storageSnapshot.ref.getDownloadURL();
+      } else {
+        // Mobile/Desktop: Upload using file
+        UploadTask uploadTask = storageRef.putFile(cvFile!);
+        TaskSnapshot storageSnapshot = await uploadTask;
+        cvUrl = await storageSnapshot.ref.getDownloadURL();
+      }
+
+      //submission date
+      String submissionDate = DateTime.now().toIso8601String().split('T')[0];
+
+      // Save facilitator profile
       await FirebaseFirestore.instance.collection('Users').doc(uid).set({
         'userType': 'facilitator',
         'name': name,
         'email': email,
         'phoneNumber': phoneNumber,
-        'companyName': companyName,
-        'companyEmail': companyEmail,
+        'cvUrl': cvUrl,
+        'status': 'pending',
+        'submissionDate': submissionDate,
       });
 
-      _showSuccessDialog('Registration successful.');
+      _showSuccessDialog(
+          'Registration successful. Please wait for admin approval.');
     } catch (e) {
       print('Error during signup: $e');
       _showErrorDialog('An error occurred. Please try again.');
@@ -106,7 +174,6 @@ class _FacilitatorSignUpState extends State<FacilitatorSignUp> {
             child: const Text('Okay'),
             onPressed: () {
               Navigator.of(ctx).pop();
-              // Optionally navigate to login or some other page
             },
           ),
         ],
@@ -137,84 +204,75 @@ class _FacilitatorSignUpState extends State<FacilitatorSignUp> {
               ),
             ),
             const SizedBox(height: 25),
-
-            // First Step: Full Name and Phone Number
-            if (isFirstStep) ...[
-              SizedBox(
-                width: 380,
-                child: MyTextFields(
-                  inputController: nameController,
-                  headerText: "Full Name",
-                  hintText: 'Name and surname',
-                  keyboardType: '',
-                ),
+            SizedBox(
+              width: 380,
+              child: MyTextFields(
+                inputController: nameController,
+                headerText: "Full Name *",
+                hintText: 'Name and surname',
+                keyboardType: '',
               ),
-              const SizedBox(height: 15),
-              SizedBox(
-                width: 380,
-                child: MyTextFields(
-                  inputController: phoneNumController,
-                  headerText: "Phone Number",
-                  hintText: '082 222 959 332',
-                  keyboardType: 'intType',
-                ),
+            ),
+            const SizedBox(height: 15),
+            SizedBox(
+              width: 380,
+              child: MyTextFields(
+                inputController: phoneNumController,
+                headerText: "Phone Number *",
+                hintText: '082 222 959 332',
+                keyboardType: 'intType',
               ),
-              const SizedBox(height: 15),
-              SizedBox(
-                width: 380,
-                child: MyTextFields(
-                  inputController: emailController,
-                  headerText: "Email",
-                  hintText: 'Enter your email',
-                  keyboardType: 'email',
-                ),
+            ),
+            const SizedBox(height: 15),
+            SizedBox(
+              width: 380,
+              child: MyTextFields(
+                inputController: emailController,
+                headerText: "Email *",
+                hintText: 'Enter your email',
+                keyboardType: 'email',
               ),
-              const SizedBox(height: 15),
-              SizedBox(
-                width: 380,
-                child: MyTextFields(
-                  inputController: passwordController,
-                  headerText: "Password",
-                  hintText: 'Enter your password',
-                  keyboardType: '',
-                ),
+            ),
+            const SizedBox(height: 15),
+            SizedBox(
+              width: 380,
+              child: MyTextFields(
+                inputController: passwordController,
+                headerText: "Password *",
+                hintText: 'Enter your password',
+                keyboardType: '',
               ),
-              const SizedBox(height: 15),
-            ] else ...[
-              SizedBox(
-                width: 380,
-                child: MyTextFields(
-                  inputController: companyNameController,
-                  headerText: "Company Name",
-                  keyboardType: '',
-                ),
+            ),
+            const SizedBox(height: 15),
+            SizedBox(
+              width: 380,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Please Upload Your CV *',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  InkWell(
+                    onTap: _pickCVFile,
+                    child: cvFile == null && cvFileBytes == null
+                        ? Image.asset('images/upload.png')
+                        : const Icon(Icons.check, color: Colors.green),
+                  ),
+                ],
               ),
-              const SizedBox(height: 15),
-              SizedBox(
-                width: 380,
-                child: MyTextFields(
-                  inputController: companyEmailController,
-                  headerText: "Company Email",
-                  keyboardType: 'email',
-                ),
-              ),
-            ],
-
+            ),
             const SizedBox(height: 25),
             isLoading
                 ? CircularProgressIndicator()
                 : CustomButton(
-                    buttonText: isFirstStep ? 'Next' : 'Sign Up',
+                    buttonText: 'Sign Up',
                     buttonColor: Mycolors().blue,
-                    onPressed: () {
-                      if (isFirstStep) {
-                        setState(() {
-                          isFirstStep = false; // Move to the next step
-                        });
-                      } else {
-                        _signUpFacilitator(); // Handle sign-up submission
-                      }
-                    },
+                    onPressed: _signUpFacilitator,
                     width: 120,
                   ),
           ],

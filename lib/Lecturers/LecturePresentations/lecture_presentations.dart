@@ -41,7 +41,7 @@ class _LecturePresentationsState extends State<LecturePresentations> {
     return SingleChildScrollView(
       child: Column(
         children: [
-          Container(
+          SizedBox(
             width: MyUtility(context).width - 320,
             height: MyUtility(context).height - 80,
             child: Padding(

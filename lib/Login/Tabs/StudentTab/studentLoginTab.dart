@@ -1,6 +1,5 @@
 import 'package:a4m/CommonComponents/buttons/CustomButton.dart';
 import 'package:a4m/CommonComponents/inputFields/myTextFields.dart';
-import 'package:a4m/Student/studentMain.dart';
 import 'package:a4m/Student/StudentCourseBrowse/studentCourseBrowse.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/Login/Tabs/StudentTab/studentSignUp.dart';

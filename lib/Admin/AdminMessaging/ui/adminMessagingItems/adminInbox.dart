@@ -15,13 +15,13 @@ class AdminInbox extends StatefulWidget {
   final String? selectedUserType;
 
   const AdminInbox({
-    Key? key,
+    super.key,
     required this.currentUserId,
     required this.messagingService,
     this.selectedUserName,
     this.selectedUserId,
     this.selectedUserType,
-  }) : super(key: key);
+  });
 
   @override
   State<AdminInbox> createState() => _AdminInboxState();

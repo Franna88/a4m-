@@ -1,14 +1,15 @@
 import 'package:a4m/myutility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:image_network/image_network.dart';
 
 class LectureDashboardProfile extends StatefulWidget {
   final String lecturerId;
 
   const LectureDashboardProfile({
-    Key? key,
-    required this.lecturerId, // Pass the lecturer ID to fetch data
-  }) : super(key: key);
+    super.key,
+    required this.lecturerId,
+  });
 
   @override
   State<LectureDashboardProfile> createState() =>
@@ -16,9 +17,9 @@ class LectureDashboardProfile extends StatefulWidget {
 }
 
 class _LectureDashboardProfileState extends State<LectureDashboardProfile> {
-  String profileImageUrl = 'images/person2.png'; // Default profile image
-  String userName = 'Loading...'; // Placeholder name
-  final double userRating = 3.5; // Example rating, replace if needed
+  String profileImageUrl = 'images/person2.png';
+  String userName = 'Loading...';
+  final double userRating = 3.5;
 
   @override
   void initState() {
@@ -28,9 +29,6 @@ class _LectureDashboardProfileState extends State<LectureDashboardProfile> {
 
   Future<void> _fetchLecturerDetails() async {
     try {
-      print("Fetching details for lecturer ID: ${widget.lecturerId}");
-
-      // Directly fetch the document using the lecturerId
       var lecturerDoc = await FirebaseFirestore.instance
           .collection('Users')
           .doc(widget.lecturerId)
@@ -38,21 +36,17 @@ class _LectureDashboardProfileState extends State<LectureDashboardProfile> {
 
       if (lecturerDoc.exists) {
         var lecturerData = lecturerDoc.data();
-
         setState(() {
           userName = lecturerData?['name'] ?? 'Unknown Lecturer';
-          profileImageUrl = lecturerData?['profileImageUrl'] ?? profileImageUrl;
+          profileImageUrl =
+              lecturerData?['profileImageUrl'] ?? 'images/person2.png';
         });
-
-        print("Fetched name: $userName, Profile Image: $profileImageUrl");
       } else {
         setState(() {
           userName = 'Lecturer Not Found';
         });
-        print("No lecturer found with ID: ${widget.lecturerId}");
       }
     } catch (e) {
-      print("Error fetching lecturer details: $e");
       setState(() {
         userName = 'Error Loading Name';
       });
@@ -61,67 +55,90 @@ class _LectureDashboardProfileState extends State<LectureDashboardProfile> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: MyUtility(context).width * 0.26,
-        height: MyUtility(context).height * 0.52,
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              blurRadius: 2.0,
-              spreadRadius: 2.0,
-              offset: const Offset(0, 3),
+    return Container(
+      height: 200,
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 4.0,
+            spreadRadius: 2.0,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          const Text(
+            'Welcome Back',
+            style: TextStyle(
+              fontSize: 24.0,
+              fontWeight: FontWeight.bold,
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            const Text(
-              'Welcome Back',
-              style: TextStyle(
-                fontSize: 28.0,
-                fontWeight: FontWeight.bold,
+          ),
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey.shade200, width: 2),
+            ),
+            child: ClipOval(
+              child: profileImageUrl.startsWith('http')
+                  ? ImageNetwork(
+                      image: profileImageUrl,
+                      height: 80,
+                      width: 80,
+                      duration: 500,
+                      onLoading: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      onError: Container(
+                        decoration: const BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage('images/person2.png'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Image.asset(
+                      profileImageUrl,
+                      fit: BoxFit.cover,
+                    ),
+            ),
+          ),
+          Text(
+            userName,
+            style: const TextStyle(
+              fontSize: 16.0,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.star,
+                color: Colors.amber,
+                size: 20.0,
               ),
-            ),
-            CircleAvatar(
-              radius: 88,
-              backgroundImage: NetworkImage(profileImageUrl),
-            ),
-            const SizedBox(height: 16.0),
-            Text(
-              userName,
-              style: const TextStyle(
-                fontSize: 20.0,
-                fontWeight: FontWeight.bold,
+              const SizedBox(width: 4.0),
+              Text(
+                '${userRating.toStringAsFixed(1)} Rating',
+                style: const TextStyle(
+                  fontSize: 14.0,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            const SizedBox(height: 8.0),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.star,
-                  color: Colors.black,
-                  size: 20.0,
-                ),
-                const SizedBox(width: 4.0),
-                Text(
-                  '${userRating.toStringAsFixed(1)} Rating',
-                  style: const TextStyle(
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }

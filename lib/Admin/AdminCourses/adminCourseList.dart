@@ -29,7 +29,7 @@ class _AdminCourseListState extends State<AdminCourseList> {
             height: 20,
           ),
           Container(
-            height: MyUtility(context).height * 0.75 - 50,
+            height: MyUtility(context).height * 0.75 - 53,
             width: MyUtility(context).width - 320,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.only(

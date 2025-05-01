@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../Constants/myColors.dart';
 import '../../../../myutility.dart';
@@ -13,6 +15,52 @@ class FacilitatorTotalStudents extends StatefulWidget {
 }
 
 class _FacilitatorTotalStudentsState extends State<FacilitatorTotalStudents> {
+  int _totalStudents = 0;
+  int _monthlyStudents = 0;
+  bool _isLoading = true;
+  final String _facilitatorId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStudentData();
+  }
+
+  Future<void> _fetchStudentData() async {
+    if (_facilitatorId.isEmpty) return;
+
+    try {
+      setState(() => _isLoading = true);
+
+      // Get all students from facilitatorStudents subcollection
+      QuerySnapshot studentsSnapshot = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(_facilitatorId)
+          .collection('facilitatorStudents')
+          .get();
+
+      // Get current month's students
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
+
+      QuerySnapshot monthlySnapshot = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(_facilitatorId)
+          .collection('facilitatorStudents')
+          .where('createdAt', isGreaterThanOrEqualTo: startOfMonth)
+          .get();
+
+      setState(() {
+        _totalStudents = studentsSnapshot.docs.length;
+        _monthlyStudents = monthlySnapshot.docs.length;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching student data: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -48,37 +96,39 @@ class _FacilitatorTotalStudentsState extends State<FacilitatorTotalStudents> {
             ],
           ),
           const Spacer(),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                '120',
-                // totalStudents.toString(),
-                style: const TextStyle(
-                  fontSize: 40.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.arrow_upward,
-                    color: Mycolors().green,
-                    size: 24.0,
-                  ),
-                  Text(
-                    '4',
-                    // monthlyStudents.toString(),
-                    style: const TextStyle(
-                      fontSize: 20.0,
-                      fontWeight: FontWeight.bold,
+          _isLoading
+              ? CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Mycolors().green),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      _totalStudents.toString(),
+                      style: const TextStyle(
+                        fontSize: 40.0,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
-              )
-            ],
-          ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.arrow_upward,
+                          color: Mycolors().green,
+                          size: 24.0,
+                        ),
+                        Text(
+                          _monthlyStudents.toString(),
+                          style: const TextStyle(
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
           const Spacer(),
           Row(
             mainAxisSize: MainAxisSize.min,

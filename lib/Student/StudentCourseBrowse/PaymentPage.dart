@@ -8,10 +8,10 @@ class PaymentPage extends StatefulWidget {
   final Function() onPaymentComplete;
 
   const PaymentPage({
-    Key? key,
+    super.key,
     required this.courseData,
     required this.onPaymentComplete,
-  }) : super(key: key);
+  });
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();

@@ -10,16 +10,18 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_network/image_network.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 
 class EditProfileDialog extends StatefulWidget {
   final String userId;
   final String userType;
 
   const EditProfileDialog({
-    Key? key,
+    super.key,
     required this.userId,
     required this.userType,
-  }) : super(key: key);
+  });
 
   @override
   State<EditProfileDialog> createState() => _EditProfileDialogState();
@@ -40,6 +42,13 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
   // For image upload
   Uint8List? _selectedImageBytes;
   String? _profileImageUrl;
+
+  // For CV upload
+  File? _cvFile; // Mobile/Desktop
+  Uint8List? _cvFileBytes; // Web
+  String? _cvFileName;
+  String? _currentCvUrl;
+  bool _isUploadingCv = false;
 
   @override
   void initState() {
@@ -78,6 +87,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
           _descriptionController.text = _userData['description'] ?? '';
           _idController.text = _userData['idNumber'] ?? '';
           _profileImageUrl = _userData['profileImageUrl'];
+          _currentCvUrl = _userData['cvUrl'];
         });
       }
     } catch (e) {
@@ -149,6 +159,74 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
     }
   }
 
+  Future<void> _pickCVFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        if (kIsWeb) {
+          final fileBytes = result.files.single.bytes;
+          if (fileBytes != null) {
+            setState(() {
+              _cvFileBytes = fileBytes;
+              _cvFileName = result.files.single.name;
+            });
+            print('CV file picked successfully (web): $_cvFileName');
+          }
+        } else {
+          final filePath = result.files.single.path;
+          if (filePath != null) {
+            setState(() {
+              _cvFile = File(filePath);
+              _cvFileName = result.files.single.name;
+            });
+            print('CV file picked successfully (mobile): $_cvFileName');
+          }
+        }
+      }
+    } catch (e) {
+      print('Error picking CV file: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick CV file')),
+      );
+    }
+  }
+
+  Future<String?> _uploadCV() async {
+    if (_cvFileBytes == null && _cvFile == null) return _currentCvUrl;
+
+    setState(() {
+      _isUploadingCv = true;
+    });
+
+    try {
+      final storage = FirebaseStorage.instance;
+      final fileRef = storage.ref().child('CVs/${widget.userId}.pdf');
+
+      if (kIsWeb && _cvFileBytes != null) {
+        await fileRef.putData(_cvFileBytes!);
+      } else if (_cvFile != null) {
+        await fileRef.putFile(_cvFile!);
+      }
+
+      final downloadUrl = await fileRef.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      print('Error uploading CV: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to upload CV')),
+      );
+      return null;
+    } finally {
+      setState(() {
+        _isUploadingCv = false;
+      });
+    }
+  }
+
   Future<void> _saveProfileData() async {
     setState(() {
       _isLoading = true;
@@ -157,6 +235,12 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
     try {
       // Upload profile image if changed
       final imageUrl = await _uploadProfileImage();
+
+      // Upload CV if changed (only for lecturers)
+      String? cvUrl;
+      if (widget.userType == 'lecturer') {
+        cvUrl = await _uploadCV();
+      }
 
       // Update Firestore document
       Map<String, dynamic> updateData = {
@@ -168,6 +252,10 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 
       if (imageUrl != null) {
         updateData['profileImageUrl'] = imageUrl;
+      }
+
+      if (cvUrl != null) {
+        updateData['cvUrl'] = cvUrl;
       }
 
       await FirebaseFirestore.instance
@@ -220,7 +308,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: _isLoading || _isUploading
+        child: _isLoading || _isUploading || _isUploadingCv
             ? Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
                 child: Column(
@@ -258,7 +346,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                                             curve: Curves.easeIn,
                                             onPointer: true,
                                             debugPrint: false,
-                                            fullScreen: false,
                                             fitAndroidIos: BoxFit.cover,
                                             fitWeb: BoxFitWeb.cover,
                                             borderRadius:
@@ -426,6 +513,60 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                             hintText: 'Tell us about yourself',
                             keyboardType: 'multiline',
                           ),
+                          // CV Upload section for lecturers and facilitators
+                          if (widget.userType == 'lecturer' ||
+                              widget.userType == 'facilitator') ...[
+                            SizedBox(height: 20),
+                            Container(
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'CV Document',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        _cvFileName ??
+                                            (_currentCvUrl != null
+                                                ? 'Current CV'
+                                                : 'No CV uploaded'),
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      ElevatedButton.icon(
+                                        onPressed:
+                                            _isUploadingCv ? null : _pickCVFile,
+                                        icon: Icon(_cvFileName != null
+                                            ? Icons.check
+                                            : Icons.upload_file),
+                                        label: Text(_cvFileName != null
+                                            ? 'CV Selected'
+                                            : 'Update CV'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Mycolors().blue,
+                                          foregroundColor: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

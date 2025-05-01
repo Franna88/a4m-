@@ -64,7 +64,7 @@ class _StudentListState extends State<StudentList> {
       columns = ((screenWidth - 300) / itemWidth).floor().clamp(1, 3);
     }
 
-    return Container(
+    return SizedBox(
       width: double.infinity,
       height: MyUtility(context).height - 110,
       child: Column(

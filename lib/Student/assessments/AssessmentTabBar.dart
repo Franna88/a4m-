@@ -5,6 +5,7 @@ class AssessmentTabBar extends StatelessWidget {
   final Function(int) onTabSelected;
 
   const AssessmentTabBar({
+    super.key,
     required this.selectedIndex,
     required this.onTabSelected,
   });

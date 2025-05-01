@@ -423,8 +423,9 @@ class _ContentDevMessagesMainState extends State<ContentDevMessagesMain> {
   }
 
   void _sendMessage() {
-    if (_messageController.text.trim().isEmpty || _selectedChatId == null)
+    if (_messageController.text.trim().isEmpty || _selectedChatId == null) {
       return;
+    }
 
     _messagingService.sendMessage(
       chatId: _selectedChatId!,

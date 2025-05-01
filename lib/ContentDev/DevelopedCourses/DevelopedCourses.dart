@@ -28,15 +28,21 @@ class _DevelopedCoursesState extends State<DevelopedCourses> {
     try {
       print("Fetching courses created by: ${widget.contentDevId}");
 
-      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+      // Fetch courses from both collections
+      QuerySnapshot coursesSnapshot = await FirebaseFirestore.instance
           .collection('courses')
-          .where('createdBy',
-              isEqualTo: widget.contentDevId) // Filter by createdBy
+          .where('createdBy', isEqualTo: widget.contentDevId)
+          .get();
+
+      QuerySnapshot pendingCoursesSnapshot = await FirebaseFirestore.instance
+          .collection('pendingCourses')
+          .where('createdBy', isEqualTo: widget.contentDevId)
           .get();
 
       List<Map<String, dynamic>> tempCourses = [];
 
-      for (var doc in querySnapshot.docs) {
+      // Process regular courses
+      for (var doc in coursesSnapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
 
         // Fetch module data to calculate assessments
@@ -65,6 +71,43 @@ class _DevelopedCoursesState extends State<DevelopedCourses> {
           'moduleAmount': moduleSnapshot.size,
           'totalStudents': students.length.toString(),
           'totalAssessments': totalAssessments.toString(),
+          'status': data['status'] ?? 'approved',
+          'declineReason': data['declineReason'],
+        });
+      }
+
+      // Process pending courses
+      for (var doc in pendingCoursesSnapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+
+        // Fetch module data to calculate assessments
+        QuerySnapshot moduleSnapshot = await FirebaseFirestore.instance
+            .collection('pendingCourses')
+            .doc(doc.id)
+            .collection('modules')
+            .get();
+
+        int totalAssessments = 0;
+        for (var module in moduleSnapshot.docs) {
+          final moduleData = module.data() as Map<String, dynamic>;
+          if (moduleData.containsKey('assessmentsPdfUrl')) {
+            totalAssessments++;
+          }
+        }
+
+        // Fetch students count
+        List students = data['students'] ?? [];
+
+        tempCourses.add({
+          'id': doc.id,
+          'courseName': data['courseName'] ?? 'No Name',
+          'courseDescription': data['courseDescription'] ?? '',
+          'courseImage': data['courseImageUrl'] ?? '',
+          'moduleAmount': moduleSnapshot.size,
+          'totalStudents': students.length.toString(),
+          'totalAssessments': totalAssessments.toString(),
+          'status': data['status'] ?? 'pending',
+          'declineReason': data['declineReason'],
         });
       }
 
@@ -91,7 +134,7 @@ class _DevelopedCoursesState extends State<DevelopedCourses> {
     double screenWidth = MediaQuery.of(context).size.width;
     int crossAxisCount = (screenWidth ~/ 400).clamp(1, 6);
 
-    return Container(
+    return SizedBox(
       width: MyUtility(context).width - 320,
       height: MyUtility(context).height - 80,
       child: Padding(
@@ -164,6 +207,8 @@ class _DevelopedCoursesState extends State<DevelopedCourses> {
                                     changePage: (index) =>
                                         widget.changePageWithCourseId(
                                             index, course['id']),
+                                    courseStatus: course['status'],
+                                    declineReason: course['declineReason'],
                                   ),
                                 ),
                             ],

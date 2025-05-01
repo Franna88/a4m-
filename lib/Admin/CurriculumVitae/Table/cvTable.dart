@@ -6,9 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/TableWidgets/tableStructure.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CvTable extends StatefulWidget {
-  const CvTable({super.key});
+  final String? userType;
+
+  const CvTable({
+    super.key,
+    this.userType,
+  });
 
   @override
   State<CvTable> createState() => applicants();
@@ -20,11 +26,18 @@ class applicants extends State<CvTable> {
     List<Map<String, dynamic>> pendingCvList = [];
 
     try {
-      // get 'pending' applicants
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
+      // Create base query
+      Query query = FirebaseFirestore.instance
           .collection('Users')
-          .where('status', isEqualTo: 'pending')
-          .get();
+          .where('status', isEqualTo: 'pending');
+
+      // Add userType filter if specified
+      if (widget.userType != null) {
+        query = query.where('userType', isEqualTo: widget.userType);
+      }
+
+      // Execute query
+      QuerySnapshot snapshot = await query.get();
 
       for (var doc in snapshot.docs) {
         pendingCvList.add({
@@ -207,14 +220,10 @@ class applicants extends State<CvTable> {
                               // download using course['cvUrl']
                               String cvUrl = course['cvUrl'];
                               print('Download CV from: $cvUrl');
-
-                              // Update status to 'seen' after clicking download
-                              await FirebaseFirestore.instance
-                                  .collection('Users')
-                                  .doc(course['id'])
-                                  .update({'status': 'seen'});
-                              setState(
-                                  () {}); // Refresh the table after updating status
+                              // Open the CV in a new window/tab
+                              if (await canLaunch(cvUrl)) {
+                                await launch(cvUrl);
+                              }
                             },
                             child: Image.asset('images/downloadIcon.png'),
                           ),
@@ -227,27 +236,103 @@ class applicants extends State<CvTable> {
                             children: [
                               ApprovalButton(
                                 onPress: () async {
-                                  // TO DO: Implement the logic to approve
+                                  // Update status to 'approved'
                                   await FirebaseFirestore.instance
                                       .collection('Users')
                                       .doc(course['id'])
-                                      .update({'status': 'approved'});
+                                      .update({
+                                    'status': 'approved',
+                                    'approvedAt': FieldValue.serverTimestamp()
+                                  });
                                   setState(
                                       () {}); // Refresh the table after approval
                                 },
                               ),
-                              SizedBox(
-                                width: 10,
-                              ),
+                              SizedBox(width: 10),
                               DeleteButton(
                                 onPress: () async {
-                                  // TO DO: Implement the logic to delete
-                                  await FirebaseFirestore.instance
-                                      .collection('Users')
-                                      .doc(course['id'])
-                                      .delete();
-                                  setState(
-                                      () {}); // Refresh the table after deletion
+                                  // Show dialog to get decline reason
+                                  final TextEditingController reasonController =
+                                      TextEditingController();
+
+                                  bool? dialogResult = await showDialog<bool>(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: Text(
+                                          'Decline CV',
+                                          style: GoogleFonts.montserrat(
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        content: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Please provide a reason for declining this CV:',
+                                              style: GoogleFonts.montserrat(),
+                                            ),
+                                            SizedBox(height: 16),
+                                            TextField(
+                                              controller: reasonController,
+                                              decoration: InputDecoration(
+                                                hintText:
+                                                    'Enter reason for declining...',
+                                                border: OutlineInputBorder(),
+                                              ),
+                                              maxLines: 3,
+                                            ),
+                                          ],
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.of(context)
+                                                    .pop(false),
+                                            child: Text('Cancel'),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              if (reasonController.text
+                                                  .trim()
+                                                  .isEmpty) {
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                      content: Text(
+                                                          'Please provide a reason for declining')),
+                                                );
+                                                return;
+                                              }
+                                              Navigator.of(context).pop(true);
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Mycolors().red,
+                                            ),
+                                            child: Text('Decline'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+
+                                  if (dialogResult == true &&
+                                      reasonController.text.trim().isNotEmpty) {
+                                    // Update status to 'declined' with reason
+                                    await FirebaseFirestore.instance
+                                        .collection('Users')
+                                        .doc(course['id'])
+                                        .update({
+                                      'status': 'declined',
+                                      'declineReason':
+                                          reasonController.text.trim(),
+                                      'declinedAt': FieldValue.serverTimestamp()
+                                    });
+                                    setState(
+                                        () {}); // Refresh the table after declining
+                                  }
                                 },
                               ),
                             ],

@@ -11,7 +11,7 @@ class ModuleContent extends StatefulWidget {
   final Function(int, {int? moduleIndex}) changePageIndex;
   final int moduleIndex;
 
-  ModuleContent({
+  const ModuleContent({
     super.key,
     required this.changePageIndex,
     required this.moduleIndex,

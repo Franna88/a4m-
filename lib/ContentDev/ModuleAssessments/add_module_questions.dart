@@ -12,7 +12,7 @@ class AddModuleQuestions extends StatefulWidget {
   final Function(int, {int? moduleIndex}) changePageIndex;
   final int moduleIndex;
 
-  AddModuleQuestions({
+  const AddModuleQuestions({
     super.key,
     required this.changePageIndex,
     required this.moduleIndex,
@@ -25,8 +25,8 @@ class AddModuleQuestions extends StatefulWidget {
 class _AddModuleQuestionsState extends State<AddModuleQuestions> {
   late TextEditingController _trueFalseQuestionController;
   late TextEditingController _trueFalseAnswerController;
-  List<String> _answers = [];
-  List<bool> _correctAnswers = [];
+  final List<String> _answers = [];
+  final List<bool> _correctAnswers = [];
   String? _selectedQuestionType;
   String _trueFalseAnswer = '';
 

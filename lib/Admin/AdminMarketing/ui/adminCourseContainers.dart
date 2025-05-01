@@ -3,7 +3,6 @@ import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:flutter/foundation.dart';
 import 'package:image_network/image_network.dart';
 
 class AdminCourseContainers extends StatefulWidget {

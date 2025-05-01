@@ -11,6 +11,8 @@ import 'ui/adminMessagingItems/LecturerList/LecturerList.dart';
 import 'ui/adminMessagingItems/contentDevList/contentDevList.dart';
 import 'ui/adminMessagingItems/importantMessages/adminImportantMessages.dart';
 import 'ui/adminMessagingItems/studentList/studentList.dart';
+import 'ui/adminMessagingItems/AdminList/adminList.dart';
+import 'ui/adminMessagingItems/FacilitatorStudentList/facilitatorStudentList.dart';
 
 class AdminMessagesMain extends StatefulWidget {
   final String? userId; // Optional user ID
@@ -82,15 +84,16 @@ class _AdminMessagesMainState extends State<AdminMessagesMain> {
       case 'student':
         return ['student', 'lecturer', 'admin'].contains(otherRole);
       case 'lecturer':
-        return ['student', 'lecturer', 'admin', 'facilitator']
+        return ['student', 'lecturer', 'admin', 'facilitator', 'content_dev']
             .contains(otherRole);
       case 'content_dev':
-        return ['admin'].contains(otherRole);
+        return ['admin', 'lecturer'].contains(otherRole);
       case 'admin':
         return ['student', 'lecturer', 'content_dev', 'facilitator']
             .contains(otherRole);
       case 'facilitator':
-        return ['lecturer', 'facilitator', 'admin'].contains(otherRole);
+        return ['lecturer', 'facilitator', 'admin', 'student']
+            .contains(otherRole);
       default:
         return false;
     }
@@ -136,20 +139,36 @@ class _AdminMessagesMainState extends State<AdminMessagesMain> {
       pageNames.add('Lecturers');
     }
 
-    // Only show Students tab if the user is not a student
-    if (canChatWith('student') && currentUserRole != 'student') {
-      pages.add(StudentList(
-        onStudentSelected: handleUserSelected,
-        currentUserId: currentUserId,
-      ));
-      pageNames.add('Students');
-    }
-
     if (canChatWith('facilitator')) {
       pages.add(FacilitatorList(
         onFacilitatorSelected: handleUserSelected,
       ));
       pageNames.add('Facilitators');
+    }
+
+    if (canChatWith('admin')) {
+      pages.add(AdminList(
+        onAdminSelected: handleUserSelected,
+        currentUserId: currentUserId,
+      ));
+      pageNames.add('Admin');
+    }
+
+    // Add facilitator's students list if the user is a facilitator
+    if (currentUserRole == 'facilitator') {
+      pages.add(FacilitatorStudentList(
+        onStudentSelected: handleUserSelected,
+        currentUserId: currentUserId,
+      ));
+      pageNames.add('My Students');
+    }
+    // Add general students list for other roles that can chat with students
+    else if (canChatWith('student') && currentUserRole != 'student') {
+      pages.add(StudentList(
+        onStudentSelected: handleUserSelected,
+        currentUserId: currentUserId,
+      ));
+      pageNames.add('Students');
     }
 
     // Ensure pageIndex is valid
@@ -164,14 +183,14 @@ class _AdminMessagesMainState extends State<AdminMessagesMain> {
     final double navbarWidth = currentUserRole == 'admin' ? 0 : 280;
     final double bottomOffset = currentUserRole == 'admin' ? 0 : 50;
 
-    return Container(
+    return SizedBox(
       width: screenWidth - navbarWidth,
       height: screenHeight - bottomOffset,
       child: AdminMessaging(
         changePage: changePage,
-        child: pages[pageIndex],
         availablePageNames: pageNames,
         currentUserRole: currentUserRole,
+        child: pages[pageIndex],
       ),
     );
   }

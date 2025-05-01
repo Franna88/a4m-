@@ -97,7 +97,7 @@ class _LectureStudentState extends State<LectureStudent> {
         print('Course data: $courseData');
 
         final studentsList = (courseData['students'] as List<dynamic>? ?? [])
-            .where((student) => student is Map<String, dynamic>)
+            .whereType<Map<String, dynamic>>()
             .map((student) => student['studentId'] as String?)
             .where((id) => id != null)
             .cast<String>()
@@ -149,7 +149,7 @@ class _LectureStudentState extends State<LectureStudent> {
             .expand((course) {
               final studentsList = (course['students'] as List<dynamic>? ?? []);
               return studentsList
-                  .where((student) => student is Map<String, dynamic>)
+                  .whereType<Map<String, dynamic>>()
                   .map((student) => student['studentId'] as String?)
                   .where((id) => id != null);
             })
@@ -262,7 +262,7 @@ class _LectureStudentState extends State<LectureStudent> {
         320 -
         30; // Total width minus sidebar and padding
 
-    return Container(
+    return SizedBox(
       width: MyUtility(context).width - 320,
       height: MyUtility(context).height - 80,
       child: Padding(
@@ -307,7 +307,7 @@ class _LectureStudentState extends State<LectureStudent> {
                               value: course['id'],
                               child: Text(course['name']),
                             );
-                          }).toList(),
+                          }),
                         ],
                         onChanged: (value) {
                           setState(() {
