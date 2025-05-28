@@ -333,15 +333,23 @@ class _CreateCourseState extends State<CreateCourse> {
   }
 
   void _loadNetworkImage(String imageUrl) async {
-    final response = await html.HttpRequest.request(
-      imageUrl,
-      responseType: "arraybuffer",
-    );
+    try {
+      final response = await html.HttpRequest.request(
+        imageUrl,
+        responseType: "arraybuffer",
+      );
 
-    if (response.response is ByteBuffer) {
-      setState(() {
-        _selectedImage = Uint8List.view(response.response);
-      });
+      if (response.response is ByteBuffer) {
+        setState(() {
+          _selectedImage = Uint8List.view(response.response);
+          // Create a blob URL for preview
+          final blob = html.Blob([_selectedImage!]);
+          _selectedImageUrl = html.Url.createObjectUrlFromBlob(blob);
+        });
+        print("Network image loaded successfully");
+      }
+    } catch (e) {
+      print("Error loading network image: $e");
     }
   }
 
@@ -357,17 +365,23 @@ class _CreateCourseState extends State<CreateCourse> {
     html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
     uploadInput.accept = 'image/*';
     uploadInput.click();
-
-    uploadInput.onChange.listen((e) async {
+    uploadInput.onChange.first.then((_) {
       final files = uploadInput.files;
       if (files != null && files.isNotEmpty) {
         final reader = html.FileReader();
         reader.readAsArrayBuffer(files[0]);
-        reader.onLoadEnd.listen((e) {
+        reader.onLoadEnd.first.then((_) {
+          // Create a temporary URL for preview
+          final blob = html.Blob([reader.result as Uint8List]);
+          final url = html.Url.createObjectUrlFromBlob(blob);
           setState(() {
             _selectedImage = reader.result as Uint8List;
+            _selectedImageUrl = url;
           });
+          print("New course image selected.");
         });
+      } else {
+        print("No image selected.");
       }
     });
   }
@@ -426,228 +440,311 @@ class _CreateCourseState extends State<CreateCourse> {
               height: MyUtility(context).height - 80,
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Modern Header with gradient
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Mycolors().blue, Mycolors().darkTeal],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: Offset(0, 5),
-                            ),
-                          ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Modern Header with gradient
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Mycolors().blue, Mycolors().darkTeal],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
                         ),
-                        height: MyUtility(context).height * 0.08,
-                        width: MyUtility(context).width,
-                        child: Center(
-                          child: Text(
-                            'Course Content Preview',
-                            style: MyTextStyles(context).headerWhite.copyWith(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: Offset(0, 5),
                           ),
+                        ],
+                      ),
+                      height: MyUtility(context).height * 0.06,
+                      width: MyUtility(context).width,
+                      child: Center(
+                        child: Text(
+                          widget.courseId != null
+                              ? 'Edit Courses'
+                              : 'Upload Courses',
+                          style: MyTextStyles(context).headerWhite.copyWith(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                       ),
-                      SizedBox(height: 20),
-                      // Main Content Card
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        width: MyUtility(context).width,
-                        child: Padding(
-                          padding: const EdgeInsets.all(30.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Image Upload Section
-                                  InkWell(
-                                    onTap: _pickImage,
-                                    child: Container(
-                                      height: MyUtility(context).height * 0.38,
-                                      width: MyUtility(context).width * 0.3,
-                                      decoration: BoxDecoration(
-                                        color: Mycolors().offWhite,
-                                        borderRadius: BorderRadius.circular(15),
-                                        border: Border.all(
-                                          color: Colors.grey.withOpacity(0.3),
-                                        ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Course Display - Create and manage your course content',
+                      style: TextStyle(
+                        color: Mycolors().darkGrey,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    // Main Content Card
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      width: MyUtility(context).width,
+                      height: MyUtility(context).height * 0.7,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 32.0, vertical: 24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Image Upload Section
+                                InkWell(
+                                  onTap: _pickImage,
+                                  child: Container(
+                                    height: MyUtility(context).height * 0.28,
+                                    width: MyUtility(context).width * 0.26,
+                                    decoration: BoxDecoration(
+                                      color: Mycolors().offWhite,
+                                      borderRadius: BorderRadius.circular(15),
+                                      border: Border.all(
+                                        color: Colors.grey.withOpacity(0.3),
                                       ),
-                                      child: _selectedImage != null
-                                          ? ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(15),
-                                              child: Image.memory(
-                                                _selectedImage!,
-                                                fit: BoxFit.cover,
-                                              ),
-                                            )
-                                          : (_selectedImageUrl != null &&
-                                                  _selectedImageUrl!.isNotEmpty)
-                                              ? ClipRRect(
-                                                  borderRadius:
-                                                      BorderRadius.circular(15),
-                                                  child: ImageNetwork(
-                                                    image: _selectedImageUrl!,
-                                                    width: MyUtility(context)
-                                                            .width *
-                                                        0.3,
-                                                    height: MyUtility(context)
-                                                            .height *
-                                                        0.38,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            15),
-                                                    fitWeb: BoxFitWeb.cover,
-                                                    fitAndroidIos: BoxFit.cover,
-                                                    onLoading: Center(
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                      color: Mycolors().blue,
-                                                    )),
+                                    ),
+                                    child: (() {
+                                      // First priority: In-memory selected image
+                                      if (_selectedImage != null) {
+                                        return ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                          child: Image.memory(
+                                            _selectedImage!,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        );
+                                      }
+                                      // Second priority: Selected image URL (could be blob or network)
+                                      else if (_selectedImageUrl != null &&
+                                          _selectedImageUrl!.isNotEmpty) {
+                                        // Check if it's a blob URL
+                                        if (_selectedImageUrl!
+                                            .startsWith('blob:')) {
+                                          return ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(15),
+                                            child: Image.network(
+                                              _selectedImageUrl!,
+                                              fit: BoxFit.cover,
+                                              loadingBuilder: (context, child,
+                                                  loadingProgress) {
+                                                if (loadingProgress == null)
+                                                  return child;
+                                                return Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    color: Mycolors().blue,
                                                   ),
-                                                )
-                                              : Column(
+                                                );
+                                              },
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                print(
+                                                    "Error loading blob URL: $error");
+                                                return Column(
                                                   mainAxisAlignment:
                                                       MainAxisAlignment.center,
                                                   children: [
                                                     Icon(
-                                                      Icons
-                                                          .add_photo_alternate_outlined,
-                                                      size: 50,
-                                                      color:
-                                                          Mycolors().darkGrey,
+                                                      Icons.error_outline,
+                                                      size: 48,
+                                                      color: Colors.red,
                                                     ),
-                                                    SizedBox(height: 10),
+                                                    SizedBox(height: 8),
                                                     Text(
-                                                      'Click to upload course image',
+                                                      'Failed to load image',
                                                       style: TextStyle(
-                                                        color:
-                                                            Mycolors().darkGrey,
+                                                        color: Colors.red,
                                                         fontSize: 14,
                                                       ),
                                                     ),
                                                   ],
+                                                );
+                                              },
+                                            ),
+                                          );
+                                        } else {
+                                          return ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(15),
+                                            child: ImageNetwork(
+                                              image: _selectedImageUrl!,
+                                              width: MyUtility(context).width *
+                                                  0.26,
+                                              height:
+                                                  MyUtility(context).height *
+                                                      0.28,
+                                              fitWeb: BoxFitWeb.cover,
+                                              fitAndroidIos: BoxFit.cover,
+                                              onLoading: Center(
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  color: Mycolors().blue,
                                                 ),
-                                    ),
+                                              ),
+                                              onError: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.error_outline,
+                                                    size: 48,
+                                                    color: Colors.red,
+                                                  ),
+                                                  SizedBox(height: 8),
+                                                  Text(
+                                                    'Failed to load image',
+                                                    style: TextStyle(
+                                                      color: Colors.red,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                      // Default: Upload placeholder
+                                      return Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.add_photo_alternate_outlined,
+                                            size: 48,
+                                            color: Mycolors().darkGrey,
+                                          ),
+                                          SizedBox(height: 8),
+                                          Text(
+                                            'Click to upload course image',
+                                            style: TextStyle(
+                                              color: Mycolors().darkGrey,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    })(),
                                   ),
-                                  SizedBox(width: 30),
-                                  // Course Details Section
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        ContentDevTextfields(
-                                          headerText: 'Course Name',
-                                          inputController:
-                                              _courseNameController,
-                                          keyboardType: '',
-                                        ),
-                                        SizedBox(height: 20),
-                                        ContentDevTextfields(
-                                          headerText: 'Course Category',
-                                          inputController:
-                                              _courseCategoryController,
-                                          keyboardType: '',
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 30),
-                              // Course Description
-                              ContentDevTextfields(
-                                headerText: 'Course Content',
-                                inputController: _courseDescriptionController,
-                                keyboardType: '',
-                                maxLines: 7,
-                              ),
-                              SizedBox(height: 30),
-                              // Preview PDF and Next Button
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  ElevatedButton.icon(
-                                    onPressed: _pickPreviewPdf,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Mycolors().blue,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 20, vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
+                                ),
+                                SizedBox(width: 36),
+                                // Course Details Section
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ContentDevTextfields(
+                                        headerText: widget.courseId != null
+                                            ? 'Edit Course Name'
+                                            : 'Course Name',
+                                        inputController: _courseNameController,
+                                        keyboardType: '',
                                       ),
-                                    ),
-                                    icon: Icon(
-                                      _selectedPreviewPdf != null ||
-                                              _selectedPreviewPdfUrl != null
-                                          ? Icons.check_circle
-                                          : Icons.upload_file,
-                                      color: Colors.white,
-                                    ),
-                                    label: Text(
-                                      _selectedPreviewPdf != null ||
-                                              _selectedPreviewPdfUrl != null
-                                          ? 'Preview PDF Added'
-                                          : 'Add Preview PDF',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: _handleNext,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Mycolors().green,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 30, vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
+                                      SizedBox(height: 18),
+                                      ContentDevTextfields(
+                                        headerText: widget.courseId != null
+                                            ? 'Edit Course Category'
+                                            : 'Course Category',
+                                        inputController:
+                                            _courseCategoryController,
+                                        keyboardType: '',
                                       ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          'Next',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                        SizedBox(width: 8),
-                                        Icon(Icons.arrow_forward,
-                                            color: Colors.white),
-                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 18),
+                            // Course Description
+                            ContentDevTextfields(
+                              headerText: widget.courseId != null
+                                  ? 'Edit Course Description'
+                                  : 'Course Content',
+                              inputController: _courseDescriptionController,
+                              keyboardType: '',
+                              maxLines: 7,
+                            ),
+                            SizedBox(height: 18),
+                            // Preview PDF and Next Button
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: _pickPreviewPdf,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Mycolors().blue,
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
-                                ],
-                              ),
-                            ],
-                          ),
+                                  icon: Icon(
+                                    _selectedPreviewPdf != null ||
+                                            _selectedPreviewPdfUrl != null
+                                        ? Icons.check_circle
+                                        : Icons.upload_file,
+                                    color: Colors.white,
+                                  ),
+                                  label: Text(
+                                    _selectedPreviewPdf != null ||
+                                            _selectedPreviewPdfUrl != null
+                                        ? 'Preview PDF Added'
+                                        : 'upload course display pdf',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: _handleNext,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Mycolors().green,
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 30, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Next',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Icon(Icons.arrow_forward,
+                                          color: Colors.white),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),

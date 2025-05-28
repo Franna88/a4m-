@@ -7,6 +7,7 @@ import 'package:a4m/LandingPage/CourseListPage/ui/courseContainers.dart';
 import 'package:a4m/LandingPage/landingPageMain.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../Login/loginPopup.dart';
 import '../A4mAppBar/a4mAppBar.dart';
@@ -20,28 +21,63 @@ class CourseListPage extends StatefulWidget {
 
 class _CourseListPageState extends State<CourseListPage> {
   final ScrollController _scrollController = ScrollController();
-  // double _appBarOpacity = 0.0;
+  List<Map<String, dynamic>>? courses;
+  bool isLoading = true;
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _scrollController.addListener(_scrollListener);
-  // }
+  @override
+  void initState() {
+    super.initState();
+    _fetchCourses();
+  }
 
-  // @override
-  // void dispose() {
-  //   _scrollController.removeListener(_scrollListener);
-  //   _scrollController.dispose();
-  //   super.dispose();
-  // }
-
-  // void _scrollListener() {
-  //   double offset = _scrollController.offset;
-  //   setState(() {
-  //     // Adjust opacity between 0 and 1 based on the offset
-  //     _appBarOpacity = (offset / 200).clamp(0, 1);
-  //   });
-  // }
+  Future<void> _fetchCourses() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('courses')
+          .where('status', isEqualTo: 'approved')
+          .get();
+      List<Map<String, dynamic>> courseList = [];
+      for (var doc in snapshot.docs) {
+        final courseData = doc.data() as Map<String, dynamic>;
+        // Only include courses with assigned lecturers
+        if (courseData['assignedLecturers'] != null &&
+            (courseData['assignedLecturers'] as List).isNotEmpty) {
+          // Fetch modules for the course
+          QuerySnapshot moduleSnapshot = await FirebaseFirestore.instance
+              .collection('courses')
+              .doc(doc.id)
+              .collection('modules')
+              .get();
+          int moduleCount = moduleSnapshot.docs.length;
+          int assessmentCount = 0;
+          for (var module in moduleSnapshot.docs) {
+            final moduleData = module.data() as Map<String, dynamic>;
+            if (moduleData['assessmentsPdfUrl'] != null &&
+                moduleData['assessmentsPdfUrl'].isNotEmpty) {
+              assessmentCount++;
+            }
+          }
+          courseList.add({
+            ...courseData,
+            'moduleCount': moduleCount,
+            'assessmentCount': assessmentCount,
+          });
+        }
+      }
+      setState(() {
+        courses = courseList;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        courses = [];
+        isLoading = false;
+      });
+    }
+  }
 
   Future openLoginTabs() => showDialog(
       context: context,
@@ -100,7 +136,13 @@ class _CourseListPageState extends State<CourseListPage> {
                         const SizedBox(
                           height: 30,
                         ),
-                        CourseContainers(),
+                        isLoading
+                            ? Center(
+                                child: CircularProgressIndicator(
+                                  color: Mycolors().green,
+                                ),
+                              )
+                            : CourseContainers(courses: courses),
                         const SizedBox(
                           height: 30,
                         ),

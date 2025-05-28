@@ -244,33 +244,29 @@ class _FacilitatorStudentsState extends State<FacilitatorStudents> {
               )
             else
               Expanded(
-                child: SingleChildScrollView(
-                  child: LayoutGrid(
-                    columnSizes: List.generate(
-                      crossAxisCount,
-                      (_) => const FlexibleTrackSize(1),
-                    ),
-                    rowSizes: List.generate(
-                      (filteredStudents.length / crossAxisCount).ceil(),
-                      (_) => auto,
-                    ),
-                    rowGap: 20,
-                    columnGap: 20,
-                    children: filteredStudents
-                        .map((student) => LectureStudentContainers(
-                              isLecturer: false,
-                              isContentDev: false,
-                              isFacilitator: true,
-                              image: student['profileImageUrl'] ??
-                                  'https://via.placeholder.com/150',
-                              name: student['name'] ?? 'Unknown',
-                              number: student['phoneNumber'] ?? 'No phone',
-                              studentAmount:
-                                  student['courseCount']?.toString() ?? '0',
-                              onMessageTap: () => _handleMessageTap(student),
-                            ))
-                        .toList(),
+                child: GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 20,
+                    childAspectRatio: 1.2,
                   ),
+                  itemCount: filteredStudents.length,
+                  itemBuilder: (context, index) {
+                    final student = filteredStudents[index];
+                    return LectureStudentContainers(
+                      isLecturer: false,
+                      isContentDev: false,
+                      isFacilitator: true,
+                      isStudent: false,
+                      image: student['profileImageUrl'] ?? '',
+                      name: student['name'] ?? '',
+                      number: student['phoneNumber'] ?? '',
+                      userId: student['id'] ?? '',
+                      lecturerId: widget.facilitatorId,
+                      lecturerCourses: [],
+                    );
+                  },
                 ),
               ),
           ],

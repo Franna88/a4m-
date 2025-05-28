@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_network/image_network.dart';
+import '../../../../Constants/myColors.dart';
 
 class StudentProgressListItem extends StatelessWidget {
   final String studentName;
   final String courseName;
   final double progress;
+  final String? studentId;
+  final Function(String)? onViewReport;
 
   const StudentProgressListItem({
     super.key,
     required this.studentName,
     required this.courseName,
     required this.progress,
+    this.studentId,
+    this.onViewReport,
   });
 
   @override
@@ -85,6 +90,25 @@ class StudentProgressListItem extends StatelessWidget {
               ],
             ),
           ),
+          // View Report Button
+          if (studentId != null && onViewReport != null)
+            TextButton(
+              onPressed: () => onViewReport!(studentId!),
+              style: TextButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                foregroundColor: Mycolors().green,
+              ),
+              child: Text(
+                'View Report',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           const SizedBox(width: 12),
           // Progress Bar
           SizedBox(

@@ -21,6 +21,8 @@ class DevelopedCourses extends StatefulWidget {
 
 class _DevelopedCoursesState extends State<DevelopedCourses> {
   List<Map<String, dynamic>> createdCourses = [];
+  List<Map<String, dynamic>> filteredCourses = [];
+  TextEditingController searchController = TextEditingController();
   bool isLoading = true;
 
   // Fetch courses created by this content developer
@@ -73,6 +75,8 @@ class _DevelopedCoursesState extends State<DevelopedCourses> {
           'totalAssessments': totalAssessments.toString(),
           'status': data['status'] ?? 'approved',
           'declineReason': data['declineReason'],
+          'previewPdfUrl': data['previewPdfUrl'],
+          'courseCategory': data['courseCategory'] ?? '',
         });
       }
 
@@ -108,11 +112,14 @@ class _DevelopedCoursesState extends State<DevelopedCourses> {
           'totalAssessments': totalAssessments.toString(),
           'status': data['status'] ?? 'pending',
           'declineReason': data['declineReason'],
+          'previewPdfUrl': data['previewPdfUrl'],
+          'courseCategory': data['courseCategory'] ?? '',
         });
       }
 
       setState(() {
         createdCourses = tempCourses;
+        filteredCourses = tempCourses; // Initialize filtered courses
         isLoading = false;
       });
     } catch (e) {
@@ -127,6 +134,44 @@ class _DevelopedCoursesState extends State<DevelopedCourses> {
   void initState() {
     super.initState();
     fetchCreatedCourses();
+
+    // Set up search controller listener
+    searchController.addListener(() {
+      if (!isLoading) {
+        _filterCourses(searchController.text);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  // Filter courses based on search query
+  void _filterCourses(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        filteredCourses = createdCourses;
+      });
+      return;
+    }
+
+    final searchText = query.toLowerCase();
+    setState(() {
+      filteredCourses = createdCourses.where((course) {
+        final courseName = course['courseName']?.toString().toLowerCase() ?? '';
+        final courseDescription =
+            course['courseDescription']?.toString().toLowerCase() ?? '';
+        final courseCategory =
+            course['courseCategory']?.toString().toLowerCase() ?? '';
+
+        return courseName.contains(searchText) ||
+            courseDescription.contains(searchText) ||
+            courseCategory.contains(searchText);
+      }).toList();
+    });
   }
 
   @override
@@ -150,8 +195,11 @@ class _DevelopedCoursesState extends State<DevelopedCourses> {
                   width: 300,
                   height: 50,
                   child: MySearchBar(
-                    textController: TextEditingController(),
+                    textController: searchController,
                     hintText: 'Search Course',
+                    onChanged: (value) {
+                      _filterCourses(value);
+                    },
                   ),
                 ),
               ],
@@ -162,7 +210,7 @@ class _DevelopedCoursesState extends State<DevelopedCourses> {
             Expanded(
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : createdCourses.isEmpty
+                  : filteredCourses.isEmpty
                       ? const Center(
                           child: Text(
                             'No courses created yet.',
@@ -183,7 +231,7 @@ class _DevelopedCoursesState extends State<DevelopedCourses> {
                             rowGap: 20,
                             columnGap: 20,
                             children: [
-                              for (var course in createdCourses)
+                              for (var course in filteredCourses)
                                 GestureDetector(
                                   onTap: () {
                                     print(
@@ -209,6 +257,7 @@ class _DevelopedCoursesState extends State<DevelopedCourses> {
                                             index, course['id']),
                                     courseStatus: course['status'],
                                     declineReason: course['declineReason'],
+                                    previewPdfUrl: course['previewPdfUrl'],
                                   ),
                                 ),
                             ],

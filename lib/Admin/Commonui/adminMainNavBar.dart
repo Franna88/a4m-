@@ -27,10 +27,17 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
   String? _profileImageUrl;
   final String _userId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
+  // Add state variables for metrics
+  int _totalStudents = 0;
+  int _totalCourses = 0;
+  int _coursesAccessed = 0;
+  int _newStudentsThisMonth = 0;
+
   @override
   void initState() {
     super.initState();
     _fetchUserProfileImage();
+    _fetchAdminMetrics(); // Add this line to fetch metrics
   }
 
   Future<void> _fetchUserProfileImage() async {
@@ -50,6 +57,67 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
       }
     } catch (e) {
       print('Error fetching user profile image: $e');
+    }
+  }
+
+  Future<void> _fetchAdminMetrics() async {
+    try {
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
+
+      // Get courses collection
+      final coursesSnapshot =
+          await FirebaseFirestore.instance.collection('courses').get();
+
+      // Calculate metrics
+      Set<String> uniqueStudentIds = {};
+      Set<String> newStudentIds = {};
+      int accessedCourses = 0;
+
+      for (var courseDoc in coursesSnapshot.docs) {
+        final courseData = courseDoc.data();
+        final students = courseData['students'] as List<dynamic>?;
+
+        if (students != null) {
+          for (var student in students) {
+            if (student is Map<String, dynamic> &&
+                student['studentId'] != null) {
+              uniqueStudentIds.add(student['studentId'].toString());
+
+              // Check if student is new this month
+              final registered = student['registered'];
+              if (registered != null) {
+                final registeredDate = registered is Timestamp
+                    ? registered.toDate()
+                    : registered is DateTime
+                        ? registered
+                        : null;
+
+                if (registeredDate != null &&
+                    registeredDate.isAfter(startOfMonth)) {
+                  newStudentIds.add(student['studentId'].toString());
+                }
+              }
+            }
+          }
+
+          // Count accessed courses
+          if (students.isNotEmpty) {
+            accessedCourses++;
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _totalStudents = uniqueStudentIds.length;
+          _totalCourses = coursesSnapshot.docs.length;
+          _coursesAccessed = accessedCourses;
+          _newStudentsThisMonth = newStudentIds.length;
+        });
+      }
+    } catch (e) {
+      print('Error fetching admin metrics: $e');
     }
   }
 
@@ -123,6 +191,79 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildQuickStat(String title, String value, IconData icon,
+      {String? subtitle, IconData? subtitleIcon, Color? subtitleColor}) {
+    return Container(
+      margin: const EdgeInsets.only(right: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Mycolors().green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: Mycolors().green,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+              Text(
+                value,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    if (subtitleIcon != null) ...[
+                      Icon(
+                        subtitleIcon,
+                        size: 12,
+                        color: subtitleColor ?? Mycolors().green,
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: subtitleColor ?? Mycolors().green,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -244,6 +385,38 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
               ),
             ],
           ),
+          if (activeIndex == 0) ...[
+            const SizedBox(height: 20),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildQuickStat(
+                    'Total Students',
+                    _totalStudents.toString(),
+                    Icons.people_outline,
+                    subtitle: _newStudentsThisMonth > 0
+                        ? '${_newStudentsThisMonth} new'
+                        : null,
+                    subtitleIcon:
+                        _newStudentsThisMonth > 0 ? Icons.arrow_upward : null,
+                  ),
+                  const SizedBox(width: 16),
+                  _buildQuickStat(
+                    'Total Courses',
+                    _totalCourses.toString(),
+                    Icons.school_outlined,
+                  ),
+                  const SizedBox(width: 16),
+                  _buildQuickStat(
+                    'Courses Accessed',
+                    _coursesAccessed.toString(),
+                    Icons.book_outlined,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

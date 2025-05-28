@@ -127,8 +127,16 @@ class _MarkedContainerState extends State<MarkedContainer> {
     }
   }
 
+  String _inferType(String fileUrl) {
+    final lower = fileUrl.toLowerCase();
+    if (lower.contains('assessment')) return 'Assessment';
+    if (lower.contains('assignment')) return 'Assignment';
+    if (lower.contains('test')) return 'Test PDF';
+    return 'Submission';
+  }
+
   Future<void> _viewSubmission(String fileUrl,
-      {bool isGradedPdf = false}) async {
+      {String type = 'Submission', bool isGradedPdf = false}) async {
     print('\n=== Attempting to View Submission ===');
     print('File URL: $fileUrl');
 
@@ -139,14 +147,14 @@ class _MarkedContainerState extends State<MarkedContainer> {
           builder: (context) => Scaffold(
             appBar: AppBar(
               title: Text(
-                isGradedPdf ? 'Graded Assessment' : 'Original Submission',
+                isGradedPdf ? 'Graded $type' : type,
                 style: GoogleFonts.poppins(color: Colors.white),
               ),
               backgroundColor: Mycolors().darkGrey,
             ),
             body: StudentPdfViewer(
               pdfUrl: fileUrl,
-              title: isGradedPdf ? 'Graded Assessment' : 'Original Submission',
+              title: isGradedPdf ? 'Graded $type' : type,
               showDownloadButton: true,
             ),
           ),
@@ -161,6 +169,15 @@ class _MarkedContainerState extends State<MarkedContainer> {
         ),
       );
     }
+  }
+
+  String _formatTimestamp(dynamic timestamp) {
+    if (timestamp is Timestamp) {
+      final dt = timestamp.toDate();
+      return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
+          '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    }
+    return timestamp.toString();
   }
 
   @override
@@ -198,7 +215,7 @@ class _MarkedContainerState extends State<MarkedContainer> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Submitted: ${assessment['submittedAt']}',
+                  'Submitted: ${_formatTimestamp(assessment['submittedAt'])}',
                   style: GoogleFonts.montserrat(),
                 ),
                 Text(
@@ -222,7 +239,10 @@ class _MarkedContainerState extends State<MarkedContainer> {
                   IconButton(
                     icon: const Icon(Icons.visibility),
                     onPressed: () async {
-                      await _viewSubmission(assessment['fileUrl']);
+                      await _viewSubmission(
+                        assessment['fileUrl'],
+                        type: _inferType(assessment['fileUrl']),
+                      );
                     },
                     tooltip: 'View Submission',
                   ),
@@ -230,8 +250,11 @@ class _MarkedContainerState extends State<MarkedContainer> {
                   IconButton(
                     icon: const Icon(Icons.grade),
                     onPressed: () async {
-                      await _viewSubmission(assessment['markedPdfUrl'],
-                          isGradedPdf: true);
+                      await _viewSubmission(
+                        assessment['markedPdfUrl'],
+                        type: _inferType(assessment['markedPdfUrl']),
+                        isGradedPdf: true,
+                      );
                     },
                     tooltip: 'View Graded PDF',
                   ),

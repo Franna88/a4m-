@@ -15,8 +15,8 @@ class AdminLogin extends StatefulWidget {
 }
 
 class _AdminLoginState extends State<AdminLogin> {
-  final emailController = TextEditingController(text: "tertiuscva@gmail.com");
-  final passwordController = TextEditingController(text: "test123");
+  final emailController = TextEditingController(text: "");
+  final passwordController = TextEditingController(text: "");
   final adminCodeController = TextEditingController();
 
   bool isLoading = false;

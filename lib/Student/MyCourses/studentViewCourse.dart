@@ -142,13 +142,26 @@ class _StudentViewCourseState extends State<StudentViewCourse> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            courseData['courseName'] ?? 'Course Details',
-                            style: GoogleFonts.poppins(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[800],
-                            ),
+                          Row(
+                            children: [
+                              IconButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                icon: Icon(
+                                  Icons.arrow_back_rounded,
+                                  color: Colors.grey[800],
+                                ),
+                              ),
+                              Text(
+                                courseData['courseName'] ?? 'Course Details',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[800],
+                                ),
+                              ),
+                            ],
                           ),
                           ElevatedButton.icon(
                             onPressed: () {

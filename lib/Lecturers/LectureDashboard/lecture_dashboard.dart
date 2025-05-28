@@ -1,7 +1,6 @@
 import 'package:a4m/Constants/myColors.dart';
 import 'package:a4m/Lecturers/LectureDashboard/dash_calendar_notices.dart';
 import 'package:a4m/Lecturers/LectureDashboard/lecture_dashboard_profile.dart';
-import 'package:a4m/Lecturers/LectureDashboard/lecture_dashboard_total_students.dart';
 import 'package:a4m/Lecturers/LectureDashboard/newly_submitted_modules.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
@@ -34,31 +33,17 @@ class _LectureDashboardState extends State<LectureDashboard> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Left column: Profile and Newly Submitted Modules
             Expanded(
-              flex: 3,
+              flex: 2,
               child: Column(
                 children: [
-                  SizedBox(
-                    height: 200,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: LectureDashboardProfile(
-                            lecturerId: widget.lecturerId,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: LectureDashboardTotalStudents(
-                            lecturerId: widget.lecturerId,
-                          ),
-                        ),
-                      ],
-                    ),
+                  // Profile card
+                  LectureDashboardProfile(
+                    lecturerId: widget.lecturerId,
                   ),
                   const SizedBox(height: 16),
+                  // Newly submitted modules section
                   Expanded(
                     child: NewlySubmitedModules(
                       lecturerId: widget.lecturerId,
@@ -69,7 +54,9 @@ class _LectureDashboardState extends State<LectureDashboard> {
               ),
             ),
             const SizedBox(width: 16),
+            // Right column: Calendar and Reminders (now larger)
             Expanded(
+              flex: 2,
               child: const DashCalendarNotices(),
             ),
           ],

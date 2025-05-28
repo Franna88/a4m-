@@ -93,6 +93,9 @@ class _LectureHomePageState extends State<LectureHomePage> {
       AssessmentSubmissionsView(
         courseId: selectedCourseId,
         moduleId: selectedModuleId,
+        changePage: (int page, {String courseId = '', String moduleId = ''}) {
+          changePage(page, courseId: courseId, moduleId: moduleId);
+        },
       ),
     ];
   }

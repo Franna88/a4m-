@@ -68,8 +68,8 @@ class FacilitatorLoginView extends StatefulWidget {
 }
 
 class _FacilitatorLoginViewState extends State<FacilitatorLoginView> {
-  final emailController = TextEditingController(text: 'facilicator@gmail.com');
-  final passwordController = TextEditingController(text: 'test123');
+  final emailController = TextEditingController(text: '');
+  final passwordController = TextEditingController(text: '');
   final facilitatorCodeController = TextEditingController();
   bool isLoading = false;
   Future<void> _loginFacilitator() async {

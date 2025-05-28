@@ -146,7 +146,7 @@ class applicants extends State<CvTable> {
                     TableStructure(
                       child: TableCell(
                         child: Text(
-                          'Remove CV',
+                          'approve',
                           style: GoogleFonts.montserrat(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
@@ -234,106 +234,116 @@ class applicants extends State<CvTable> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              ApprovalButton(
-                                onPress: () async {
-                                  // Update status to 'approved'
-                                  await FirebaseFirestore.instance
-                                      .collection('Users')
-                                      .doc(course['id'])
-                                      .update({
-                                    'status': 'approved',
-                                    'approvedAt': FieldValue.serverTimestamp()
-                                  });
-                                  setState(
-                                      () {}); // Refresh the table after approval
-                                },
-                              ),
-                              SizedBox(width: 10),
-                              DeleteButton(
-                                onPress: () async {
-                                  // Show dialog to get decline reason
-                                  final TextEditingController reasonController =
-                                      TextEditingController();
-
-                                  bool? dialogResult = await showDialog<bool>(
-                                    context: context,
-                                    barrierDismissible: false,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: Text(
-                                          'Decline CV',
-                                          style: GoogleFonts.montserrat(
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        content: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Please provide a reason for declining this CV:',
-                                              style: GoogleFonts.montserrat(),
-                                            ),
-                                            SizedBox(height: 16),
-                                            TextField(
-                                              controller: reasonController,
-                                              decoration: InputDecoration(
-                                                hintText:
-                                                    'Enter reason for declining...',
-                                                border: OutlineInputBorder(),
-                                              ),
-                                              maxLines: 3,
-                                            ),
-                                          ],
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.of(context)
-                                                    .pop(false),
-                                            child: Text('Cancel'),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              if (reasonController.text
-                                                  .trim()
-                                                  .isEmpty) {
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
-                                                  SnackBar(
-                                                      content: Text(
-                                                          'Please provide a reason for declining')),
-                                                );
-                                                return;
-                                              }
-                                              Navigator.of(context).pop(true);
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Mycolors().red,
-                                            ),
-                                            child: Text('Decline'),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-
-                                  if (dialogResult == true &&
-                                      reasonController.text.trim().isNotEmpty) {
-                                    // Update status to 'declined' with reason
+                              Tooltip(
+                                message: 'Approve user',
+                                child: ApprovalButton(
+                                  onPress: () async {
+                                    // Update status to 'approved'
                                     await FirebaseFirestore.instance
                                         .collection('Users')
                                         .doc(course['id'])
                                         .update({
-                                      'status': 'declined',
-                                      'declineReason':
-                                          reasonController.text.trim(),
-                                      'declinedAt': FieldValue.serverTimestamp()
+                                      'status': 'approved',
+                                      'approvedAt': FieldValue.serverTimestamp()
                                     });
                                     setState(
-                                        () {}); // Refresh the table after declining
-                                  }
-                                },
+                                        () {}); // Refresh the table after approval
+                                  },
+                                ),
+                              ),
+                              SizedBox(width: 10),
+                              Tooltip(
+                                message: 'Decline user',
+                                child: DeleteButton(
+                                  onPress: () async {
+                                    // Show dialog to get decline reason
+                                    final TextEditingController
+                                        reasonController =
+                                        TextEditingController();
+
+                                    bool? dialogResult = await showDialog<bool>(
+                                      context: context,
+                                      barrierDismissible: false,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: Text(
+                                            'Decline CV',
+                                            style: GoogleFonts.montserrat(
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          content: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Please provide a reason for declining this user:',
+                                                style: GoogleFonts.montserrat(),
+                                              ),
+                                              SizedBox(height: 16),
+                                              TextField(
+                                                controller: reasonController,
+                                                decoration: InputDecoration(
+                                                  hintText:
+                                                      'Enter reason for declining...',
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                                maxLines: 3,
+                                              ),
+                                            ],
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(false),
+                                              child: Text('Cancel'),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                if (reasonController.text
+                                                    .trim()
+                                                    .isEmpty) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                        content: Text(
+                                                            'Please provide a reason for declining')),
+                                                  );
+                                                  return;
+                                                }
+                                                Navigator.of(context).pop(true);
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Mycolors().red,
+                                              ),
+                                              child: Text('Decline'),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+
+                                    if (dialogResult == true &&
+                                        reasonController.text
+                                            .trim()
+                                            .isNotEmpty) {
+                                      // Update status to 'declined' with reason
+                                      await FirebaseFirestore.instance
+                                          .collection('Users')
+                                          .doc(course['id'])
+                                          .update({
+                                        'status': 'declined',
+                                        'declineReason':
+                                            reasonController.text.trim(),
+                                        'declinedAt':
+                                            FieldValue.serverTimestamp()
+                                      });
+                                      setState(
+                                          () {}); // Refresh the table after declining
+                                    }
+                                  },
+                                ),
                               ),
                             ],
                           ),

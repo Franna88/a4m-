@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_network/image_network.dart';
 import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:a4m/CommonComponents/inputFields/contentDevTextfields.dart';
@@ -40,13 +39,11 @@ class _ReviewCourseState extends State<ReviewCourse> {
     _courseCategoryController = TextEditingController();
     _courseDescriptionController = TextEditingController();
 
-    // Fetch course data when the page initializes
     _fetchCourseData();
   }
 
   Future<void> _fetchCourseData() async {
     try {
-      // Determine whether to fetch from pendingCourses or courses
       String collection = widget.isEdited ? 'pendingCourses' : 'courses';
 
       DocumentSnapshot courseSnapshot = await FirebaseFirestore.instance
@@ -57,18 +54,16 @@ class _ReviewCourseState extends State<ReviewCourse> {
       if (courseSnapshot.exists) {
         final courseData = courseSnapshot.data() as Map<String, dynamic>;
 
-        // Populate the controllers with course data
-        _courseNameController.text = courseData['courseName'] ?? 'Unknown';
-        _coursePriceController.text = courseData['coursePrice'] ?? 'Unknown';
-        _courseCategoryController.text =
-            courseData['courseCategory'] ?? 'Unknown';
-        _courseDescriptionController.text =
-            courseData['courseDescription'] ?? 'No description available';
-
         setState(() {
+          _courseNameController.text = courseData['courseName'] ?? 'Unknown';
+          _coursePriceController.text =
+              courseData['coursePrice']?.toString() ?? 'Unknown';
+          _courseCategoryController.text =
+              courseData['courseCategory'] ?? 'Unknown';
+          _courseDescriptionController.text =
+              courseData['courseDescription'] ?? 'No description available';
           courseImageUrl = courseData['courseImageUrl'] ?? '';
-          changes =
-              (courseData['changes'] as List<dynamic>?)?.cast<String>() ?? [];
+          changes = List<String>.from(courseData['changes'] ?? []);
         });
 
         print("Course Image URL: $courseImageUrl");
@@ -103,142 +98,218 @@ class _ReviewCourseState extends State<ReviewCourse> {
         height: MyUtility(context).height - 80,
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Mycolors().blue,
-                      borderRadius: BorderRadius.circular(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Modern Header with gradient
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Mycolors().darkTeal, Mycolors().blue],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: Offset(0, 5),
                     ),
-                    height: MyUtility(context).height * 0.06,
-                    width: MyUtility(context).width,
-                    child: Center(
-                      child: Text(
-                        'Create Course',
-                        style: MyTextStyles(context).headerWhite,
+                  ],
+                ),
+                height: MyUtility(context).height * 0.08,
+                width: MyUtility(context).width,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      left: 20,
+                      top: 0,
+                      bottom: 0,
+                      child: IconButton(
+                        icon: Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () => widget.changePageIndex(5),
                       ),
                     ),
-                  ),
+                    Center(
+                      child: Text(
+                        'Review Course',
+                        style: MyTextStyles(context).headerWhite.copyWith(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                  ],
                 ),
-                Container(
-                  color: Colors.white,
-                  width: MyUtility(context).width,
-                  height: MyUtility(context).height * 0.78,
-                  child: Padding(
-                    padding: const EdgeInsets.all(30.0),
+              ),
+              SizedBox(height: 20),
+              // Main Content Card
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(30.0),
+                  child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            courseImageUrl != null && courseImageUrl!.isNotEmpty
-                                ? ImageNetwork(
-                                    image: courseImageUrl!,
-                                    height: MyUtility(context).height * 0.38,
-                                    width: MyUtility(context).width * 0.3,
-                                    borderRadius: BorderRadius.circular(10),
-                                    duration: 1500,
-                                    curve: Curves.easeIn,
-                                    onLoading: CircularProgressIndicator(),
-                                    onError: const Icon(
-                                      Icons.error,
-                                      color: Colors.red,
-                                      size: 40,
-                                    ),
-                                  )
-                                : Container(
-                                    height: MyUtility(context).height * 0.38,
-                                    width: MyUtility(context).width * 0.3,
-                                    decoration: BoxDecoration(
-                                      color: Mycolors().offWhite,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.image,
-                                        size: 50,
-                                        color: Mycolors().darkGrey,
+                            // Course Image
+                            Flexible(
+                              flex: 2,
+                              child: Container(
+                                height: 250,
+                                decoration: BoxDecoration(
+                                  color: Mycolors().offWhite,
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(
+                                    color: Colors.grey.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: courseImageUrl != null &&
+                                        courseImageUrl!.isNotEmpty
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(15),
+                                        child: ImageNetwork(
+                                          image: courseImageUrl!,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.3,
+                                          height: 250,
+                                          fitWeb: BoxFitWeb.cover,
+                                          fitAndroidIos: BoxFit.cover,
+                                          onLoading: Center(
+                                            child: CircularProgressIndicator(),
+                                          ),
+                                          onError: Icon(
+                                            Icons.error_outline,
+                                            color: Colors.red,
+                                            size: 50,
+                                          ),
+                                        ),
+                                      )
+                                    : Center(
+                                        child: Icon(
+                                          Icons.image_not_supported_outlined,
+                                          size: 50,
+                                          color: Mycolors().darkGrey,
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                            Spacer(),
-                            SizedBox(
-                              height: MyUtility(context).height * 0.38,
-                              width: MyUtility(context).width * 0.3,
+                              ),
+                            ),
+                            SizedBox(width: 30),
+                            // Course Details
+                            Flexible(
+                              flex: 3,
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  SizedBox(
-                                    width: MyUtility(context).width * 0.3,
-                                    child: ContentDevTextfields(
-                                      headerText: 'Course Name',
-                                      inputController: _courseNameController,
-                                      keyboardType: '',
-                                    ),
+                                  ContentDevTextfields(
+                                    headerText: 'Course Name',
+                                    inputController: _courseNameController,
+                                    keyboardType: '',
+                                    readOnly: true,
                                   ),
-                                  SizedBox(
-                                    width: MyUtility(context).width * 0.3,
-                                    child: ContentDevTextfields(
-                                      headerText: 'Course Price',
-                                      inputController: _coursePriceController,
-                                      keyboardType: 'intType',
-                                    ),
+                                  SizedBox(height: 20),
+                                  ContentDevTextfields(
+                                    headerText: 'Course Price',
+                                    inputController: _coursePriceController,
+                                    keyboardType: 'intType',
+                                    readOnly: true,
                                   ),
-                                  SizedBox(
-                                    width: MyUtility(context).width * 0.3,
-                                    child: ContentDevTextfields(
-                                      headerText: 'Course Category',
-                                      inputController:
-                                          _courseCategoryController,
-                                      keyboardType: '',
-                                    ),
+                                  SizedBox(height: 20),
+                                  ContentDevTextfields(
+                                    headerText: 'Course Category',
+                                    inputController: _courseCategoryController,
+                                    keyboardType: '',
+                                    readOnly: true,
                                   ),
                                 ],
                               ),
-                            )
+                            ),
                           ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          child: Center(
-                            child: SizedBox(
-                              width: MyUtility(context).width * 0.8,
-                              child: ContentDevTextfields(
-                                headerText: 'Course Description',
-                                inputController: _courseDescriptionController,
-                                keyboardType: '',
-                                maxLines: 7,
-                              ),
+                        SizedBox(height: 30),
+                        ContentDevTextfields(
+                          headerText: 'Course Description',
+                          inputController: _courseDescriptionController,
+                          keyboardType: '',
+                          maxLines: 7,
+                          readOnly: true,
+                        ),
+                        SizedBox(height: 30),
+                        if (changes.isNotEmpty) ...[
+                          Text(
+                            'Changes Made:',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Mycolors().darkGrey,
                             ),
                           ),
-                        ),
-                        Spacer(),
-                        SlimButtons(
-                          buttonText: 'Next',
-                          buttonColor: Colors.white,
-                          borderColor: Color.fromRGBO(203, 210, 224, 1),
-                          textColor: Mycolors().green,
-                          onPressed: () {
-                            widget.changePageIndex(10, {
-                              'courseId': widget.courseId,
-                              'isEdited': widget.isEdited
-                            });
-                          },
-                          customWidth: 85,
-                          customHeight: 35,
+                          SizedBox(height: 10),
+                          Container(
+                            padding: EdgeInsets.all(15),
+                            decoration: BoxDecoration(
+                              color: Mycolors().offWhite,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.grey.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: changes
+                                  .map((change) => Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 4.0),
+                                        child: Text(
+                                          '• $change',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Mycolors().darkGrey,
+                                          ),
+                                        ),
+                                      ))
+                                  .toList(),
+                            ),
+                          ),
+                          SizedBox(height: 30),
+                        ],
+                        Center(
+                          child: SlimButtons(
+                            buttonText: 'Review Modules',
+                            buttonColor: Mycolors().blue,
+                            textColor: Colors.white,
+                            onPressed: () {
+                              widget.changePageIndex(10, {
+                                'courseId': widget.courseId,
+                                'isEdited': widget.isEdited
+                              });
+                            },
+                            customWidth: 180,
+                            customHeight: 45,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                )
-              ],
-            ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

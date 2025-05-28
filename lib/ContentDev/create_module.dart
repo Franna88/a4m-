@@ -51,6 +51,11 @@ class _CreateModuleState extends State<CreateModule> {
   String? _testSheetPdfName;
   Uint8List? _assignmentsPdf;
   String? _assignmentsPdfName;
+  Uint8List? _indexPdf;
+  String? _indexPdfName;
+  Uint8List? _lecturerGuidePdf;
+  String? _lecturerGuidePdfName;
+  String? _lecturerGuidePdfUrl;
 
   String? _selectedImageUrl;
 
@@ -70,8 +75,12 @@ class _CreateModuleState extends State<CreateModule> {
 
   String? _assignmentsPdfUrl;
 
+  String? _indexPdfUrl;
+
   bool _isLoading = false;
   final bool _isSubmittedForReview = false;
+  bool _isUploading = false;
+  double _uploadProgress = 0.0;
 
   @override
   void initState() {
@@ -84,6 +93,32 @@ class _CreateModuleState extends State<CreateModule> {
       _currentModuleIndex = widget.moduleIndex;
     } else {
       _currentModuleIndex = 0;
+
+      // When first creating a module, get the course image immediately
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final courseModel = Provider.of<CourseModel>(context, listen: false);
+
+        // First check for course image in memory
+        if (courseModel.courseImage != null) {
+          // Create a blob URL from the in-memory course image for display
+          final blob = html.Blob([courseModel.courseImage!]);
+          final url = html.Url.createObjectUrlFromBlob(blob);
+
+          setState(() {
+            _selectedImageUrl = url;
+          });
+          print("Using in-memory course image for new module");
+        }
+        // Then check for URL
+        else if (courseModel.courseImageUrl != null &&
+            courseModel.courseImageUrl!.isNotEmpty) {
+          setState(() {
+            _selectedImageUrl = courseModel.courseImageUrl;
+          });
+          print(
+              "Using course image URL for new module: ${courseModel.courseImageUrl}");
+        }
+      });
     }
   }
 
@@ -120,7 +155,16 @@ class _CreateModuleState extends State<CreateModule> {
       setState(() {
         _moduleNameController.text = existingModule.moduleName;
         _moduleDescriptionController.text = existingModule.moduleDescription;
-        _selectedImageUrl = existingModule.moduleImageUrl;
+
+        // First check if the module has its own image URL
+        if (existingModule.moduleImageUrl != null &&
+            existingModule.moduleImageUrl!.isNotEmpty) {
+          _selectedImageUrl = existingModule.moduleImageUrl;
+        } else {
+          // If not, use the course image as fallback
+          _selectedImageUrl = courseModel.courseImageUrl;
+        }
+
         _selectedPdfUrl = existingModule.modulePdfUrl;
 
         _studentGuidePdfUrl = existingModule.studentGuidePdfUrl;
@@ -130,6 +174,7 @@ class _CreateModuleState extends State<CreateModule> {
         _assessmentsPdfUrl = existingModule.assessmentsPdfUrl;
         _testSheetPdfUrl = existingModule.testSheetPdfUrl;
         _assignmentsPdfUrl = existingModule.assignmentsPdfUrl;
+        _indexPdfUrl = existingModule.indexPdfUrl;
 
         _selectedPdfName = existingModule.modulePdfName ?? "Existing PDF";
         _studentGuidePdfName =
@@ -146,6 +191,11 @@ class _CreateModuleState extends State<CreateModule> {
             existingModule.testSheetPdfName ?? "Existing Test Sheet";
         _assignmentsPdfName =
             existingModule.assignmentsPdfName ?? "Existing Assignments";
+        _indexPdfName = existingModule.indexPdfName ?? "Existing Index PDF";
+
+        _lecturerGuidePdfUrl = existingModule.lecturerGuidePdfUrl;
+        _lecturerGuidePdfName =
+            existingModule.lecturerGuidePdfName ?? 'Existing Lecturer Guide';
 
         // Clear the local image so that the widget uses the URL image for the current module
         _selectedImage = null;
@@ -174,7 +224,8 @@ class _CreateModuleState extends State<CreateModule> {
             moduleName: data['moduleName'] ?? '',
             moduleDescription: data['moduleDescription'] ?? '',
             modulePdfUrl: data['modulePdfUrl'],
-            moduleImageUrl: data['moduleImageUrl'],
+            moduleImageUrl:
+                data['moduleImageUrl'] ?? courseModel.courseImageUrl,
             studentGuidePdfUrl: data['studentGuidePdfUrl'],
             facilitatorGuidePdfUrl: data['facilitatorGuidePdfUrl'],
             answerSheetPdfUrl: data['answerSheetPdfUrl'],
@@ -190,6 +241,10 @@ class _CreateModuleState extends State<CreateModule> {
             assessmentsPdfName: data['assessmentsPdfName'],
             testSheetPdfName: data['testSheetPdfName'],
             assignmentsPdfName: data['assignmentsPdfName'],
+            indexPdfUrl: data['indexPdfUrl'],
+            indexPdfName: data['indexPdfName'],
+            lecturerGuidePdfUrl: data['lecturerGuidePdfUrl'],
+            lecturerGuidePdfName: data['lecturerGuidePdfName'],
           );
         }).toList();
 
@@ -209,8 +264,19 @@ class _CreateModuleState extends State<CreateModule> {
               courseModel.modules[_currentModuleIndex!].moduleName;
           _moduleDescriptionController.text =
               courseModel.modules[_currentModuleIndex!].moduleDescription;
-          _selectedImageUrl =
-              courseModel.modules[_currentModuleIndex!].moduleImageUrl;
+
+          // First check if the module has its own image URL
+          if (courseModel.modules[_currentModuleIndex!].moduleImageUrl !=
+                  null &&
+              courseModel
+                  .modules[_currentModuleIndex!].moduleImageUrl!.isNotEmpty) {
+            _selectedImageUrl =
+                courseModel.modules[_currentModuleIndex!].moduleImageUrl;
+          } else {
+            // If not, use the course image as fallback
+            _selectedImageUrl = courseModel.courseImageUrl;
+          }
+
           _selectedPdfUrl =
               courseModel.modules[_currentModuleIndex!].modulePdfUrl;
 
@@ -228,6 +294,7 @@ class _CreateModuleState extends State<CreateModule> {
               courseModel.modules[_currentModuleIndex!].testSheetPdfUrl;
           _assignmentsPdfUrl =
               courseModel.modules[_currentModuleIndex!].assignmentsPdfUrl;
+          _indexPdfUrl = courseModel.modules[_currentModuleIndex!].indexPdfUrl;
 
           _selectedPdfName =
               courseModel.modules[_currentModuleIndex!].modulePdfName;
@@ -245,6 +312,14 @@ class _CreateModuleState extends State<CreateModule> {
               courseModel.modules[_currentModuleIndex!].testSheetPdfName;
           _assignmentsPdfName =
               courseModel.modules[_currentModuleIndex!].assignmentsPdfName;
+          _indexPdfName =
+              courseModel.modules[_currentModuleIndex!].indexPdfName;
+
+          _lecturerGuidePdfUrl =
+              courseModel.modules[_currentModuleIndex!].lecturerGuidePdfUrl;
+          _lecturerGuidePdfName =
+              courseModel.modules[_currentModuleIndex!].lecturerGuidePdfName ??
+                  'Existing Lecturer Guide';
 
           // Clear the local image state here as well
           _selectedImage = null;
@@ -295,45 +370,74 @@ class _CreateModuleState extends State<CreateModule> {
         final reader = html.FileReader();
         reader.readAsArrayBuffer(files[0]);
         reader.onLoadEnd.listen((e) {
-          setState(() {
-            final pdfData = reader.result as Uint8List;
-            final pdfName = files[0].name;
+          final pdfData = reader.result as Uint8List;
+          final pdfName = files[0].name;
 
+          setState(() {
             switch (pdfType) {
-              case 'Student Guide':
-                _studentGuidePdf = pdfData;
-                _studentGuidePdfName = pdfName;
-                break;
-              case 'Facilitator Guide':
-                _facilitatorGuidePdf = pdfData;
-                _facilitatorGuidePdfName = pdfName;
-                break;
-              case 'Answer Sheet':
-                _answerSheetPdf = pdfData;
-                _answerSheetPdfName = pdfName;
-                break;
-              case 'Activities':
-                _activitiesPdf = pdfData;
-                _activitiesPdfName = pdfName;
-                break;
-              case 'Assessments':
-                _assessmentsPdf = pdfData;
-                _assessmentsPdfName = pdfName;
-                break;
-              case 'Test':
-                _testSheetPdf = pdfData;
-                _testSheetPdfName = pdfName;
-                break;
-              case 'Assignments':
-                _assignmentsPdf = pdfData;
-                _assignmentsPdfName = pdfName;
-                break;
-              case 'Module PDF':
+              case var t when t.contains('Module PDF'):
                 _selectedPdf = pdfData;
                 _selectedPdfName = pdfName;
+                _selectedPdfUrl = null;
+                break;
+              case var t when t.contains('Lecturer Guide'):
+                _lecturerGuidePdf = pdfData;
+                _lecturerGuidePdfName = pdfName;
+                _lecturerGuidePdfUrl = null;
+                break;
+              case var t when t.contains('Student Guide'):
+                _studentGuidePdf = pdfData;
+                _studentGuidePdfName = pdfName;
+                _studentGuidePdfUrl = null;
+                break;
+              case var t when t.contains('Facilitator Guide'):
+                _facilitatorGuidePdf = pdfData;
+                _facilitatorGuidePdfName = pdfName;
+                _facilitatorGuidePdfUrl = null;
+                break;
+              case var t when t.contains('Answer Sheet'):
+                _answerSheetPdf = pdfData;
+                _answerSheetPdfName = pdfName;
+                _answerSheetPdfUrl = null;
+                break;
+              case var t when t.contains('Activities'):
+                _activitiesPdf = pdfData;
+                _activitiesPdfName = pdfName;
+                _activitiesPdfUrl = null;
+                break;
+              case var t when t.contains('Assessments'):
+                _assessmentsPdf = pdfData;
+                _assessmentsPdfName = pdfName;
+                _assessmentsPdfUrl = null;
+                break;
+              case var t when t.contains('Test'):
+                _testSheetPdf = pdfData;
+                _testSheetPdfName = pdfName;
+                _testSheetPdfUrl = null;
+                break;
+              case var t when t.contains('Assignments'):
+                _assignmentsPdf = pdfData;
+                _assignmentsPdfName = pdfName;
+                _assignmentsPdfUrl = null;
+                break;
+              case var t when t.contains('Index PDF'):
+                _indexPdf = pdfData;
+                _indexPdfName = pdfName;
+                _indexPdfUrl = null;
+                break;
+              default:
+                print('Unknown PDF type: $pdfType');
                 break;
             }
           });
+
+          // Show feedback to user
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$pdfType selected: $pdfName'),
+              duration: Duration(seconds: 2),
+            ),
+          );
         });
       }
     });
@@ -353,53 +457,96 @@ class _CreateModuleState extends State<CreateModule> {
         final existingModule = courseModel.modules[_currentModuleIndex!];
         existingModule.moduleName = _moduleNameController.text;
         existingModule.moduleDescription = _moduleDescriptionController.text;
-        existingModule.moduleImage = _selectedImage;
-        existingModule.moduleImageUrl = _selectedImageUrl;
+
+        // Only update module image if a new one was selected
+        if (_selectedImage != null) {
+          existingModule.moduleImage = _selectedImage;
+          existingModule.moduleImageUrl = _selectedImageUrl;
+        } else if (_selectedImageUrl != null &&
+            _selectedImageUrl != courseModel.courseImageUrl) {
+          // If we have a specific module image URL that's not the course image, keep it
+          existingModule.moduleImageUrl = _selectedImageUrl;
+          existingModule.moduleImage = null;
+        } else {
+          // Otherwise, use the course image
+          existingModule.moduleImage = null;
+          existingModule.moduleImageUrl =
+              null; // This will make it fall back to course image
+        }
+
         existingModule.modulePdf = _selectedPdf;
         existingModule.modulePdfName = _selectedPdfName;
+        existingModule.modulePdfUrl = _selectedPdfUrl;
 
         // Update additional PDFs
         existingModule.studentGuidePdf = _studentGuidePdf;
         existingModule.studentGuidePdfName = _studentGuidePdfName;
+        existingModule.studentGuidePdfUrl = _studentGuidePdfUrl;
         existingModule.facilitatorGuidePdf = _facilitatorGuidePdf;
         existingModule.facilitatorGuidePdfName = _facilitatorGuidePdfName;
+        existingModule.facilitatorGuidePdfUrl = _facilitatorGuidePdfUrl;
         existingModule.answerSheetPdf = _answerSheetPdf;
         existingModule.answerSheetPdfName = _answerSheetPdfName;
+        existingModule.answerSheetPdfUrl = _answerSheetPdfUrl;
         existingModule.activitiesPdf = _activitiesPdf;
         existingModule.activitiesPdfName = _activitiesPdfName;
+        existingModule.activitiesPdfUrl = _activitiesPdfUrl;
         existingModule.assessmentsPdf = _assessmentsPdf;
         existingModule.assessmentsPdfName = _assessmentsPdfName;
+        existingModule.assessmentsPdfUrl = _assessmentsPdfUrl;
         existingModule.testSheetPdf = _testSheetPdf;
         existingModule.testSheetPdfName = _testSheetPdfName;
+        existingModule.testSheetPdfUrl = _testSheetPdfUrl;
         existingModule.assignmentsPdf = _assignmentsPdf;
         existingModule.assignmentsPdfName = _assignmentsPdfName;
+        existingModule.assignmentsPdfUrl = _assignmentsPdfUrl;
+        existingModule.indexPdf = _indexPdf;
+        existingModule.indexPdfName = _indexPdfName;
+        existingModule.indexPdfUrl = _indexPdfUrl;
+        existingModule.lecturerGuidePdf = _lecturerGuidePdf;
+        existingModule.lecturerGuidePdfName = _lecturerGuidePdfName;
+        existingModule.lecturerGuidePdfUrl = _lecturerGuidePdfUrl;
 
         courseModel.updateModule(_currentModuleIndex!, existingModule);
         print("✅ Module updated at index: $_currentModuleIndex");
       } else {
-        // Create new module (Creation Mode)
         final newModule = Module(
           id: FirebaseFirestore.instance.collection('modules').doc().id,
           moduleName: _moduleNameController.text,
           moduleDescription: _moduleDescriptionController.text,
           moduleImage: _selectedImage,
-          moduleImageUrl: _selectedImageUrl,
+          moduleImageUrl: _selectedImage != null ? _selectedImageUrl : null,
           modulePdf: _selectedPdf,
-          modulePdfName: _selectedPdfName,
+          modulePdfName: _selectedPdfName ?? 'Module PDF',
+          modulePdfUrl: _selectedPdfUrl,
           studentGuidePdf: _studentGuidePdf,
-          studentGuidePdfName: _studentGuidePdfName,
+          studentGuidePdfName: _studentGuidePdfName ?? 'Student Guide',
+          studentGuidePdfUrl: _studentGuidePdfUrl,
           facilitatorGuidePdf: _facilitatorGuidePdf,
-          facilitatorGuidePdfName: _facilitatorGuidePdfName,
+          facilitatorGuidePdfName:
+              _facilitatorGuidePdfName ?? 'Facilitator Guide',
+          facilitatorGuidePdfUrl: _facilitatorGuidePdfUrl,
           answerSheetPdf: _answerSheetPdf,
-          answerSheetPdfName: _answerSheetPdfName,
+          answerSheetPdfName: _answerSheetPdfName ?? 'Answer Sheet',
+          answerSheetPdfUrl: _answerSheetPdfUrl,
           activitiesPdf: _activitiesPdf,
-          activitiesPdfName: _activitiesPdfName,
+          activitiesPdfName: _activitiesPdfName ?? 'Activities',
+          activitiesPdfUrl: _activitiesPdfUrl,
           assessmentsPdf: _assessmentsPdf,
-          assessmentsPdfName: _assessmentsPdfName,
+          assessmentsPdfName: _assessmentsPdfName ?? 'Assessments',
+          assessmentsPdfUrl: _assessmentsPdfUrl,
           testSheetPdf: _testSheetPdf,
-          testSheetPdfName: _testSheetPdfName,
+          testSheetPdfName: _testSheetPdfName ?? 'Test Sheet',
+          testSheetPdfUrl: _testSheetPdfUrl,
           assignmentsPdf: _assignmentsPdf,
-          assignmentsPdfName: _assignmentsPdfName,
+          assignmentsPdfName: _assignmentsPdfName ?? 'Assignments',
+          assignmentsPdfUrl: _assignmentsPdfUrl,
+          indexPdf: _indexPdf,
+          indexPdfName: _indexPdfName ?? 'Index PDF',
+          indexPdfUrl: _indexPdfUrl,
+          lecturerGuidePdf: _lecturerGuidePdf,
+          lecturerGuidePdfName: _lecturerGuidePdfName ?? 'Lecturer Guide',
+          lecturerGuidePdfUrl: _lecturerGuidePdfUrl,
         );
 
         courseModel.addModule(newModule);
@@ -422,12 +569,68 @@ class _CreateModuleState extends State<CreateModule> {
     setState(() {
       _currentModuleIndex = courseModel.modules.length;
     });
-    courseModel.addModule(Module(
+
+    // Create a new module with proper initialization
+    final newModule = Module(
       moduleName: '',
       moduleDescription: '',
       id: FirebaseFirestore.instance.collection('modules').doc().id,
-    ));
-    print("➕ New module template created");
+      moduleImage: null,
+      moduleImageUrl: courseModel.courseImageUrl, // Use course image as default
+
+      // Initialize all PDF-related fields
+      modulePdf: null,
+      modulePdfName: 'Module PDF',
+      modulePdfUrl: null,
+
+      studentGuidePdf: null,
+      studentGuidePdfName: 'Student Guide',
+      studentGuidePdfUrl: null,
+
+      facilitatorGuidePdf: null,
+      facilitatorGuidePdfName: 'Facilitator Guide',
+      facilitatorGuidePdfUrl: null,
+
+      answerSheetPdf: null,
+      answerSheetPdfName: 'Answer Sheet',
+      answerSheetPdfUrl: null,
+
+      activitiesPdf: null,
+      activitiesPdfName: 'Activities',
+      activitiesPdfUrl: null,
+
+      assessmentsPdf: null,
+      assessmentsPdfName: 'Assessments',
+      assessmentsPdfUrl: null,
+
+      testSheetPdf: null,
+      testSheetPdfName: 'Test Sheet',
+      testSheetPdfUrl: null,
+
+      assignmentsPdf: null,
+      assignmentsPdfName: 'Assignments',
+      assignmentsPdfUrl: null,
+
+      indexPdf: null,
+      indexPdfName: 'Index PDF',
+      indexPdfUrl: null,
+
+      lecturerGuidePdf: null,
+      lecturerGuidePdfName: 'Lecturer Guide',
+      lecturerGuidePdfUrl: null,
+    );
+
+    courseModel.addModule(newModule);
+
+    // Show feedback to user
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('New module added. Please add content and save.'),
+        duration: Duration(seconds: 3),
+      ),
+    );
+
+    print("➕ New module template created with initialized PDF fields");
   }
 
   void _clearInputs() {
@@ -440,48 +643,87 @@ class _CreateModuleState extends State<CreateModule> {
       _selectedPdfName = null;
 
       // Clear additional PDF inputs
+      _selectedPdfUrl = null;
+
       _studentGuidePdf = null;
       _studentGuidePdfName = null;
+      _studentGuidePdfUrl = null;
+
       _facilitatorGuidePdf = null;
       _facilitatorGuidePdfName = null;
+      _facilitatorGuidePdfUrl = null;
+
       _answerSheetPdf = null;
       _answerSheetPdfName = null;
+      _answerSheetPdfUrl = null;
+
       _activitiesPdf = null;
       _activitiesPdfName = null;
+      _activitiesPdfUrl = null;
+
       _assessmentsPdf = null;
       _assessmentsPdfName = null;
+      _assessmentsPdfUrl = null;
+
       _testSheetPdf = null;
       _testSheetPdfName = null;
+      _testSheetPdfUrl = null;
+
       _assignmentsPdf = null;
       _assignmentsPdfName = null;
+      _assignmentsPdfUrl = null;
+
+      _indexPdf = null;
+      _indexPdfName = null;
+      _indexPdfUrl = null;
+
+      _lecturerGuidePdf = null;
+      _lecturerGuidePdfName = null;
+      _lecturerGuidePdfUrl = null;
     });
   }
 
   bool _validateInputs() {
-    // Only validate required fields
+    // Only validate required fields: name and description
     if (_moduleNameController.text.isEmpty ||
-        _moduleDescriptionController.text.isEmpty ||
-        (_selectedImage == null &&
-            (_selectedImageUrl == null || _selectedImageUrl!.isEmpty))) {
+        _moduleDescriptionController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(
-                'Please fill in the module name, description, and select an image.')),
+            content: Text('Please fill in the module name and description.')),
       );
       return false;
     }
+
+    // Optionally, warn if neither module nor course image is present
+    final courseModel = Provider.of<CourseModel>(context, listen: false);
+    bool hasModuleImage = _selectedImage != null ||
+        (_selectedImageUrl != null && _selectedImageUrl!.isNotEmpty);
+    bool hasCourseImage = courseModel.courseImage != null ||
+        (courseModel.courseImageUrl != null &&
+            courseModel.courseImageUrl!.isNotEmpty);
+
+    if (!hasModuleImage && !hasCourseImage) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text('Warning: No image selected for this module or course.')),
+      );
+      // Still allow saving, just a warning
+    }
+
     return true;
   }
 
   Future<void> _saveToFirebase() async {
-    if (!_validateInputs()) {
-      return;
-    }
+    // Always save current module changes first, including for new modules
+    _setModule(); // This ensures all current UI data is saved to the module
+
+    if (!_validateInputs()) return;
 
     setState(() {
-      _isLoading = true;
+      _isUploading = true;
+      _uploadProgress = 0.0;
     });
-
     try {
       final courseModel = Provider.of<CourseModel>(context, listen: false);
       final firebase_storage.FirebaseStorage storage =
@@ -528,6 +770,16 @@ class _CreateModuleState extends State<CreateModule> {
       // Upload the course image only if it's new
       String? courseImageUrl =
           courseModel.courseImageUrl; // Keep existing URL by default
+      int totalUploads = 1 +
+          courseModel.modules.length *
+              9; // 1 for course image, 9 for each module's files
+      int completedUploads = 0;
+      void updateProgress() {
+        setState(() {
+          _uploadProgress = completedUploads / totalUploads;
+        });
+      }
+
       if (courseModel.courseImage != null) {
         firebase_storage.Reference ref = storage
             .ref()
@@ -535,10 +787,16 @@ class _CreateModuleState extends State<CreateModule> {
         firebase_storage.UploadTask uploadTask =
             ref.putData(courseModel.courseImage!);
         firebase_storage.TaskSnapshot snapshot = await uploadTask;
-        courseImageUrl = await snapshot.ref.getDownloadURL();
+        String downloadUrl = await snapshot.ref.getDownloadURL();
+        courseModel.setCourseImageUrl(downloadUrl);
         if (!isNewCourse) {
           courseChanges.add("Updated Course Image");
         }
+        completedUploads++;
+        updateProgress();
+      } else {
+        completedUploads++;
+        updateProgress();
       }
 
       // Determine which collection to use
@@ -560,12 +818,13 @@ class _CreateModuleState extends State<CreateModule> {
       for (var module in courseModel.modules) {
         // Track changes for this module
         List<String> moduleChangeList = [];
+        DocumentSnapshot? existingModuleDoc;
 
         // For edited courses, fetch existing module data to compare
+        bool isNewModule = false;
         if (!isNewCourse) {
           try {
-            DocumentSnapshot existingModuleDoc = await FirebaseFirestore
-                .instance
+            existingModuleDoc = await FirebaseFirestore.instance
                 .collection('courses')
                 .doc(widget.courseId)
                 .collection('modules')
@@ -612,10 +871,62 @@ class _CreateModuleState extends State<CreateModule> {
               if (module.assignmentsPdf != null) {
                 moduleChangeList.add("Updated Assignments");
               }
+            } else {
+              // This is a new module being added to an existing course
+              isNewModule = true;
+              moduleChangeList.add("Added New Module: ${module.moduleName}");
+
+              // Mark all uploaded content as new
+              if (module.moduleImage != null || module.moduleImageUrl != null) {
+                moduleChangeList.add("Added Module Image");
+              }
+              if (module.modulePdf != null || module.modulePdfUrl != null) {
+                moduleChangeList.add("Added Module PDF");
+              }
+              if (module.studentGuidePdf != null ||
+                  module.studentGuidePdfUrl != null) {
+                moduleChangeList.add("Added Student Guide");
+              }
+              if (module.facilitatorGuidePdf != null ||
+                  module.facilitatorGuidePdfUrl != null) {
+                moduleChangeList.add("Added Facilitator Guide");
+              }
+              if (module.answerSheetPdf != null ||
+                  module.answerSheetPdfUrl != null) {
+                moduleChangeList.add("Added Answer Sheet");
+              }
+              if (module.activitiesPdf != null ||
+                  module.activitiesPdfUrl != null) {
+                moduleChangeList.add("Added Activities");
+              }
+              if (module.assessmentsPdf != null ||
+                  module.assessmentsPdfUrl != null) {
+                moduleChangeList.add("Added Assessments");
+              }
+              if (module.testSheetPdf != null ||
+                  module.testSheetPdfUrl != null) {
+                moduleChangeList.add("Added Test Sheet");
+              }
+              if (module.assignmentsPdf != null ||
+                  module.assignmentsPdfUrl != null) {
+                moduleChangeList.add("Added Assignments");
+              }
+              if (module.indexPdf != null || module.indexPdfUrl != null) {
+                moduleChangeList.add("Added Index PDF");
+              }
+              if (module.lecturerGuidePdf != null ||
+                  module.lecturerGuidePdfUrl != null) {
+                moduleChangeList.add("Added Lecturer Guide");
+              }
             }
           } catch (e) {
             print("Error fetching existing module data: $e");
+            // If there's an error fetching, treat as new module to be safe
+            isNewModule = true;
           }
+        } else {
+          // For new courses, all modules are new
+          isNewModule = true;
         }
 
         // Upload module image only if it's new
@@ -628,34 +939,98 @@ class _CreateModuleState extends State<CreateModule> {
               ref.putData(module.moduleImage!);
           firebase_storage.TaskSnapshot snapshot = await uploadTask;
           moduleImageUrl = await snapshot.ref.getDownloadURL();
+          completedUploads++;
+          updateProgress();
+        } else if (isNewModule) {
+          // For new modules, use the course image URL if no specific module image
+          moduleImageUrl = courseModel.courseImageUrl ?? courseImageUrl;
+          completedUploads++;
+          updateProgress();
+        } else {
+          // If no module image is uploaded, use the course image URL
+          moduleImageUrl =
+              moduleImageUrl ?? courseModel.courseImageUrl ?? courseImageUrl;
+          completedUploads++;
+          updateProgress();
         }
 
-        // Upload module PDF only if it's new
-        String? modulePdfUrl =
-            module.modulePdfUrl; // Keep existing URL by default
-        if (module.modulePdf != null) {
-          firebase_storage.Reference ref = storage.ref().child(
-              'modules/${DateTime.now().millisecondsSinceEpoch}_module.pdf');
-          firebase_storage.UploadTask uploadTask =
-              ref.putData(module.modulePdf!);
-          firebase_storage.TaskSnapshot snapshot = await uploadTask;
-          modulePdfUrl = await snapshot.ref.getDownloadURL();
-        }
-
-        // Helper function to handle PDF uploads
+        // Helper function to handle PDF uploads with improved new module handling
         Future<String?> uploadPdf(
             Uint8List? pdfData, String? existingUrl, String fileName) async {
-          if (pdfData == null) {
-            return existingUrl; // Return existing URL if no new file
+          // For new modules or when new PDF data is provided
+          if (pdfData != null) {
+            try {
+              print('Starting upload for $fileName');
+              firebase_storage.Reference ref = storage.ref().child(
+                  'pdfs/${DateTime.now().millisecondsSinceEpoch}_$fileName.pdf');
+
+              // Create upload task with metadata
+              firebase_storage.UploadTask uploadTask = ref.putData(
+                  pdfData,
+                  firebase_storage.SettableMetadata(
+                      contentType: 'application/pdf',
+                      customMetadata: {'fileName': fileName}));
+
+              // Monitor upload progress
+              uploadTask.snapshotEvents
+                  .listen((firebase_storage.TaskSnapshot snapshot) {
+                print(
+                    'Upload progress for $fileName: ${snapshot.bytesTransferred}/${snapshot.totalBytes}');
+              });
+
+              // Wait for upload to complete
+              firebase_storage.TaskSnapshot snapshot = await uploadTask;
+              String downloadUrl = await snapshot.ref.getDownloadURL();
+
+              print('Successfully uploaded $fileName: $downloadUrl');
+              completedUploads++;
+              updateProgress();
+              return downloadUrl;
+            } catch (e) {
+              print('Error uploading $fileName: $e');
+              completedUploads++;
+              updateProgress();
+              return null;
+            }
+          } else if (existingUrl != null && existingUrl.isNotEmpty) {
+            // Keep existing URL if no new data
+            print('Using existing URL for $fileName: $existingUrl');
+            completedUploads++;
+            updateProgress();
+            return existingUrl;
+          } else {
+            // For new modules or when no data is provided
+            print('No PDF data for $fileName');
+            completedUploads++;
+            updateProgress();
+            return null;
           }
-          firebase_storage.Reference ref = storage.ref().child(
-              'pdfs/${DateTime.now().millisecondsSinceEpoch}_$fileName.pdf');
-          firebase_storage.UploadTask uploadTask = ref.putData(pdfData);
-          firebase_storage.TaskSnapshot snapshot = await uploadTask;
-          return await snapshot.ref.getDownloadURL();
         }
 
-        // Upload new PDFs while keeping existing URLs for unchanged files
+        // Debug logging for module data
+        print('📋 Processing module: ${module.moduleName}');
+        print('🆕 Is new module: $isNewModule');
+        print('📄 Module PDF data present: ${module.modulePdf != null}');
+        print(
+            '📄 Student Guide PDF data present: ${module.studentGuidePdf != null}');
+        print(
+            '📄 Facilitator Guide PDF data present: ${module.facilitatorGuidePdf != null}');
+        print(
+            '📄 Answer Sheet PDF data present: ${module.answerSheetPdf != null}');
+        print(
+            '📄 Activities PDF data present: ${module.activitiesPdf != null}');
+        print(
+            '📄 Assessments PDF data present: ${module.assessmentsPdf != null}');
+        print('📄 Test Sheet PDF data present: ${module.testSheetPdf != null}');
+        print(
+            '📄 Assignments PDF data present: ${module.assignmentsPdf != null}');
+        print('📄 Index PDF data present: ${module.indexPdf != null}');
+        print(
+            '📄 Lecturer Guide PDF data present: ${module.lecturerGuidePdf != null}');
+
+        // Upload all PDFs consistently
+        String? modulePdfUrl = await uploadPdf(
+            module.modulePdf, module.modulePdfUrl, 'module_pdf');
         String? studentGuidePdfUrl = await uploadPdf(
             module.studentGuidePdf, module.studentGuidePdfUrl, 'student_guide');
         String? facilitatorGuidePdfUrl = await uploadPdf(
@@ -672,6 +1047,10 @@ class _CreateModuleState extends State<CreateModule> {
             module.testSheetPdf, module.testSheetPdfUrl, 'test_sheet');
         String? assignmentsPdfUrl = await uploadPdf(
             module.assignmentsPdf, module.assignmentsPdfUrl, 'assignments');
+        String? indexPdfUrl =
+            await uploadPdf(module.indexPdf, module.indexPdfUrl, 'index');
+        String? lecturerGuidePdfUrl = await uploadPdf(module.lecturerGuidePdf,
+            module.lecturerGuidePdfUrl, 'lecturer_guide');
 
         // If there are changes, add to moduleChanges list
         if (moduleChangeList.isNotEmpty) {
@@ -688,21 +1067,27 @@ class _CreateModuleState extends State<CreateModule> {
           'moduleDescription': module.moduleDescription,
           'moduleImageUrl': moduleImageUrl,
           'modulePdfUrl': modulePdfUrl,
-          'modulePdfName': module.modulePdfName,
+          'modulePdfName': module.modulePdfName ?? 'Module PDF',
           'studentGuidePdfUrl': studentGuidePdfUrl,
-          'studentGuidePdfName': module.studentGuidePdfName,
+          'studentGuidePdfName': module.studentGuidePdfName ?? 'Student Guide',
           'facilitatorGuidePdfUrl': facilitatorGuidePdfUrl,
-          'facilitatorGuidePdfName': module.facilitatorGuidePdfName,
+          'facilitatorGuidePdfName':
+              module.facilitatorGuidePdfName ?? 'Facilitator Guide',
           'answerSheetPdfUrl': answerSheetPdfUrl,
-          'answerSheetPdfName': module.answerSheetPdfName,
+          'answerSheetPdfName': module.answerSheetPdfName ?? 'Answer Sheet',
           'activitiesPdfUrl': activitiesPdfUrl,
-          'activitiesPdfName': module.activitiesPdfName,
+          'activitiesPdfName': module.activitiesPdfName ?? 'Activities',
           'assessmentsPdfUrl': assessmentsPdfUrl,
-          'assessmentsPdfName': module.assessmentsPdfName,
+          'assessmentsPdfName': module.assessmentsPdfName ?? 'Assessments',
           'testSheetPdfUrl': testSheetPdfUrl,
-          'testSheetPdfName': module.testSheetPdfName,
+          'testSheetPdfName': module.testSheetPdfName ?? 'Test Sheet',
           'assignmentsPdfUrl': assignmentsPdfUrl,
-          'assignmentsPdfName': module.assignmentsPdfName,
+          'assignmentsPdfName': module.assignmentsPdfName ?? 'Assignments',
+          'indexPdfUrl': indexPdfUrl,
+          'indexPdfName': module.indexPdfName ?? 'Index PDF',
+          'lecturerGuidePdfUrl': lecturerGuidePdfUrl,
+          'lecturerGuidePdfName':
+              module.lecturerGuidePdfName ?? 'Lecturer Guide',
           'questions': module.questions.map((q) => q.toMap()).toList(),
           'tasks': module.tasks.map((t) => t.toMap()).toList(),
           'assignments': module.assignments.map((a) => a.toMap()).toList(),
@@ -739,9 +1124,7 @@ class _CreateModuleState extends State<CreateModule> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                'Course and modules ${isNewCourse ? 'created' : 'updated'} successfully!')),
+        SnackBar(content: Text('Course and modules submitted!')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -749,7 +1132,8 @@ class _CreateModuleState extends State<CreateModule> {
       );
     } finally {
       setState(() {
-        _isLoading = false;
+        _isUploading = false;
+        _uploadProgress = 0.0;
       });
     }
   }
@@ -779,53 +1163,92 @@ class _CreateModuleState extends State<CreateModule> {
       // Handle Module Image
       if (_selectedImage != null) {
         moduleChangeList.add("Updated Module Image");
+        existingModule.moduleImage = _selectedImage;
+        existingModule.moduleImageUrl = _selectedImageUrl;
+      } else if (existingModule.moduleImage == null &&
+          existingModule.moduleImageUrl == null) {
+        existingModule.moduleImageUrl = courseModel.courseImageUrl;
       }
 
-      // Handle PDF uploads tracking
-      Map<String, Uint8List?> pdfFiles = {
-        "Module PDF": _selectedPdf,
-        "Student Guide": _studentGuidePdf,
-        "Facilitator Guide": _facilitatorGuidePdf,
-        "Answer Sheet": _answerSheetPdf,
-        "Activities": _activitiesPdf,
-        "Assessments": _assessmentsPdf,
-        "Test": _testSheetPdf,
-        "Assignments": _assignmentsPdf
-      };
-
-      for (String key in pdfFiles.keys) {
-        if (pdfFiles[key] != null) {
-          moduleChangeList.add("Updated $key");
-        }
-      }
-
-      // Store changes in the module itself
+      // Update module data
       existingModule.moduleName = _moduleNameController.text;
       existingModule.moduleDescription = _moduleDescriptionController.text;
-      existingModule.moduleImage = _selectedImage;
-      existingModule.moduleImageUrl = _selectedImageUrl;
-      existingModule.modulePdf = _selectedPdf;
-      existingModule.modulePdfName = _selectedPdfName;
 
-      existingModule.studentGuidePdf = _studentGuidePdf;
-      existingModule.studentGuidePdfName = _studentGuidePdfName;
-      existingModule.facilitatorGuidePdf = _facilitatorGuidePdf;
-      existingModule.facilitatorGuidePdfName = _facilitatorGuidePdfName;
-      existingModule.answerSheetPdf = _answerSheetPdf;
-      existingModule.answerSheetPdfName = _answerSheetPdfName;
-      existingModule.activitiesPdf = _activitiesPdf;
-      existingModule.activitiesPdfName = _activitiesPdfName;
-      existingModule.assessmentsPdf = _assessmentsPdf;
-      existingModule.assessmentsPdfName = _assessmentsPdfName;
-      existingModule.testSheetPdf = _testSheetPdf;
-      existingModule.testSheetPdfName = _testSheetPdfName;
-      existingModule.assignmentsPdf = _assignmentsPdf;
-      existingModule.assignmentsPdfName = _assignmentsPdfName;
+      // Handle all PDFs
+      if (_selectedPdf != null) {
+        moduleChangeList.add("Updated Module PDF");
+        existingModule.modulePdf = _selectedPdf;
+        existingModule.modulePdfName = _selectedPdfName;
+        existingModule.modulePdfUrl = null; // Clear URL to force upload
+      }
 
-      // **Attach changes to module**
+      if (_studentGuidePdf != null) {
+        moduleChangeList.add("Updated Student Guide");
+        existingModule.studentGuidePdf = _studentGuidePdf;
+        existingModule.studentGuidePdfName = _studentGuidePdfName;
+        existingModule.studentGuidePdfUrl = null;
+      }
+
+      if (_facilitatorGuidePdf != null) {
+        moduleChangeList.add("Updated Facilitator Guide");
+        existingModule.facilitatorGuidePdf = _facilitatorGuidePdf;
+        existingModule.facilitatorGuidePdfName = _facilitatorGuidePdfName;
+        existingModule.facilitatorGuidePdfUrl = null;
+      }
+
+      if (_answerSheetPdf != null) {
+        moduleChangeList.add("Updated Answer Sheet");
+        existingModule.answerSheetPdf = _answerSheetPdf;
+        existingModule.answerSheetPdfName = _answerSheetPdfName;
+        existingModule.answerSheetPdfUrl = null;
+      }
+
+      if (_activitiesPdf != null) {
+        moduleChangeList.add("Updated Activities");
+        existingModule.activitiesPdf = _activitiesPdf;
+        existingModule.activitiesPdfName = _activitiesPdfName;
+        existingModule.activitiesPdfUrl = null;
+      }
+
+      if (_assessmentsPdf != null) {
+        moduleChangeList.add("Updated Assessments");
+        existingModule.assessmentsPdf = _assessmentsPdf;
+        existingModule.assessmentsPdfName = _assessmentsPdfName;
+        existingModule.assessmentsPdfUrl = null;
+      }
+
+      if (_testSheetPdf != null) {
+        moduleChangeList.add("Updated Test Sheet");
+        existingModule.testSheetPdf = _testSheetPdf;
+        existingModule.testSheetPdfName = _testSheetPdfName;
+        existingModule.testSheetPdfUrl = null;
+      }
+
+      if (_assignmentsPdf != null) {
+        moduleChangeList.add("Updated Assignments");
+        existingModule.assignmentsPdf = _assignmentsPdf;
+        existingModule.assignmentsPdfName = _assignmentsPdfName;
+        existingModule.assignmentsPdfUrl = null;
+      }
+
+      if (_indexPdf != null) {
+        moduleChangeList.add("Updated Index PDF");
+        existingModule.indexPdf = _indexPdf;
+        existingModule.indexPdfName = _indexPdfName;
+        existingModule.indexPdfUrl = null;
+      }
+
+      if (_lecturerGuidePdf != null) {
+        moduleChangeList.add("Updated Lecturer Guide");
+        existingModule.lecturerGuidePdf = _lecturerGuidePdf;
+        existingModule.lecturerGuidePdfName = _lecturerGuidePdfName;
+        existingModule.lecturerGuidePdfUrl = null;
+      }
+
+      // Attach changes to module
       existingModule.changes = moduleChangeList;
 
-      // **Save changes inside CourseModel**
+      // Save changes inside CourseModel
       courseModel.updateModule(_currentModuleIndex!, existingModule);
 
       print(
@@ -871,329 +1294,575 @@ class _CreateModuleState extends State<CreateModule> {
             : 0;
     final totalModules = courseModel.modules.length;
 
-    return Material(
-      color: Mycolors().offWhite,
-      child: SizedBox(
-        width: MyUtility(context).width - 280,
-        height: MyUtility(context).height - 80,
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Modern Header with gradient
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Mycolors().darkTeal, Mycolors().blue],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: Offset(0, 5),
+    return Stack(
+      children: [
+        Material(
+          color: Mycolors().offWhite,
+          child: SizedBox(
+            width: MyUtility(context).width - 280,
+            height: MyUtility(context).height - 80,
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Modern Header with gradient
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Mycolors().darkTeal, Mycolors().blue],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
                       ),
-                    ],
-                  ),
-                  height: MyUtility(context).height * 0.08,
-                  width: MyUtility(context).width,
-                  child: Center(
-                    child: Text(
-                      'Upload Module',
-                      style: MyTextStyles(context).headerWhite.copyWith(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: Offset(0, 5),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-                SizedBox(height: 20),
-                // Main Content Card
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(30.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Module Navigation and Controls
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Module ${currentIndex} of $totalModules',
-                            style: TextStyle(
-                              fontSize: 16,
+                    height: MyUtility(context).height * 0.08,
+                    width: MyUtility(context).width,
+                    child: Center(
+                      child: Text(
+                        widget.courseId != null
+                            ? 'Edit Module'
+                            : 'Upload Module',
+                        style: MyTextStyles(context).headerWhite.copyWith(
+                              fontSize: 24,
                               fontWeight: FontWeight.w600,
-                              color: Mycolors().darkGrey,
                             ),
-                          ),
-                          Row(
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: _addNewModule,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Mycolors().blue,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                icon: Icon(Icons.add),
-                                label: Text('Add New Module'),
-                              ),
-                              SizedBox(width: 10),
-                              ElevatedButton.icon(
-                                onPressed: _navigateToPreviousModule,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Mycolors().darkGrey,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    side:
-                                        BorderSide(color: Mycolors().darkGrey),
-                                  ),
-                                ),
-                                icon: Icon(Icons.arrow_back),
-                                label: Text('Previous'),
-                              ),
-                              SizedBox(width: 10),
-                              ElevatedButton.icon(
-                                onPressed: _navigateToNextModule,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Mycolors().darkGrey,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    side:
-                                        BorderSide(color: Mycolors().darkGrey),
-                                  ),
-                                ),
-                                icon: Icon(Icons.arrow_forward),
-                                label: Text('Next'),
-                              ),
-                            ],
-                          ),
-                        ],
                       ),
-                      SizedBox(height: 30),
-                      // Module Name and Save Button
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ContentDevTextfields(
-                              inputController: _moduleNameController,
-                              headerText: 'Module Name',
-                              keyboardType: '',
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  // Main Content Card
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: Offset(0, 5),
                             ),
-                          ),
-                          SizedBox(width: 20),
-                          ElevatedButton.icon(
-                            onPressed: _setModule,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Mycolors().blue,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            icon: Icon(Icons.save, color: Colors.white),
-                            label: Text('Save Module',
-                                style: TextStyle(color: Colors.white)),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 30),
-                      // Module Content Section
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Image Upload Section
-                          InkWell(
-                            onTap: _pickImage,
-                            child: Container(
-                              height: MediaQuery.of(context).size.height * 0.3,
-                              width: MediaQuery.of(context).size.width * 0.3,
-                              decoration: BoxDecoration(
-                                color: Mycolors().offWhite,
-                                borderRadius: BorderRadius.circular(15),
-                                border: Border.all(
-                                  color: Colors.grey.withOpacity(0.3),
-                                ),
-                              ),
-                              child: _selectedImage != null
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(15),
-                                      child: Image.memory(
-                                        _selectedImage!,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    )
-                                  : (_selectedImageUrl != null &&
-                                          _selectedImageUrl!.isNotEmpty)
-                                      ? ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                          child: ImageNetwork(
-                                            key: ValueKey(_selectedImageUrl),
-                                            image: _selectedImageUrl!,
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.3,
-                                            height: MediaQuery.of(context)
-                                                    .size
-                                                    .height *
-                                                0.3,
-                                            borderRadius:
-                                                BorderRadius.circular(15),
-                                            fitWeb: BoxFitWeb.cover,
-                                            fitAndroidIos: BoxFit.cover,
-                                            onLoading: Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                              color: Mycolors().blue,
-                                            )),
-                                          ),
-                                        )
-                                      : Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons
-                                                  .add_photo_alternate_outlined,
-                                              size: 50,
-                                              color: Mycolors().darkGrey,
-                                            ),
-                                            SizedBox(height: 10),
-                                            Text(
-                                              'Click to upload module image',
-                                              style: TextStyle(
-                                                color: Mycolors().darkGrey,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                            ),
-                          ),
-                          SizedBox(width: 30),
-                          // PDF Upload Section
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(30.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Module Navigation and Controls
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Module Documents',
+                                  'Module ${currentIndex} of $totalModules',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: Mycolors().darkGrey,
                                   ),
                                 ),
-                                SizedBox(height: 20),
-                                Wrap(
-                                  spacing: 10,
-                                  runSpacing: 10,
-                                  children: [
-                                    _buildPdfButton(
-                                        'Student Guide', _studentGuidePdf),
-                                    _buildPdfButton('Facilitator Guide',
-                                        _facilitatorGuidePdf),
-                                    _buildPdfButton(
-                                        'Answer Sheet', _answerSheetPdf),
-                                    _buildPdfButton(
-                                        'Activities', _activitiesPdf),
-                                    _buildPdfButton(
-                                        'Assessments', _assessmentsPdf),
-                                    _buildPdfButton('Test', _testSheetPdf),
-                                    _buildPdfButton(
-                                        'Assignments', _assignmentsPdf),
-                                  ],
+                              ],
+                            ),
+                            SizedBox(height: 30),
+                            // Module Name
+                            ContentDevTextfields(
+                              inputController: _moduleNameController,
+                              headerText: widget.courseId != null
+                                  ? 'Edit Module Name'
+                                  : 'Module Name',
+                              keyboardType: '',
+                            ),
+                            SizedBox(height: 30),
+                            // Module Content Section
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Flexible(
+                                  flex: 2,
+                                  child: InkWell(
+                                    onTap: _pickImage,
+                                    child: Container(
+                                      constraints:
+                                          BoxConstraints(maxHeight: 250),
+                                      decoration: BoxDecoration(
+                                        color: Mycolors().offWhite,
+                                        borderRadius: BorderRadius.circular(15),
+                                        border: Border.all(
+                                          color: Colors.grey.withOpacity(0.3),
+                                        ),
+                                      ),
+                                      child: (() {
+                                        final courseModel =
+                                            Provider.of<CourseModel>(context);
+
+                                        // 1. First priority: In-memory selected image
+                                        if (_selectedImage != null) {
+                                          return ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(15),
+                                            child: Image.memory(
+                                              _selectedImage!,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          );
+                                        }
+                                        // 2. Second priority: Selected image URL (could be blob or network)
+                                        else if (_selectedImageUrl != null &&
+                                            _selectedImageUrl!.isNotEmpty) {
+                                          // Check if it's a blob URL (starts with blob:)
+                                          if (_selectedImageUrl!
+                                              .startsWith('blob:')) {
+                                            return ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                              child: Image.network(
+                                                _selectedImageUrl!,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.3,
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    0.3,
+                                                fit: BoxFit.cover,
+                                                loadingBuilder: (context, child,
+                                                    loadingProgress) {
+                                                  if (loadingProgress == null)
+                                                    return child;
+                                                  return Center(
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      color: Mycolors().blue,
+                                                    ),
+                                                  );
+                                                },
+                                                errorBuilder: (context, error,
+                                                    stackTrace) {
+                                                  print(
+                                                      "Error loading blob URL: $error");
+                                                  return _buildErrorWidget();
+                                                },
+                                              ),
+                                            );
+                                          }
+                                          // Handle remote URLs with ImageNetwork widget
+                                          else {
+                                            return ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                              child: ImageNetwork(
+                                                image: _selectedImageUrl!,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.3,
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    0.3,
+                                                fitWeb: BoxFitWeb.cover,
+                                                fitAndroidIos: BoxFit.cover,
+                                                onLoading: Center(
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                  color: Mycolors().blue,
+                                                )),
+                                                onError: _buildErrorWidget(),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                        // 3. Third priority: In-memory course image
+                                        else if (courseModel.courseImage !=
+                                            null) {
+                                          return ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(15),
+                                            child: Image.memory(
+                                              courseModel.courseImage!,
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.3,
+                                              height: MediaQuery.of(context)
+                                                      .size
+                                                      .height *
+                                                  0.3,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          );
+                                        }
+                                        // 4. Fourth priority: Course image URL
+                                        else if (courseModel.courseImageUrl !=
+                                                null &&
+                                            courseModel
+                                                .courseImageUrl!.isNotEmpty) {
+                                          // Check if it's a blob URL
+                                          if (courseModel.courseImageUrl!
+                                              .startsWith('blob:')) {
+                                            return ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                              child: Image.network(
+                                                courseModel.courseImageUrl!,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.3,
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    0.3,
+                                                fit: BoxFit.cover,
+                                                loadingBuilder: (context, child,
+                                                    loadingProgress) {
+                                                  if (loadingProgress == null)
+                                                    return child;
+                                                  return Center(
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      color: Mycolors().blue,
+                                                    ),
+                                                  );
+                                                },
+                                                errorBuilder: (context, error,
+                                                    stackTrace) {
+                                                  print(
+                                                      "Error loading course blob URL: $error");
+                                                  return _buildErrorWidget();
+                                                },
+                                              ),
+                                            );
+                                          } else {
+                                            return ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                              child: ImageNetwork(
+                                                image:
+                                                    courseModel.courseImageUrl!,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.3,
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    0.3,
+                                                fitWeb: BoxFitWeb.cover,
+                                                fitAndroidIos: BoxFit.cover,
+                                                onLoading: Center(
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                  color: Mycolors().blue,
+                                                )),
+                                                onError: _buildErrorWidget(),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                        // 5. Default: Placeholder
+                                        else {
+                                          return Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons
+                                                    .add_photo_alternate_outlined,
+                                                size: 50,
+                                                color: Mycolors().darkGrey,
+                                              ),
+                                              SizedBox(height: 10),
+                                              Text(
+                                                'Click to upload module image\nor use course image',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  color: Mycolors().darkGrey,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        }
+                                      })(),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 30),
+                                Flexible(
+                                  flex: 3,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Module Documents',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                          color: Mycolors().darkGrey,
+                                        ),
+                                      ),
+                                      SizedBox(height: 20),
+                                      Wrap(
+                                        spacing: 10,
+                                        runSpacing: 10,
+                                        children: [
+                                          _buildPdfButton(
+                                              widget.courseId != null
+                                                  ? 'Edit Student Guide'
+                                                  : 'Student Guide',
+                                              _studentGuidePdf,
+                                              _studentGuidePdfUrl),
+                                          _buildPdfButton(
+                                              widget.courseId != null
+                                                  ? 'Edit Facilitator Guide'
+                                                  : 'Facilitator Guide',
+                                              _facilitatorGuidePdf,
+                                              _facilitatorGuidePdfUrl),
+                                          _buildPdfButton(
+                                              widget.courseId != null
+                                                  ? 'Edit Answer Sheet'
+                                                  : 'Answer Sheet',
+                                              _answerSheetPdf,
+                                              _answerSheetPdfUrl),
+                                          _buildPdfButton(
+                                              widget.courseId != null
+                                                  ? 'Edit Lecturer Guide'
+                                                  : 'Lecturer Guide',
+                                              _lecturerGuidePdf,
+                                              _lecturerGuidePdfUrl),
+                                          _buildPdfButton(
+                                              widget.courseId != null
+                                                  ? 'Edit Assessments'
+                                                  : 'Assessments',
+                                              _assessmentsPdf,
+                                              _assessmentsPdfUrl),
+                                          _buildPdfButton(
+                                              widget.courseId != null
+                                                  ? 'Edit Test'
+                                                  : 'Test',
+                                              _testSheetPdf,
+                                              _testSheetPdfUrl),
+                                          _buildPdfButton(
+                                              widget.courseId != null
+                                                  ? 'Edit Assignments'
+                                                  : 'Assignments',
+                                              _assignmentsPdf,
+                                              _assignmentsPdfUrl),
+                                        ],
+                                      ),
+                                      SizedBox(height: 20),
+                                      Row(
+                                        children: [
+                                          _buildPdfButton(
+                                            widget.courseId != null
+                                                ? 'Edit Index PDF'
+                                                : 'Index PDF',
+                                            _indexPdf,
+                                            _indexPdfUrl,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 30),
-                      // Module Description
-                      ContentDevTextfields(
-                        headerText: 'Module Content',
-                        inputController: _moduleDescriptionController,
-                        keyboardType: '',
-                        maxLines: 9,
-                      ),
-                      SizedBox(height: 40),
-                      // Submit Button
-                      Center(
-                        child: ElevatedButton.icon(
-                          onPressed: _saveToFirebase,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Mycolors().green,
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 30, vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                            SizedBox(height: 30),
+                            // Module Description
+                            ContentDevTextfields(
+                              headerText: widget.courseId != null
+                                  ? 'Edit Module Description'
+                                  : 'Module Content',
+                              inputController: _moduleDescriptionController,
+                              keyboardType: '',
+                              maxLines: 9,
                             ),
-                          ),
-                          icon: Icon(Icons.send, color: Colors.white),
-                          label: Text(
-                            'Submit for Review',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                            SizedBox(height: 30),
+                            // Navigation Buttons Row
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: _navigateToPreviousModule,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Mycolors().darkGrey,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      side: BorderSide(
+                                          color: Mycolors().darkGrey),
+                                    ),
+                                  ),
+                                  icon: Icon(Icons.arrow_back),
+                                  label: Text('Previous'),
+                                ),
+                                SizedBox(width: 20),
+                                ElevatedButton.icon(
+                                  onPressed: _setModule,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Mycolors().blue,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  icon: Icon(Icons.save),
+                                  label: Text('Save Module'),
+                                ),
+                                SizedBox(width: 20),
+                                ElevatedButton.icon(
+                                  onPressed: _addNewModule,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Mycolors().blue,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  icon: Icon(Icons.add),
+                                  label: Text('Add New Module'),
+                                ),
+                                SizedBox(width: 20),
+                                ElevatedButton.icon(
+                                  onPressed: _navigateToNextModule,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Mycolors().darkGrey,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      side: BorderSide(
+                                          color: Mycolors().darkGrey),
+                                    ),
+                                  ),
+                                  icon: Icon(Icons.arrow_forward),
+                                  label: Text('Next'),
+                                ),
+                              ],
                             ),
-                          ),
+                            SizedBox(height: 40),
+                            // Submit Button
+                            Center(
+                              child: ElevatedButton.icon(
+                                onPressed: _saveToFirebase,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Mycolors().green,
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 30, vertical: 15),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                icon: Icon(Icons.send, color: Colors.white),
+                                label: Text(
+                                  'Submit for Review',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
+        if (_isUploading)
+          Container(
+            color: Colors.black.withOpacity(0.3),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                      width: 300,
+                      child: LinearProgressIndicator(value: _uploadProgress)),
+                  SizedBox(height: 16),
+                  Text('Uploading, please wait...',
+                      style: TextStyle(color: Colors.white)),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 
-  Widget _buildPdfButton(String title, Uint8List? pdfData) {
+  Widget _buildPdfButton(String title, Uint8List? pdfData, [String? pdfUrl]) {
+    // A PDF is considered uploaded if either we have new data or an existing URL
+    final isUploaded = pdfData != null || (pdfUrl != null && pdfUrl.isNotEmpty);
+    final isNewUpload = pdfData != null;
+
+    // Debug logging for PDF status
+
     return ElevatedButton.icon(
       onPressed: () => _pickPdf(title),
       style: ElevatedButton.styleFrom(
-        backgroundColor: pdfData != null ? Mycolors().green : Colors.white,
-        foregroundColor: pdfData != null ? Colors.white : Mycolors().darkGrey,
+        backgroundColor: isUploaded ? Mycolors().green : Colors.white,
+        foregroundColor: isUploaded ? Colors.white : Mycolors().darkGrey,
         elevation: 0,
         padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
           side: BorderSide(
-            color: pdfData != null ? Mycolors().green : Mycolors().darkGrey,
+            color: isUploaded ? Mycolors().green : Mycolors().darkGrey,
           ),
         ),
       ),
-      icon: Icon(pdfData != null ? Icons.check_circle : Icons.upload_file),
-      label: Text(title),
+      icon: Icon(isNewUpload
+          ? Icons.check_circle
+          : isUploaded
+              ? Icons.cloud_done
+              : Icons.upload_file),
+      label: Text(isNewUpload
+          ? '$title Ready'
+          : isUploaded
+              ? '$title Added'
+              : title),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 50,
+            color: Colors.red,
+          ),
+          SizedBox(height: 10),
+          Text(
+            'Failed to load image',
+            style: TextStyle(
+              color: Colors.red,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -226,8 +226,8 @@ class _FacilitatorNavBarState extends State<FacilitatorNavBar> {
                     child: Column(
                       children: [
                         _buildNavItem(Icons.dashboard, 'Dashboard', 0),
-                        _buildNavItem(Icons.school, 'My Courses', 1),
-                        _buildNavItem(Icons.search, 'Browse Courses', 2),
+                        _buildNavItem(Icons.search, 'Purchase Courses', 2),
+                        _buildNavItem(Icons.school, 'Students and Modules', 1),
                         Visibility(
                           visible: false, // Hide the Students tab
                           child: _buildNavItem(Icons.people, 'Students', 3),

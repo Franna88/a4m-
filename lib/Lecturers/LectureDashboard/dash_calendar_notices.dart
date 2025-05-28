@@ -8,6 +8,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:intl/intl.dart';
 
 class DashCalendarNotices extends StatefulWidget {
   const DashCalendarNotices({super.key});
@@ -23,6 +24,7 @@ class _DashCalendarNoticesState extends State<DashCalendarNotices> {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
   final String _userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -60,7 +62,16 @@ class _DashCalendarNoticesState extends State<DashCalendarNotices> {
   }
 
   Future<void> _loadReminders() async {
-    if (_userId.isEmpty) return;
+    setState(() {
+      _isLoading = true;
+    });
+
+    if (_userId.isEmpty) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
 
     try {
       final remindersSnapshot = await FirebaseFirestore.instance
@@ -68,6 +79,8 @@ class _DashCalendarNoticesState extends State<DashCalendarNotices> {
           .doc(_userId)
           .collection('reminders')
           .get();
+
+      final Map<DateTime, List<Map<String, dynamic>>> newReminders = {};
 
       if (remindersSnapshot.docs.isNotEmpty) {
         for (var doc in remindersSnapshot.docs) {
@@ -79,29 +92,68 @@ class _DashCalendarNoticesState extends State<DashCalendarNotices> {
             reminderDate.day,
           );
 
-          if (!_reminders.containsKey(normalizedDate)) {
-            _reminders[normalizedDate] = [];
+          if (!newReminders.containsKey(normalizedDate)) {
+            newReminders[normalizedDate] = [];
           }
 
-          _reminders[normalizedDate]!.add({
+          newReminders[normalizedDate]!.add({
             'id': doc.id,
             'title': data['title'],
             'time': data['time'],
             'description': data['description'] ?? '',
+            'date': reminderDate,
           });
         }
+      }
 
-        if (mounted) {
-          setState(() {});
-        }
+      if (mounted) {
+        setState(() {
+          _reminders.clear();
+          _reminders.addAll(newReminders);
+          _isLoading = false;
+        });
       }
     } catch (e) {
       print('Error loading reminders: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  List<Map<String, dynamic>> _getTodaysReminders() {
+    final today = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+    );
+
+    return _reminders[today] ?? [];
+  }
+
+  List<Map<String, dynamic>> _getSelectedDayReminders() {
+    if (_selectedDay == null) return [];
+
+    final selectedDayNormalized = DateTime(
+      _selectedDay!.year,
+      _selectedDay!.month,
+      _selectedDay!.day,
+    );
+
+    return _reminders[selectedDayNormalized] ?? [];
   }
 
   @override
   Widget build(BuildContext context) {
+    final todaysReminders = _getTodaysReminders();
+    final selectedDayReminders = _getSelectedDayReminders();
+    final bool isTodaySelected = _selectedDay != null &&
+        _selectedDay!.year == DateTime.now().year &&
+        _selectedDay!.month == DateTime.now().month &&
+        _selectedDay!.day == DateTime.now().day;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -114,154 +166,326 @@ class _DashCalendarNoticesState extends State<DashCalendarNotices> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              'Calendar & Reminders',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          TableCalendar(
-            firstDay: DateTime(2020),
-            lastDay: DateTime(2030),
-            focusedDay: _focusedDay,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            onDaySelected: (selectedDay, focusedDay) {
-              setState(() {
-                _selectedDay = selectedDay;
-                _focusedDay = focusedDay;
-              });
-            },
-            calendarStyle: CalendarStyle(
-              selectedDecoration: BoxDecoration(
-                color: Mycolors().blue,
-                shape: BoxShape.circle,
-              ),
-              todayDecoration: BoxDecoration(
-                color: Mycolors().blue.withOpacity(0.5),
-                shape: BoxShape.circle,
-              ),
-              weekendTextStyle: const TextStyle(color: Colors.red),
-              outsideTextStyle: TextStyle(color: Colors.grey[400]),
-              markerDecoration: BoxDecoration(
-                color: Mycolors().green,
-                shape: BoxShape.circle,
-              ),
-              cellMargin: const EdgeInsets.all(4),
-            ),
-            headerStyle: const HeaderStyle(
-              titleCentered: true,
-              formatButtonVisible: false,
-              titleTextStyle:
-                  TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-              leftChevronIcon: Icon(Icons.chevron_left, size: 24),
-              rightChevronIcon: Icon(Icons.chevron_right, size: 24),
-              headerMargin: EdgeInsets.only(bottom: 8),
-              headerPadding: EdgeInsets.symmetric(vertical: 4),
-            ),
-            calendarBuilders: CalendarBuilders(
-              markerBuilder: (context, date, events) {
-                if (_reminders.containsKey(date)) {
-                  return Positioned(
-                    bottom: 1,
-                    child: Container(
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Calendar header with title and action button
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey.shade200),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Calendar & Reminders',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.add_circle, color: Mycolors().blue),
+                        onPressed: () => _showAddReminderDialog(context),
+                        tooltip: 'Add Reminder',
+                      ),
+                    ],
+                  ),
+                ),
+                // Calendar
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  child: TableCalendar(
+                    firstDay: DateTime(2020),
+                    lastDay: DateTime(2030),
+                    focusedDay: _focusedDay,
+                    selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                    onDaySelected: (selectedDay, focusedDay) {
+                      setState(() {
+                        _selectedDay = selectedDay;
+                        _focusedDay = focusedDay;
+                      });
+                    },
+                    calendarStyle: CalendarStyle(
+                      selectedDecoration: BoxDecoration(
+                        color: Mycolors().blue,
+                        shape: BoxShape.circle,
+                      ),
+                      todayDecoration: BoxDecoration(
+                        color: Mycolors().blue.withOpacity(0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      weekendTextStyle: const TextStyle(color: Colors.red),
+                      outsideTextStyle: TextStyle(color: Colors.grey[400]),
+                      markerDecoration: BoxDecoration(
                         color: Mycolors().green,
                         shape: BoxShape.circle,
                       ),
+                      cellMargin: const EdgeInsets.all(2),
                     ),
-                  );
-                }
-                return null;
-              },
-            ),
-            daysOfWeekHeight: 20,
-            rowHeight: 35,
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Today\'s Reminders',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    headerStyle: HeaderStyle(
+                      titleCentered: true,
+                      formatButtonVisible: false,
+                      titleTextStyle: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                      leftChevronIcon: Icon(Icons.chevron_left,
+                          size: 24, color: Mycolors().blue),
+                      rightChevronIcon: Icon(Icons.chevron_right,
+                          size: 24, color: Mycolors().blue),
+                      headerMargin: const EdgeInsets.only(bottom: 4),
+                      headerPadding: const EdgeInsets.symmetric(vertical: 6),
+                    ),
+                    eventLoader: (day) {
+                      final normalizedDay =
+                          DateTime(day.year, day.month, day.day);
+                      return _reminders[normalizedDay] ?? [];
+                    },
+                    calendarBuilders: CalendarBuilders(
+                      markerBuilder: (context, date, events) {
+                        if (events.isNotEmpty) {
+                          return Positioned(
+                            bottom: 1,
+                            right: 1,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: Mycolors().green,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          );
+                        }
+                        return null;
+                      },
+                    ),
+                    daysOfWeekHeight: 14,
+                    rowHeight: 28,
                   ),
                 ),
-                IconButton(
-                  icon: Icon(Icons.add_circle_outline,
-                      color: Mycolors().blue, size: 20),
-                  onPressed: () => _showAddReminderDialog(context),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+
+                // Divider between calendar and reminders sections
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Divider(color: Colors.grey.shade300),
                 ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: _reminders[_selectedDay]?.isEmpty ?? true
-                  ? Center(
-                      child: Text(
-                        'No reminders for today',
+
+                // Selected date header
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedDay != null
+                            ? DateFormat('MMMM d, yyyy').format(_selectedDay!)
+                            : DateFormat('MMMM d, yyyy').format(DateTime.now()),
                         style: GoogleFonts.poppins(
-                          color: Colors.grey[600],
-                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: Mycolors().blue,
                         ),
                       ),
-                    )
-                  : ListView.separated(
-                      itemCount: (_reminders[_selectedDay] ?? []).length,
-                      separatorBuilder: (context, index) =>
-                          const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final reminder = _reminders[_selectedDay]![index];
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                          visualDensity: const VisualDensity(vertical: -4),
-                          title: Text(
-                            reminder['title'],
+                      if (_selectedDay != null)
+                        TextButton.icon(
+                          icon: Icon(Icons.add,
+                              size: 18, color: Mycolors().green),
+                          label: Text(
+                            'Add Reminder',
                             style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
                               fontSize: 12,
+                              color: Mycolors().green,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          subtitle: Text(
-                            reminder['time'],
-                            style: GoogleFonts.poppins(
-                              color: Colors.grey[600],
-                              fontSize: 11,
-                            ),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          trailing: IconButton(
-                            icon: Icon(
-                              Icons.delete_outline,
-                              color: Colors.red[400],
-                              size: 16,
+                          onPressed: () => _showAddReminderDialog(context),
+                        ),
+                    ],
+                  ),
+                ),
+
+                // Reminders list for selected day
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: selectedDayReminders.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.event_note,
+                                  size: 32,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'No reminders for ${_selectedDay != null ? DateFormat('MMM d').format(_selectedDay!) : "today"}',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.grey[600],
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                              ],
                             ),
-                            onPressed: () => _deleteReminder(reminder['id']),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                          )
+                        : ListView.separated(
+                            itemCount: selectedDayReminders.length,
+                            separatorBuilder: (context, index) =>
+                                Divider(color: Colors.grey[200], height: 1),
+                            itemBuilder: (context, index) {
+                              final reminder = selectedDayReminders[index];
+                              return ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 4, horizontal: 8),
+                                dense: true,
+                                leading: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: Mycolors().blue.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.notifications_active,
+                                    color: Mycolors().blue,
+                                    size: 20,
+                                  ),
+                                ),
+                                title: Text(
+                                  reminder['title'],
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      reminder['time'],
+                                      style: GoogleFonts.poppins(
+                                        color: Mycolors().blue,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    if (reminder['description'] != null &&
+                                        reminder['description'].isNotEmpty)
+                                      Text(
+                                        reminder['description'],
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.grey[600],
+                                          fontSize: 11,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                  ],
+                                ),
+                                trailing: IconButton(
+                                  icon: Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red[400],
+                                    size: 20,
+                                  ),
+                                  onPressed: () =>
+                                      _deleteReminder(reminder['id']),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ),
+
+                // Today's Reminders section (only shown if there are today's reminders and not viewing today)
+                if (todaysReminders.isNotEmpty && !isTodaySelected) ...[
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Divider(color: Colors.grey.shade300),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Text(
+                      "Today's Reminders",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Mycolors().green,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    height: 80,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: todaysReminders.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 12),
+                      itemBuilder: (context, index) {
+                        final reminder = todaysReminders[index];
+                        return Container(
+                          width: 160,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Mycolors().green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: Mycolors().green.withOpacity(0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                reminder['title'],
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  color: Colors.grey[800],
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                reminder['time'],
+                                style: GoogleFonts.poppins(
+                                  color: Mycolors().green,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         );
                       },
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -274,109 +498,123 @@ class _DashCalendarNoticesState extends State<DashCalendarNotices> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(
-            'Add Reminder',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: InputDecoration(
-                    labelText: 'Title',
-                    labelStyle: TextStyle(color: Mycolors().blue),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Mycolors().blue),
-                    ),
-                  ),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text(
+                'Add Reminder',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: 16),
-                InkWell(
-                  onTap: () async {
-                    final TimeOfDay? time = await showTimePicker(
-                      context: context,
-                      initialTime: selectedTime,
-                    );
-                    if (time != null) {
-                      selectedTime = time;
-                      timeController.text =
-                          '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-                    }
-                  },
-                  child: InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: 'Time',
-                      labelStyle: TextStyle(color: Mycolors().blue),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Mycolors().blue),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Date: ${_selectedDay != null ? DateFormat('MMM d, yyyy').format(_selectedDay!) : DateFormat('MMM d, yyyy').format(DateTime.now())}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.grey[700],
                       ),
                     ),
-                    child: Text(
-                      timeController.text.isEmpty
-                          ? 'Select Time'
-                          : timeController.text,
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: titleController,
+                      decoration: InputDecoration(
+                        labelText: 'ReminderTitle',
+                        labelStyle: TextStyle(color: Mycolors().blue),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Mycolors().blue),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: () async {
+                        final TimeOfDay? time = await showTimePicker(
+                          context: context,
+                          initialTime: selectedTime,
+                        );
+                        if (time != null) {
+                          setState(() {
+                            selectedTime = time;
+                            timeController.text =
+                                '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+                          });
+                        }
+                      },
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Time',
+                          labelStyle: TextStyle(color: Mycolors().blue),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Mycolors().blue),
+                          ),
+                        ),
+                        child: Text(
+                          timeController.text.isEmpty
+                              ? 'Select Time'
+                              : timeController.text,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: descriptionController,
+                      decoration: InputDecoration(
+                        labelText: 'Reminder Description',
+                        labelStyle: TextStyle(color: Mycolors().blue),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Mycolors().blue),
+                        ),
+                      ),
+                      maxLines: 3,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.poppins(
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: descriptionController,
-                  decoration: InputDecoration(
-                    labelText: 'Description (Optional)',
-                    labelStyle: TextStyle(color: Mycolors().blue),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Mycolors().blue),
+                ElevatedButton(
+                  onPressed: () {
+                    if (titleController.text.isNotEmpty &&
+                        timeController.text.isNotEmpty) {
+                      _addReminder(
+                        titleController.text,
+                        timeController.text,
+                        descriptionController.text,
+                        selectedTime,
+                      );
+                      Navigator.pop(context);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Mycolors().blue,
+                    elevation: 0,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
+                  child: Text(
+                    'Add',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  maxLines: 3,
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.poppins(
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (titleController.text.isNotEmpty &&
-                    timeController.text.isNotEmpty) {
-                  _addReminder(
-                    titleController.text,
-                    timeController.text,
-                    descriptionController.text,
-                    selectedTime,
-                  );
-                  Navigator.pop(context);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Mycolors().blue,
-                elevation: 0,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-              child: Text(
-                'Add',
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -410,6 +648,7 @@ class _DashCalendarNoticesState extends State<DashCalendarNotices> {
         'description': description,
         'date': Timestamp.fromDate(reminderDateTime),
         'createdAt': FieldValue.serverTimestamp(),
+        'createdBy': _userId,
       });
 
       final normalizedDate = DateTime(
@@ -427,6 +666,7 @@ class _DashCalendarNoticesState extends State<DashCalendarNotices> {
         'title': title,
         'time': time,
         'description': description,
+        'date': reminderDateTime,
       });
 
       await _scheduleNotification(
@@ -455,13 +695,16 @@ class _DashCalendarNoticesState extends State<DashCalendarNotices> {
           .doc(reminderId)
           .delete();
 
-      for (var date in _reminders.keys) {
-        _reminders[date] = _reminders[date]!
+      final List<DateTime> keysToCheck = List<DateTime>.from(_reminders.keys);
+      for (var date in keysToCheck) {
+        final updatedReminders = _reminders[date]!
             .where((reminder) => reminder['id'] != reminderId)
             .toList();
 
-        if (_reminders[date]!.isEmpty) {
+        if (updatedReminders.isEmpty) {
           _reminders.remove(date);
+        } else {
+          _reminders[date] = updatedReminders;
         }
       }
 

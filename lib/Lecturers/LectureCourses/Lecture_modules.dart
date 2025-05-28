@@ -12,6 +12,9 @@ import 'package:a4m/CommonComponents/displayCardIcons.dart';
 import 'package:a4m/Lecturers/LectureCourses/view_modules_complete.dart';
 import 'package:a4m/Lecturers/LectureCourses/assessment_submissions_view.dart';
 import 'package:image_network/image_network.dart';
+import 'dart:html' as html;
+import 'dart:ui' as ui;
+import 'dart:async';
 
 class LectureModulesContainer extends StatefulWidget {
   final Function(int, {String courseId, String moduleId}) changePage;
@@ -40,6 +43,8 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
   String? selectedModuleId;
   String? selectedModuleName;
   bool isHovered = false;
+  Timer? _debounceTimer;
+  final TextEditingController _searchController = TextEditingController();
 
   final List<String> filterOptions = [
     'All',
@@ -59,6 +64,13 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
     } else {
       print("Warning: courseId is empty in LectureModulesContainer");
     }
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    _searchController.dispose();
+    super.dispose();
   }
 
   // Fetch modules dynamically from Firestore
@@ -92,21 +104,42 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
     }
   }
 
-  void _applyFilters() {
-    filteredModules = modules.where((module) {
-      // Apply search filter
-      final nameMatches = module['moduleName']
-              ?.toString()
-              .toLowerCase()
-              .contains(searchQuery.toLowerCase()) ??
-          false;
-      final descriptionMatches = module['moduleDescription']
-              ?.toString()
-              .toLowerCase()
-              .contains(searchQuery.toLowerCase()) ??
-          false;
+  // Perform search with debounce
+  void _performSearch(String query) {
+    // Cancel previous timer if it exists
+    _debounceTimer?.cancel();
 
-      if (!nameMatches && !descriptionMatches) return false;
+    // Create a new timer that will execute after 300ms (reduced from 500ms)
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        // Check if widget is still mounted
+        setState(() {
+          searchQuery = query.toLowerCase();
+          _applyFilters();
+        });
+      }
+    });
+  }
+
+  void _applyFilters() {
+    if (modules.isEmpty) return;
+
+    filteredModules = modules.where((module) {
+      // Apply search filter first
+      if (searchQuery.isNotEmpty) {
+        final nameMatches = module['moduleName']
+                ?.toString()
+                .toLowerCase()
+                .contains(searchQuery) ??
+            false;
+        final descriptionMatches = module['moduleDescription']
+                ?.toString()
+                .toLowerCase()
+                .contains(searchQuery) ??
+            false;
+
+        if (!nameMatches && !descriptionMatches) return false;
+      }
 
       // Apply category filter
       switch (selectedFilter) {
@@ -126,8 +159,6 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
           return true;
       }
     }).toList();
-
-    setState(() {});
   }
 
   void _openPdf(String url, String title) {
@@ -143,6 +174,11 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
       );
       return;
     }
+
+    // Only show download for Test Sheet and Assessment
+    final lowerTitle = title.toLowerCase();
+    final showDownload =
+        lowerTitle.contains('test') || lowerTitle.contains('assessment');
 
     Navigator.push(
       context,
@@ -165,7 +201,7 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
           body: LecturerPdfViewer(
             pdfUrl: url,
             title: title,
-            showDownloadButton: !title.toLowerCase().contains('activities'),
+            showDownloadButton: showDownload,
           ),
         ),
       ),
@@ -198,6 +234,41 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
     widget.changePage(7, courseId: widget.courseId, moduleId: moduleId);
   }
 
+  void _showIndexPdfDialog(BuildContext context, String pdfUrl) {
+    final viewType = 'index-pdf-viewer';
+    // Register the view factory only once
+    // ignore: undefined_prefixed_name
+    ui.platformViewRegistry.registerViewFactory(
+      viewType,
+      (int viewId) {
+        final html.IFrameElement element = html.IFrameElement()
+          ..src =
+              'https://docs.google.com/viewer?embedded=true&url=${Uri.encodeComponent(pdfUrl)}'
+          ..style.border = 'none'
+          ..width = '600'
+          ..height = '800';
+        return element;
+      },
+    );
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        contentPadding: EdgeInsets.zero,
+        content: SizedBox(
+          width: 600,
+          height: 800,
+          child: HtmlElementView(viewType: viewType),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -209,6 +280,29 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
         height: MyUtility(context).height - 80,
         child: Column(
           children: [
+            // Keep backButton at the top for module complete list view
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    widget.changePage(1);
+                  },
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Back to Courses'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Mycolors().green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(child: Container()),
+              ],
+            ),
             // Header with back button
             Container(
               padding: const EdgeInsets.all(16),
@@ -255,27 +349,44 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search and Filter Row
+            // Search Bar and Back Button Row
             Row(
               children: [
-                // Search Bar
+                // Back Button
+                ElevatedButton.icon(
+                  onPressed: () {
+                    widget.changePage(1);
+                  },
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Back'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Mycolors().green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    minimumSize: const Size(0, 40),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Search Bar (smaller)
                 Expanded(
                   flex: 2,
                   child: MySearchBar(
-                    textController: TextEditingController(text: searchQuery),
+                    textController: _searchController,
                     hintText: 'Search Module',
                     onChanged: (value) {
-                      setState(() {
-                        searchQuery = value;
-                        _applyFilters();
-                      });
+                      _performSearch(value);
                     },
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 // Filter Dropdown
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey[300]!),
                     borderRadius: BorderRadius.circular(8),
@@ -296,6 +407,7 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
                         });
                       }
                     },
+                    underline: const SizedBox(),
                   ),
                 ),
               ],
@@ -457,113 +569,48 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
                                               ),
                                               const SizedBox(height: 8),
                                               // Module Description
-                                              Text(
-                                                module['moduleDescription'] ??
-                                                    'No description available',
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 14,
-                                                  color: Colors.grey[600],
-                                                  height: 1.5,
+                                              // Text(
+                                              //   module['moduleDescription'] ??
+                                              //       'No description available',
+                                              //   style: GoogleFonts.poppins(
+                                              //     fontSize: 14,
+                                              //     color: Colors.grey[600],
+                                              //     height: 1.5,
+                                              //   ),
+                                              //   maxLines: 2,
+                                              //   overflow: TextOverflow.ellipsis,
+                                              // ),
+                                              // const SizedBox(height: 16),
+                                              // Info Icon Button
+                                              if (module['indexPdfUrl'] !=
+                                                      null &&
+                                                  (module['indexPdfUrl']
+                                                          as String)
+                                                      .isNotEmpty)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          top: 8.0,
+                                                          bottom: 8.0),
+                                                  child: Tooltip(
+                                                    message: 'View Index',
+                                                    child: IconButton(
+                                                      icon: Icon(
+                                                        Icons.info_outline,
+                                                        color: Colors.blue,
+                                                        size: 28,
+                                                      ),
+                                                      onPressed: () {
+                                                        _showIndexPdfDialog(
+                                                            context,
+                                                            module[
+                                                                'indexPdfUrl']);
+                                                      },
+                                                    ),
+                                                  ),
                                                 ),
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 16),
                                               // Action Buttons
-                                              SingleChildScrollView(
-                                                scrollDirection:
-                                                    Axis.horizontal,
-                                                child: Row(
-                                                  children: [
-                                                    // Student Guide
-                                                    if (module[
-                                                            'studentGuidePdfUrl'] !=
-                                                        null)
-                                                      _buildActionButton(
-                                                        icon: Icons
-                                                            .school_outlined,
-                                                        label: 'Student Guide',
-                                                        onTap: () => _openPdf(
-                                                          module[
-                                                              'studentGuidePdfUrl'],
-                                                          'Student Guide',
-                                                        ),
-                                                      ),
-                                                    if (module[
-                                                            'studentGuidePdfUrl'] !=
-                                                        null)
-                                                      const SizedBox(width: 8),
-                                                    // Lecturer Guide
-                                                    if (module[
-                                                            'lecturerGuidePdfUrl'] !=
-                                                        null)
-                                                      _buildActionButton(
-                                                        icon: Icons
-                                                            .description_outlined,
-                                                        label: 'Lecturer Guide',
-                                                        onTap: () => _openPdf(
-                                                          module[
-                                                              'lecturerGuidePdfUrl'],
-                                                          'Lecturer Guide',
-                                                        ),
-                                                      ),
-                                                    if (module[
-                                                            'lecturerGuidePdfUrl'] !=
-                                                        null)
-                                                      const SizedBox(width: 8),
-                                                    // Test Sheet
-                                                    if (module[
-                                                            'testSheetPdfUrl'] !=
-                                                        null)
-                                                      _buildActionButton(
-                                                        icon:
-                                                            Icons.quiz_outlined,
-                                                        label: 'Test',
-                                                        onTap: () => _openPdf(
-                                                          module[
-                                                              'testSheetPdfUrl'],
-                                                          'Test Sheet',
-                                                        ),
-                                                      ),
-                                                    if (module[
-                                                            'testSheetPdfUrl'] !=
-                                                        null)
-                                                      const SizedBox(width: 8),
-                                                    // Assessments
-                                                    if (module[
-                                                            'assessmentsPdfUrl'] !=
-                                                        null)
-                                                      _buildActionButton(
-                                                        icon: Icons
-                                                            .assignment_outlined,
-                                                        label: 'Assessment',
-                                                        onTap: () => _openPdf(
-                                                          module[
-                                                              'assessmentsPdfUrl'],
-                                                          'Assessment',
-                                                        ),
-                                                      ),
-                                                    if (module[
-                                                            'assessmentsPdfUrl'] !=
-                                                        null)
-                                                      const SizedBox(width: 8),
-                                                    // Answer Sheet
-                                                    if (module[
-                                                            'answerSheetPdfUrl'] !=
-                                                        null)
-                                                      _buildActionButton(
-                                                        icon: Icons
-                                                            .check_circle_outline,
-                                                        label: 'Answers',
-                                                        onTap: () => _openPdf(
-                                                          module[
-                                                              'answerSheetPdfUrl'],
-                                                          'Answer Sheet',
-                                                        ),
-                                                      ),
-                                                  ],
-                                                ),
-                                              ),
+                                              _buildActionButtonsGrid(module),
                                             ],
                                           ),
                                         ),
@@ -619,5 +666,73 @@ class _LectureModulesContainerState extends State<LectureModulesContainer> {
         ),
       ),
     );
+  }
+
+  Widget _buildActionButtonsGrid(Map<String, dynamic> module) {
+    final List<Widget> buttons = [];
+    if (module['studentGuidePdfUrl'] != null)
+      buttons.add(Tooltip(
+        message: 'View Student Guide',
+        child: _buildActionButton(
+          icon: Icons.school_outlined,
+          label: 'Student Guide',
+          onTap: () => _openPdf(module['studentGuidePdfUrl'], 'Student Guide'),
+        ),
+      ));
+    if (module['lecturerGuidePdfUrl'] != null)
+      buttons.add(Tooltip(
+        message: 'View Lecturer Guide',
+        child: _buildActionButton(
+          icon: Icons.description_outlined,
+          label: 'Lecturer Guide',
+          onTap: () =>
+              _openPdf(module['lecturerGuidePdfUrl'], 'Lecturer Guide'),
+        ),
+      ));
+    if (module['testSheetPdfUrl'] != null)
+      buttons.add(Tooltip(
+        message: 'View Test',
+        child: _buildActionButton(
+          icon: Icons.quiz_outlined,
+          label: 'Test',
+          onTap: () => _openPdf(module['testSheetPdfUrl'], 'Test Sheet'),
+        ),
+      ));
+    if (module['assessmentsPdfUrl'] != null)
+      buttons.add(Tooltip(
+        message: 'View Assessment',
+        child: _buildActionButton(
+          icon: Icons.assignment_outlined,
+          label: 'Assessment',
+          onTap: () => _openPdf(module['assessmentsPdfUrl'], 'Assessment'),
+        ),
+      ));
+    if (module['answerSheetPdfUrl'] != null)
+      buttons.add(Tooltip(
+        message: 'View Answers',
+        child: _buildActionButton(
+          icon: Icons.check_circle_outline,
+          label: 'Answers',
+          onTap: () => _openPdf(module['answerSheetPdfUrl'], 'Answer Sheet'),
+        ),
+      ));
+    // Add Index PDF button
+
+    // Display buttons in a grid: 2 per row (or 3 if you want)
+    int buttonsPerRow = 2;
+    List<Widget> rows = [];
+    for (int i = 0; i < buttons.length; i += buttonsPerRow) {
+      rows.add(Row(
+        children: [
+          for (int j = i; j < i + buttonsPerRow && j < buttons.length; j++)
+            Expanded(child: buttons[j]),
+          if ((i + buttonsPerRow) > buttons.length)
+            for (int k = 0; k < (i + buttonsPerRow - buttons.length); k++)
+              const Expanded(child: SizedBox()),
+        ],
+      ));
+      rows.add(const SizedBox(height: 8));
+    }
+    return Column(children: rows);
   }
 }

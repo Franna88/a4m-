@@ -69,8 +69,8 @@ class ContentDevLoginView extends StatefulWidget {
 }
 
 class _ContentDevLoginViewState extends State<ContentDevLoginView> {
-  final emailController = TextEditingController(text: "contentdev@gmai.com");
-  final passwordController = TextEditingController(text: "test123");
+  final emailController = TextEditingController(text: "");
+  final passwordController = TextEditingController(text: "");
   final contentDevCodeController = TextEditingController();
   bool isLoading = false;
   Future<void> _loginContentDev() async {

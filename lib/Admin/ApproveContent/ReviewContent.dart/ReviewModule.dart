@@ -83,7 +83,7 @@ class _ReviewModuleState extends State<ReviewModule> {
       return freshUrl;
     } catch (e) {
       print("❌ Error fetching fresh PDF URL: $e");
-      return storedPath; // Fallback to original URL if error
+      return storedPath;
     }
   }
 
@@ -117,19 +117,24 @@ class _ReviewModuleState extends State<ReviewModule> {
     }
 
     final currentModule = modules[currentIndex];
-    final moduleName = currentModule['moduleName'] ?? 'Unknown Module Name';
-    final moduleDescription =
-        currentModule['moduleDescription'] ?? 'No Description';
-    final pdfUrl = currentModule['modulePdfUrl'] ?? '';
-    final moduleImageUrl = currentModule['moduleImageUrl'] ?? '';
+    final moduleData = currentModule.data() as Map<String, dynamic>;
 
-    final studentGuidePdfUrl = currentModule['studentGuidePdfUrl'] ?? '';
-    final facilitatorGuidePdfUrl =
-        currentModule['facilitatorGuidePdfUrl'] ?? '';
-    final answerSheetPdfUrl = currentModule['answerSheetPdfUrl'] ?? '';
-    final activitiesPdfUrl = currentModule['activitiesPdfUrl'] ?? '';
-    final assessmentsPdfUrl = currentModule['assessmentsPdfUrl'] ?? '';
-    final testSheetPdfUrl = currentModule['testSheetPdfUrl'] ?? '';
+    final moduleName = moduleData['moduleName'] ?? 'Unknown Module Name';
+    final moduleDescription =
+        moduleData['moduleDescription'] ?? 'No Description';
+    final moduleImageUrl = moduleData['moduleImageUrl'] ?? '';
+
+    // Get all PDF URLs with null safety
+    final modulePdfUrl = moduleData['modulePdfUrl'] ?? '';
+    final studentGuidePdfUrl = moduleData['studentGuidePdfUrl'] ?? '';
+    final facilitatorGuidePdfUrl = moduleData['facilitatorGuidePdfUrl'] ?? '';
+    final lecturerGuidePdfUrl = moduleData['lecturerGuidePdfUrl'] ?? '';
+    final answerSheetPdfUrl = moduleData['answerSheetPdfUrl'] ?? '';
+    final activitiesPdfUrl = moduleData['activitiesPdfUrl'] ?? '';
+    final assessmentsPdfUrl = moduleData['assessmentsPdfUrl'] ?? '';
+    final testSheetPdfUrl = moduleData['testSheetPdfUrl'] ?? '';
+    final assignmentsPdfUrl = moduleData['assignmentsPdfUrl'] ?? '';
+    final indexPdfUrl = moduleData['indexPdfUrl'] ?? '';
 
     return Material(
       color: Mycolors().offWhite,
@@ -137,213 +142,245 @@ class _ReviewModuleState extends State<ReviewModule> {
         width: MyUtility(context).width - 280,
         height: MyUtility(context).height - 80,
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Mycolors().darkTeal,
-                      borderRadius: BorderRadius.circular(10),
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Modern Header with gradient
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Mycolors().darkTeal, Mycolors().blue],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: Offset(0, 5),
                     ),
-                    height: MyUtility(context).height * 0.06,
-                    width: MyUtility(context).width,
-                    child: Center(
-                      child: Text(
-                        'Review Module',
-                        style: MyTextStyles(context).headerWhite,
-                      ),
-                    ),
+                  ],
+                ),
+                height: MyUtility(context).height * 0.08,
+                width: MyUtility(context).width,
+                child: Center(
+                  child: Text(
+                    'Review Module',
+                    style: MyTextStyles(context).headerWhite.copyWith(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
                 ),
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: Row(
+              ),
+              SizedBox(height: 20),
+              // Main Content Card
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(30.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Module Navigation and Controls
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.3,
-                              child: ContentDevTextfields(
-                                inputController:
-                                    TextEditingController(text: moduleName),
-                                headerText: 'Module Name',
-                                keyboardType: '',
+                            Text(
+                              'Module ${currentIndex + 1} of ${modules.length}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Mycolors().darkGrey,
                               ),
                             ),
-                            Spacer(),
+                          ],
+                        ),
+                        SizedBox(height: 30),
+                        // Module Name
+                        ContentDevTextfields(
+                          inputController:
+                              TextEditingController(text: moduleName),
+                          headerText: 'Module Name',
+                          keyboardType: '',
+                          readOnly: true,
+                        ),
+                        SizedBox(height: 30),
+                        // Module Content Section
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Module Image
+                            Flexible(
+                              flex: 2,
+                              child: Container(
+                                height: 250,
+                                decoration: BoxDecoration(
+                                  color: Mycolors().offWhite,
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(
+                                    color: Colors.grey.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: moduleImageUrl.isNotEmpty
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(15),
+                                        child: ImageNetwork(
+                                          image: moduleImageUrl,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.3,
+                                          height: 250,
+                                          fitWeb: BoxFitWeb.cover,
+                                          fitAndroidIos: BoxFit.cover,
+                                          onLoading: Center(
+                                            child: CircularProgressIndicator(),
+                                          ),
+                                          onError: Icon(
+                                            Icons.error_outline,
+                                            color: Colors.red,
+                                            size: 50,
+                                          ),
+                                        ),
+                                      )
+                                    : Center(
+                                        child: Icon(
+                                          Icons.image_not_supported_outlined,
+                                          size: 50,
+                                          color: Mycolors().darkGrey,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            SizedBox(width: 30),
+                            // PDF Documents Section
+                            Flexible(
+                              flex: 3,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Module Documents',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: Mycolors().darkGrey,
+                                    ),
+                                  ),
+                                  SizedBox(height: 20),
+                                  Wrap(
+                                    spacing: 10,
+                                    runSpacing: 10,
+                                    children: [
+                                      if (studentGuidePdfUrl.isNotEmpty)
+                                        _buildViewButton('View Student Guide',
+                                            studentGuidePdfUrl),
+                                      if (facilitatorGuidePdfUrl.isNotEmpty)
+                                        _buildViewButton(
+                                            'View Facilitator Guide',
+                                            facilitatorGuidePdfUrl),
+                                      if (lecturerGuidePdfUrl.isNotEmpty)
+                                        _buildViewButton('View Lecturer Guide',
+                                            lecturerGuidePdfUrl),
+                                      if (answerSheetPdfUrl.isNotEmpty)
+                                        _buildViewButton('View Answer Sheet',
+                                            answerSheetPdfUrl),
+                                      if (activitiesPdfUrl.isNotEmpty)
+                                        _buildViewButton('View Activities',
+                                            activitiesPdfUrl),
+                                      if (assessmentsPdfUrl.isNotEmpty)
+                                        _buildViewButton('View Assessments',
+                                            assessmentsPdfUrl),
+                                      if (testSheetPdfUrl.isNotEmpty)
+                                        _buildViewButton(
+                                            'View Test Sheet', testSheetPdfUrl),
+                                      if (assignmentsPdfUrl.isNotEmpty)
+                                        _buildViewButton('View Assignments',
+                                            assignmentsPdfUrl),
+                                    ],
+                                  ),
+                                  SizedBox(height: 20),
+                                  if (indexPdfUrl.isNotEmpty)
+                                    _buildViewButton(
+                                        'View Index PDF', indexPdfUrl),
+                                  if (modulePdfUrl.isNotEmpty)
+                                    _buildViewButton(
+                                        'View Module PDF', modulePdfUrl),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 30),
+                        // Module Description
+                        ContentDevTextfields(
+                          headerText: 'Module Description',
+                          inputController:
+                              TextEditingController(text: moduleDescription),
+                          keyboardType: '',
+                          maxLines: 9,
+                          readOnly: true,
+                        ),
+                        SizedBox(height: 30),
+                        // Navigation Buttons Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (currentIndex == 0)
+                              SlimButtons(
+                                buttonText: 'Back to Course Review',
+                                buttonColor: Colors.white,
+                                borderColor: Mycolors().darkGrey,
+                                textColor: Mycolors().darkGrey,
+                                onPressed: _navigateBackToCourseReview,
+                                customWidth: 180,
+                                customHeight: 40,
+                              )
+                            else
+                              SlimButtons(
+                                buttonText: 'Previous Module',
+                                buttonColor: Colors.white,
+                                borderColor: Mycolors().darkGrey,
+                                textColor: Mycolors().darkGrey,
+                                onPressed: _navigateToPreviousModule,
+                                customWidth: 150,
+                                customHeight: 40,
+                              ),
+                            Text(
+                              '${currentIndex + 1} / ${modules.length}',
+                              style: MyTextStyles(context).mediumBlack,
+                            ),
                             SlimButtons(
-                              buttonText: 'Assessments',
-                              textColor: Mycolors().darkGrey,
+                              buttonText: 'Next Module',
                               buttonColor: Colors.white,
                               borderColor: Mycolors().darkGrey,
-                              onPressed: () {
-                                widget.changePageIndex(5);
-                              },
-                              customWidth: 125,
+                              textColor: Mycolors().darkGrey,
+                              onPressed: _navigateToNextModule,
+                              customWidth: 150,
                               customHeight: 40,
                             ),
                           ],
                         ),
-                      ),
-                      Row(
-                        children: [
-                          moduleImageUrl.isNotEmpty
-                              ? ImageNetwork(
-                                  image: moduleImageUrl,
-                                  height:
-                                      MediaQuery.of(context).size.height * 0.3,
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.3,
-                                  borderRadius: BorderRadius.circular(10),
-                                  fitWeb: BoxFitWeb.cover,
-                                  fitAndroidIos: BoxFit.cover,
-                                )
-                              : Container(
-                                  height:
-                                      MediaQuery.of(context).size.height * 0.3,
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.3,
-                                  decoration: BoxDecoration(
-                                    color: Mycolors().offWhite,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Center(
-                                    child: Icon(
-                                      Icons.image,
-                                      size: 50,
-                                      color: Mycolors().darkGrey,
-                                    ),
-                                  ),
-                                ),
-                          Spacer(),
-                          Column(
-                            children: [
-                              if (studentGuidePdfUrl.isNotEmpty) ...[
-                                _buildViewButton(
-                                    'View Student Guide', studentGuidePdfUrl),
-                                SizedBox(height: 10),
-                              ],
-                              if (facilitatorGuidePdfUrl.isNotEmpty) ...[
-                                _buildViewButton('View Facilitator Guide',
-                                    facilitatorGuidePdfUrl),
-                                SizedBox(height: 10),
-                              ],
-                              if (answerSheetPdfUrl.isNotEmpty) ...[
-                                _buildViewButton(
-                                    'View Answer Sheet', answerSheetPdfUrl),
-                                SizedBox(height: 10),
-                              ],
-                              if (activitiesPdfUrl.isNotEmpty) ...[
-                                _buildViewButton(
-                                    'View Activities', activitiesPdfUrl),
-                                SizedBox(height: 10),
-                              ],
-                              if (assessmentsPdfUrl.isNotEmpty) ...[
-                                _buildViewButton(
-                                    'View Assessments', assessmentsPdfUrl),
-                                SizedBox(height: 10),
-                              ],
-                              if (testSheetPdfUrl.isNotEmpty) ...[
-                                _buildViewButton(
-                                    'View Test Sheet', testSheetPdfUrl),
-                                SizedBox(height: 10),
-                              ],
-                            ],
-                          ),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
-                        child: Center(
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.82,
-                            child: ContentDevTextfields(
-                              inputController: TextEditingController(
-                                  text: moduleDescription),
-                              headerText: 'Module Description',
-                              keyboardType: '',
-                              maxLines: 9,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 20),
-                      if (pdfUrl.isNotEmpty)
-                        SlimButtons(
-                          buttonText: 'View Module PDF',
-                          buttonColor: Colors.white,
-                          borderColor: Mycolors().darkGrey,
-                          textColor: Mycolors().darkGrey,
-                          onPressed: () async {
-                            String freshPdfUrl =
-                                await _getFreshPdfUrl(pdfUrl); // Get fresh URL
-
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => Scaffold(
-                                  appBar: AppBar(title: Text('View PDF')),
-                                  body: PdfViewerWeb(
-                                      pdfUrl: freshPdfUrl), // Use fresh URL
-                                ),
-                              ),
-                            );
-                          },
-                          customWidth: 160,
-                          customHeight: 40,
-                        ),
-                      SizedBox(height: 30),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          if (currentIndex == 0)
-                            SlimButtons(
-                              buttonText: 'Back to Course Review',
-                              buttonColor: Colors.white,
-                              borderColor: Mycolors().darkGrey,
-                              textColor: Mycolors().darkGrey,
-                              onPressed: _navigateBackToCourseReview,
-                              customWidth: 180,
-                              customHeight: 40,
-                            )
-                          else
-                            SlimButtons(
-                              buttonText: 'Previous Module',
-                              buttonColor: Colors.white,
-                              borderColor: Mycolors().darkGrey,
-                              textColor: Mycolors().darkGrey,
-                              onPressed: _navigateToPreviousModule,
-                              customWidth: 150,
-                              customHeight: 40,
-                            ),
-                          Text(
-                            '${currentIndex + 1} / ${modules.length}',
-                            style: MyTextStyles(context).mediumBlack,
-                          ),
-                          SlimButtons(
-                            buttonText: 'Next Module',
-                            buttonColor: Colors.white,
-                            borderColor: Mycolors().darkGrey,
-                            textColor: Mycolors().darkGrey,
-                            onPressed: _navigateToNextModule,
-                            customWidth: 150,
-                            customHeight: 40,
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -352,7 +389,7 @@ class _ReviewModuleState extends State<ReviewModule> {
 
   Widget _buildViewButton(String text, String path) {
     return FutureBuilder<String>(
-      future: _getFreshPdfUrl(path), // Get fresh URL before opening
+      future: _getFreshPdfUrl(path),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return CircularProgressIndicator();
@@ -360,7 +397,7 @@ class _ReviewModuleState extends State<ReviewModule> {
         if (snapshot.hasError) {
           return Text('Error loading PDF');
         }
-        final freshPdfUrl = snapshot.data ?? path; // Use fresh URL
+        final freshPdfUrl = snapshot.data ?? path;
 
         return SlimButtons(
           buttonText: text,
@@ -372,8 +409,8 @@ class _ReviewModuleState extends State<ReviewModule> {
               context,
               MaterialPageRoute(
                 builder: (context) => Scaffold(
-                  appBar: AppBar(title: Text(text)), // Show correct title
-                  body: PdfViewerWeb(pdfUrl: freshPdfUrl), // Open correct PDF
+                  appBar: AppBar(title: Text(text)),
+                  body: PdfViewerWeb(pdfUrl: freshPdfUrl),
                 ),
               ),
             );

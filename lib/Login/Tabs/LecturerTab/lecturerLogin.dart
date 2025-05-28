@@ -70,8 +70,8 @@ class LecturerLoginView extends StatefulWidget {
 }
 
 class _LecturerLoginViewState extends State<LecturerLoginView> {
-  final emailController = TextEditingController(text: 'lecture@gmail.com');
-  final passwordController = TextEditingController(text: 'test123');
+  final emailController = TextEditingController(text: '');
+  final passwordController = TextEditingController(text: '');
   final lecturerCodeController = TextEditingController();
 
   bool isLoading = false;

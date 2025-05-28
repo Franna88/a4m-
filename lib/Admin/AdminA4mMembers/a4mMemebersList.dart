@@ -1,11 +1,11 @@
 import 'package:a4m/Admin/AdminA4mMembers/dummyDataModel/membersDummyData.dart';
-import 'package:a4m/CommonComponents/inputFields/myDropDownMenu.dart';
 import 'package:a4m/CommonComponents/inputFields/mySearchBar.dart';
 import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 
 import 'ui/memberContainers.dart';
 
@@ -23,6 +23,8 @@ class _A4mMembersListState extends State<A4mMembersList>
   List<MembersDummyData> _members = [];
   bool _isLoading = true;
   String _searchQuery = '';
+  Timer? _debounceTimer;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -48,6 +50,22 @@ class _A4mMembersListState extends State<A4mMembersList>
     _fetchMembersData();
   }
 
+  void _onSearchChanged(String query) {
+    // Cancel previous timer if it exists
+    if (_debounceTimer?.isActive ?? false) {
+      _debounceTimer!.cancel();
+    }
+
+    // Create a new timer
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _searchQuery = query;
+        });
+      }
+    });
+  }
+
   Future<void> _fetchMembersData() async {
     setState(() {
       _isLoading = true;
@@ -70,6 +88,8 @@ class _A4mMembersListState extends State<A4mMembersList>
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -100,13 +120,8 @@ class _A4mMembersListState extends State<A4mMembersList>
 
   @override
   Widget build(BuildContext context) {
-    final memberSearch = TextEditingController();
-    final memberCategorySelect = TextEditingController();
-
-    // Calculate the number of columns based on the screen width
     double screenWidth = MediaQuery.of(context).size.width;
-    int crossAxisCount =
-        (screenWidth ~/ 400).clamp(1, 6); // Minimum 1, maximum 6
+    int crossAxisCount = (screenWidth ~/ 400).clamp(1, 6);
 
     return SizedBox(
       width: MyUtility(context).width - 320,
@@ -116,31 +131,18 @@ class _A4mMembersListState extends State<A4mMembersList>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search bar and dropdown
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                MyDropDownMenu(
-                  description: 'Member Category',
-                  customSize: 300,
-                  items: [], // Update with member categories if needed
-                  textfieldController: memberCategorySelect,
+            // Search bar only
+            Align(
+              alignment: Alignment.centerRight,
+              child: SizedBox(
+                width: 300,
+                height: 50,
+                child: MySearchBar(
+                  textController: _searchController,
+                  hintText: 'Search Member',
+                  onChanged: _onSearchChanged,
                 ),
-                SizedBox(
-                  width: 300,
-                  height: 50,
-                  child: MySearchBar(
-                    textController: memberSearch,
-                    hintText: 'Search Member',
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value;
-                      });
-                    },
-                  ),
-                ),
-              ],
+              ),
             ),
             const SizedBox(height: 30),
 

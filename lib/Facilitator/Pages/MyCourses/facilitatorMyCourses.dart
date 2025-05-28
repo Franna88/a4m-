@@ -5,6 +5,7 @@ import 'package:a4m/myutility.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 
 import '../../../CommonComponents/inputFields/mySearchBar.dart';
 
@@ -24,12 +25,51 @@ class FacilitatorMyCourses extends StatefulWidget {
 
 class _FacilitatorMyCoursesState extends State<FacilitatorMyCourses> {
   List<Map<String, dynamic>> facilitatorCourses = [];
+  List<Map<String, dynamic>> filteredCourses = [];
   bool isLoading = true;
+  String searchQuery = '';
+  Timer? _debounceTimer;
+  final TextEditingController courseSearchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _fetchFacilitatorCourses();
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    courseSearchController.dispose();
+    super.dispose();
+  }
+
+  // Handle search with debounce
+  void _performSearch(String query) {
+    // Cancel previous timer if it exists
+    _debounceTimer?.cancel();
+
+    // Create a new timer that will execute after 500ms
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        searchQuery = query.toLowerCase();
+        _filterCourses();
+      });
+    });
+  }
+
+  // Filter courses based on search query
+  void _filterCourses() {
+    if (searchQuery.isEmpty) {
+      filteredCourses = List.from(facilitatorCourses);
+    } else {
+      filteredCourses = facilitatorCourses.where((course) {
+        final name = (course['courseName'] ?? '').toString().toLowerCase();
+        final description =
+            (course['courseDescription'] ?? '').toString().toLowerCase();
+        return name.contains(searchQuery) || description.contains(searchQuery);
+      }).toList();
+    }
   }
 
   Future<void> _fetchFacilitatorCourses() async {
@@ -95,18 +135,28 @@ class _FacilitatorMyCoursesState extends State<FacilitatorMyCourses> {
 
           setState(() {
             facilitatorCourses = fetchedCourses;
+            filteredCourses = fetchedCourses; // Initialize filtered courses
             isLoading = false;
           });
         } else {
-          setState(() => isLoading = false);
+          setState(() {
+            isLoading = false;
+            filteredCourses = [];
+          });
         }
       } else {
         print("Facilitator document not found.");
-        setState(() => isLoading = false);
+        setState(() {
+          isLoading = false;
+          filteredCourses = [];
+        });
       }
     } catch (e) {
       print("Error fetching facilitator courses: $e");
-      setState(() => isLoading = false);
+      setState(() {
+        isLoading = false;
+        filteredCourses = [];
+      });
     }
   }
 
@@ -120,7 +170,6 @@ class _FacilitatorMyCoursesState extends State<FacilitatorMyCourses> {
 
   @override
   Widget build(BuildContext context) {
-    final courseSearch = TextEditingController();
     final screenWidth = MyUtility(context).width - 280;
 
     int crossAxisCount =
@@ -143,76 +192,92 @@ class _FacilitatorMyCoursesState extends State<FacilitatorMyCourses> {
                   SizedBox(
                     width: 350,
                     child: MySearchBar(
-                      textController: courseSearch,
+                      textController: courseSearchController,
                       hintText: 'Search Course',
+                      onChanged: _performSearch,
                     ),
                   ),
                   const SizedBox(height: 20),
                   Expanded(
                     child: isLoading
                         ? const Center(child: CircularProgressIndicator())
-                        : SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                LayoutGrid(
-                                  columnSizes: List.generate(
-                                    crossAxisCount,
-                                    (_) => const FlexibleTrackSize(1),
+                        : filteredCourses.isEmpty
+                            ? Center(
+                                child: Text(
+                                  searchQuery.isEmpty
+                                      ? 'No courses available'
+                                      : 'No courses match your search',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
                                   ),
-                                  rowSizes: List.generate(
-                                    (facilitatorCourses.length / crossAxisCount)
-                                        .ceil(),
-                                    (_) => auto,
-                                  ),
-                                  columnGap: 8,
-                                  rowGap: 15,
-                                  children: facilitatorCourses
-                                      .map(
-                                        (course) => Material(
-                                          color: Colors.transparent,
-                                          child: InkWell(
-                                            onTap: () => _navigateToCourseView(
-                                                course['courseId']),
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                            child: FacilitatorCourseContainers(
-                                              isAssignStudent: true,
-                                              courseName:
-                                                  course['courseName'] ??
-                                                      'Unknown',
-                                              courseDescription:
-                                                  course['courseDescription'] ??
-                                                      '',
-                                              totalStudents:
-                                                  course['studentCount']
-                                                          ?.toString() ??
-                                                      '0',
-                                              totalAssesments:
-                                                  course['assessmentCount']
-                                                          ?.toString() ??
-                                                      '0',
-                                              totalModules:
-                                                  course['moduleCount']
-                                                          ?.toString() ??
-                                                      '0',
-                                              courseImage: course[
-                                                      'courseImageUrl'] ??
-                                                  'https://via.placeholder.com/150',
-                                              coursePrice:
-                                                  'R ${course['coursePrice']?.toString() ?? '0'}',
-                                              facilitatorId:
-                                                  widget.facilitatorId,
-                                              courseId: course['courseId'],
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
                                 ),
-                                const SizedBox(height: 10),
-                              ],
-                            ),
-                          ),
+                              )
+                            : SingleChildScrollView(
+                                child: Column(
+                                  children: [
+                                    LayoutGrid(
+                                      columnSizes: List.generate(
+                                        crossAxisCount,
+                                        (_) => const FlexibleTrackSize(1),
+                                      ),
+                                      rowSizes: List.generate(
+                                        (filteredCourses.length /
+                                                crossAxisCount)
+                                            .ceil(),
+                                        (_) => auto,
+                                      ),
+                                      columnGap: 8,
+                                      rowGap: 15,
+                                      children: filteredCourses
+                                          .map(
+                                            (course) => Material(
+                                              color: Colors.transparent,
+                                              child: InkWell(
+                                                onTap: () =>
+                                                    _navigateToCourseView(
+                                                        course['courseId']),
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                child:
+                                                    FacilitatorCourseContainers(
+                                                  isAssignStudent: true,
+                                                  courseName:
+                                                      course['courseName'] ??
+                                                          'Unknown',
+                                                  courseDescription: course[
+                                                          'courseDescription'] ??
+                                                      '',
+                                                  totalStudents:
+                                                      course['studentCount']
+                                                              ?.toString() ??
+                                                          '0',
+                                                  totalAssesments:
+                                                      course['assessmentCount']
+                                                              ?.toString() ??
+                                                          '0',
+                                                  totalModules:
+                                                      course['moduleCount']
+                                                              ?.toString() ??
+                                                          '0',
+                                                  courseImage: course[
+                                                          'courseImageUrl'] ??
+                                                      'https://via.placeholder.com/150',
+                                                  coursePrice:
+                                                      'R ${course['coursePrice']?.toString() ?? '0'}',
+                                                  facilitatorId:
+                                                      widget.facilitatorId,
+                                                  courseId: course['courseId'],
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                          .toList(),
+                                    ),
+                                    const SizedBox(height: 10),
+                                  ],
+                                ),
+                              ),
                   ),
                 ],
               ),

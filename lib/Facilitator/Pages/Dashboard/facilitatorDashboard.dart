@@ -32,7 +32,7 @@ class _FacilitatorDashboardState extends State<FacilitatorDashboard> {
           children: [
             // Main Content Column
             Expanded(
-              flex: 3,
+              flex: 2,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -65,6 +65,7 @@ class _FacilitatorDashboardState extends State<FacilitatorDashboard> {
             const SizedBox(width: 16),
             // Calendar Section
             Expanded(
+              flex: 2,
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,

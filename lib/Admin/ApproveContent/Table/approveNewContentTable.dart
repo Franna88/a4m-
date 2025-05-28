@@ -102,7 +102,7 @@ class _ApproveNewContentTableState extends State<ApproveNewContentTable> {
                 TableCell(
                   child: TableStructure(
                     child: Text(
-                      widget.status == 'removed' ? 'Restore' : 'Approve',
+                      widget.status == 'removed' ? 'Restore' : 'Status',
                       style: GoogleFonts.montserrat(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,

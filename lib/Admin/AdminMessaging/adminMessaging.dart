@@ -75,22 +75,23 @@ class _AdminMessagingState extends State<AdminMessaging> {
                 width: 1.5,
               ),
             ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  const SizedBox(width: 20),
-                  for (int i = 0; i < pageNames.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 20),
-                    AlternateNavButtons(
-                      buttonText: pageNames[i],
-                      onTap: () => _handleItemClick(i),
-                      isActive: activeIndex == i,
+            child: Row(
+              children: [
+                for (int i = 0; i < pageNames.length; i++)
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        left: i == 0 ? 12 : 8,
+                        right: i == pageNames.length - 1 ? 12 : 8,
+                      ),
+                      child: AlternateNavButtons(
+                        buttonText: pageNames[i],
+                        onTap: () => _handleItemClick(i),
+                        isActive: activeIndex == i,
+                      ),
                     ),
-                  ],
-                  const SizedBox(width: 20),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
           // Main Content Area

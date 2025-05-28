@@ -278,12 +278,11 @@ class _LectureStudentState extends State<LectureStudent> {
                 // Course filter dropdown
                 StreamBuilder<List<Map<String, dynamic>>>(
                   stream: _getLecturerCourses(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
+                  builder: (context, courseSnapshot) {
+                    if (!courseSnapshot.hasData) {
                       return const SizedBox(width: 300);
                     }
-
-                    final courses = snapshot.data!;
+                    final lecturerCourses = courseSnapshot.data!;
                     return Container(
                       width: 300,
                       height: 50,
@@ -302,7 +301,7 @@ class _LectureStudentState extends State<LectureStudent> {
                             value: null,
                             child: Text('All Courses'),
                           ),
-                          ...courses.map((course) {
+                          ...lecturerCourses.map((course) {
                             return DropdownMenuItem<String>(
                               value: course['id'],
                               child: Text(course['name']),
@@ -333,68 +332,79 @@ class _LectureStudentState extends State<LectureStudent> {
             // Students grid
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
-                stream: _getStudents(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                stream: _getLecturerCourses(),
+                builder: (context, courseSnapshot) {
+                  if (!courseSnapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());
                   }
-
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No students found',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                  final lecturerCourses = courseSnapshot.data!;
+                  return StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: _getStudents(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            'No students found',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        );
+                      }
+                      final students = snapshot.data!.where((student) {
+                        final searchQuery = _searchQuery.toLowerCase();
+                        final name = student['name'].toString().toLowerCase();
+                        final email = student['email'].toString().toLowerCase();
+                        final number =
+                            student['studentNumber'].toString().toLowerCase();
+                        return name.contains(searchQuery) ||
+                            email.contains(searchQuery) ||
+                            number.contains(searchQuery);
+                      }).toList();
+                      if (students.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            'No matching students found',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        );
+                      }
+                      return SingleChildScrollView(
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: Container(
+                            constraints:
+                                BoxConstraints(maxWidth: availableWidth),
+                            child: Wrap(
+                              spacing:
+                                  20, // Horizontal space between containers
+                              runSpacing: 20, // Vertical space between rows
+                              alignment: WrapAlignment.start,
+                              children: students.map((student) {
+                                return LectureStudentContainers(
+                                  image: student['profileImageUrl'] ?? '',
+                                  name: student['name'] ?? 'No Name',
+                                  number: student['studentNumber'] ?? 'No ID',
+                                  isStudent: true,
+                                  onMessageTap: () =>
+                                      _handleMessageTap(student),
+                                  userId: student['id'] ?? '',
+                                  lecturerId: widget.lecturerId,
+                                  lecturerCourses: lecturerCourses,
+                                );
+                              }).toList(),
+                            ),
+                          ),
                         ),
-                      ),
-                    );
-                  }
-
-                  final students = snapshot.data!.where((student) {
-                    final searchQuery = _searchQuery.toLowerCase();
-                    final name = student['name'].toString().toLowerCase();
-                    final email = student['email'].toString().toLowerCase();
-                    final number =
-                        student['studentNumber'].toString().toLowerCase();
-                    return name.contains(searchQuery) ||
-                        email.contains(searchQuery) ||
-                        number.contains(searchQuery);
-                  }).toList();
-
-                  if (students.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No matching students found',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    );
-                  }
-
-                  return SingleChildScrollView(
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: Container(
-                        constraints: BoxConstraints(maxWidth: availableWidth),
-                        child: Wrap(
-                          spacing: 20, // Horizontal space between containers
-                          runSpacing: 20, // Vertical space between rows
-                          alignment: WrapAlignment.start,
-                          children: students.map((student) {
-                            return LectureStudentContainers(
-                              image: student['profileImageUrl'] ?? '',
-                              name: student['name'] ?? 'No Name',
-                              number: student['studentNumber'] ?? 'No ID',
-                              isStudent: true,
-                              onMessageTap: () => _handleMessageTap(student),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
+                      );
+                    },
                   );
                 },
               ),

@@ -2,6 +2,7 @@ import 'package:a4m/myutility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_network/image_network.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LectureDashboardProfile extends StatefulWidget {
   final String lecturerId;
@@ -56,7 +57,7 @@ class _LectureDashboardProfileState extends State<LectureDashboardProfile> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 200,
+      height: 160,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -69,16 +70,8 @@ class _LectureDashboardProfileState extends State<LectureDashboardProfile> {
           ),
         ],
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      child: Row(
         children: [
-          const Text(
-            'Welcome Back',
-            style: TextStyle(
-              fontSize: 24.0,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
           Container(
             width: 80,
             height: 80,
@@ -111,32 +104,40 @@ class _LectureDashboardProfileState extends State<LectureDashboardProfile> {
                     ),
             ),
           ),
-          Text(
-            userName,
-            style: const TextStyle(
-              fontSize: 16.0,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.star,
-                color: Colors.amber,
-                size: 20.0,
-              ),
-              const SizedBox(width: 4.0),
-              Text(
-                '${userRating.toStringAsFixed(1)} Rating',
-                style: const TextStyle(
-                  fontSize: 14.0,
-                  fontWeight: FontWeight.w500,
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  userName,
+                  style: GoogleFonts.poppins(
+                    fontSize: 20.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.star,
+                      color: Colors.amber,
+                      size: 20.0,
+                    ),
+                    const SizedBox(width: 4.0),
+                    Text(
+                      '${userRating.toStringAsFixed(1)} Rating',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -6,6 +6,7 @@ import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:a4m/Constants/myColors.dart';
+import 'dart:async';
 
 import '../../../CommonComponents/inputFields/myDropDownMenu.dart';
 import '../../../CommonComponents/inputFields/mySearchBar.dart';
@@ -32,6 +33,52 @@ class _FacilitatorBrowseCoursesState extends State<FacilitatorBrowseCourses> {
       'coursePrice': '\$${(index + 1) * 50}',
     },
   );
+
+  // Search state
+  String _searchQuery = '';
+  Timer? _debounceTimer;
+  List<Map<String, dynamic>>? _filteredCourses;
+  List<Map<String, dynamic>>? _allCourses;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  // Debounced search function
+  void _performSearch(String query) {
+    // Cancel previous timer if it exists
+    _debounceTimer?.cancel();
+
+    // Create a new timer that will execute after 300ms
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _searchQuery = query.toLowerCase();
+          _filterCourses();
+        });
+      }
+    });
+  }
+
+  void _filterCourses() {
+    if (_allCourses == null) return;
+
+    if (_searchQuery.isEmpty) {
+      _filteredCourses = _allCourses;
+    } else {
+      _filteredCourses = _allCourses!.where((course) {
+        final name = (course['courseName'] ?? '').toString().toLowerCase();
+        final desc =
+            (course['courseDescription'] ?? '').toString().toLowerCase();
+        return name.contains(_searchQuery) || desc.contains(_searchQuery);
+      }).toList();
+    }
+  }
+
   Future<void> _addCourseToFacilitator(
       Map<String, dynamic> course, int selectedLicenses) async {
     String facilitatorId = widget.facilitatorId;
@@ -133,7 +180,7 @@ class _FacilitatorBrowseCoursesState extends State<FacilitatorBrowseCourses> {
   Future<List<Map<String, dynamic>>> fetchApprovedCourses() async {
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('courses')
-        .where('status', isEqualTo: 'approved') // Filter by status
+        .where('status', isEqualTo: 'approved')
         .get();
 
     List<Map<String, dynamic>> courses = [];
@@ -143,7 +190,7 @@ class _FacilitatorBrowseCoursesState extends State<FacilitatorBrowseCourses> {
       // Check if the course has assigned lecturers
       if (courseData['assignedLecturers'] == null ||
           (courseData['assignedLecturers'] as List).isEmpty) {
-        continue; // Skip this course if no lecturers are assigned
+        continue;
       }
 
       // Fetch modules for the course
@@ -416,12 +463,10 @@ class _FacilitatorBrowseCoursesState extends State<FacilitatorBrowseCourses> {
   @override
   Widget build(BuildContext context) {
     final category = TextEditingController();
-    final courseSearch = TextEditingController();
     final screenWidth = MyUtility(context).width - 280;
 
-    // Decrease spacing by calculating tighter crossAxisCount
-    int crossAxisCount =
-        (screenWidth ~/ 300).clamp(1, 6); // Adjusted for tight layout
+    // Calculate crossAxisCount
+    int crossAxisCount = (screenWidth ~/ 300).clamp(1, 6);
 
     return SizedBox(
       height: MyUtility(context).height - 50,
@@ -457,8 +502,10 @@ class _FacilitatorBrowseCoursesState extends State<FacilitatorBrowseCourses> {
                       SizedBox(
                         width: 350,
                         child: MySearchBar(
-                            textController: courseSearch,
-                            hintText: 'Search Course'),
+                          textController: _searchController,
+                          hintText: 'Search Course',
+                          onChanged: _performSearch,
+                        ),
                       )
                     ],
                   ),
@@ -469,68 +516,65 @@ class _FacilitatorBrowseCoursesState extends State<FacilitatorBrowseCourses> {
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
+                          return const Center(
+                              child: CircularProgressIndicator());
                         } else if (snapshot.hasError) {
                           return Center(
                               child: Text('Error: ${snapshot.error}'));
                         } else if (!snapshot.hasData ||
                             snapshot.data!.isEmpty) {
-                          return Center(
+                          return const Center(
                               child: Text('No approved courses available.'));
                         }
 
-                        final courses = snapshot.data!;
+                        // Cache all courses if not already cached
+                        _allCourses ??= snapshot.data!;
+
+                        // Use filtered courses if available, otherwise use all courses
+                        final coursesToDisplay =
+                            _filteredCourses ?? _allCourses!;
 
                         return SingleChildScrollView(
                           child: LayoutGrid(
                             columnSizes: List.generate(
                               crossAxisCount,
-                              (_) =>
-                                  FlexibleTrackSize(1), // Flexible column sizes
+                              (_) => const FlexibleTrackSize(1),
                             ),
                             rowSizes: List.generate(
-                              (courses.length / crossAxisCount).ceil(),
-                              (_) => auto, // Auto height for rows
+                              (coursesToDisplay.length / crossAxisCount).ceil(),
+                              (_) => auto,
                             ),
-                            rowGap: 20, // Space between rows
-                            columnGap: 20, // Space between columns
+                            rowGap: 20,
+                            columnGap: 20,
                             children: [
-                              for (var course in courses)
+                              for (var course in coursesToDisplay)
                                 SizedBox(
-                                  width: 320, // Fixed width
-                                  height: 340, // Fixed height
+                                  width: 320,
+                                  height: 340,
                                   child: GestureDetector(
-                                    onTap: () => _showAddCourseDialog(
-                                        course), // Show dialog before adding course
-                                    child: SizedBox(
-                                      width: 320,
-                                      height: 340,
-                                      child: FacilitatorCourseContainers(
-                                        courseImage: course['courseImageUrl'] ??
-                                            'images/placeholder.png',
-                                        courseName:
-                                            course['courseName'] ?? 'No Name',
-                                        courseDescription:
-                                            course['courseDescription'] ??
-                                                'No Description',
-                                        coursePrice:
-                                            'R ${course['coursePrice']?.toString() ?? '0'}',
-                                        totalModules:
-                                            course['moduleCount']?.toString() ??
-                                                '0',
-                                        totalAssesments:
-                                            course['assessmentCount']
-                                                    ?.toString() ??
-                                                '0',
-                                        totalStudents: course['studentCount']
-                                                ?.toString() ??
-                                            '0',
-                                        isAssignStudent: false,
-                                        facilitatorId: widget
-                                            .facilitatorId, // Pass facilitatorId
-                                        courseId:
-                                            course['courseId'], // Pass courseId
-                                      ),
+                                    onTap: () => _showAddCourseDialog(course),
+                                    child: FacilitatorCourseContainers(
+                                      courseImage: course['courseImageUrl'] ??
+                                          'images/placeholder.png',
+                                      courseName:
+                                          course['courseName'] ?? 'No Name',
+                                      courseDescription:
+                                          course['courseDescription'] ??
+                                              'No Description',
+                                      coursePrice:
+                                          'R ${course['coursePrice']?.toString() ?? '0'}',
+                                      totalModules:
+                                          course['moduleCount']?.toString() ??
+                                              '0',
+                                      totalAssesments: course['assessmentCount']
+                                              ?.toString() ??
+                                          '0',
+                                      totalStudents:
+                                          course['studentCount']?.toString() ??
+                                              '0',
+                                      isAssignStudent: false,
+                                      facilitatorId: widget.facilitatorId,
+                                      courseId: course['courseId'],
                                     ),
                                   ),
                                 ),

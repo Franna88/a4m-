@@ -237,7 +237,7 @@ class _AdminMainNavBarState extends State<ContentDevNavBar> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Here\'s what\'s happening with your courses',
+                'Manage Course content',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   color: Colors.grey[600],

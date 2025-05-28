@@ -22,28 +22,33 @@ class _CompSuggestionsMainState extends State<CompSuggestionsMain> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Feedback Management',
-            style: GoogleFonts.poppins(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[800],
-            ),
-          ),
-          const SizedBox(height: 20),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildTab('Lecturer Evaluation', 0),
-              const SizedBox(width: 16),
-              _buildTab('Course Evaluation', 1),
+              Text(
+                'Feedback Management',
+                style: GoogleFonts.poppins(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+              Row(
+                children: [
+                  _buildTab('Lecturer Evaluation', 0),
+                  const SizedBox(width: 16),
+                  _buildTab('Course Evaluation', 1),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 20),
           Expanded(
             child: Container(
+              width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.grey.withOpacity(0.1),

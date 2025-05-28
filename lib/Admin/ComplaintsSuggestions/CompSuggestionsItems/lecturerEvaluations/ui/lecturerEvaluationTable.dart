@@ -264,98 +264,104 @@ class _LecturerEvaluationTableState extends State<LecturerEvaluationTable> {
           );
         }
 
-        return Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              DataTable(
-                headingRowColor: MaterialStateProperty.all(Colors.white),
-                dataRowColor: MaterialStateProperty.all(Colors.white),
-                columnSpacing: 40,
-                horizontalMargin: 0,
-                columns: [
-                  'Course',
-                  'Student Name',
-                  'Overall Rating',
-                  'Date',
-                  'Actions',
-                ]
-                    .map((column) => DataColumn(
-                          label: Text(
-                            column,
+        return SingleChildScrollView(
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DataTable(
+                  headingRowColor: MaterialStateProperty.all(Colors.grey[50]),
+                  dataRowColor: MaterialStateProperty.all(Colors.white),
+                  columnSpacing: 56,
+                  horizontalMargin: 24,
+                  columns: [
+                    'Course',
+                    'Student Name',
+                    'Overall Rating',
+                    'Date',
+                    'Actions',
+                  ]
+                      .map((column) => DataColumn(
+                            label: Expanded(
+                              child: Text(
+                                column,
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  color: Colors.grey[800],
+                                ),
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                  rows: evaluations.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final ratings = data['ratings'] as Map<String, dynamic>;
+                    final averageRating =
+                        ratings.values.reduce((a, b) => a + b) / ratings.length;
+
+                    return DataRow(
+                      cells: [
+                        DataCell(
+                          Text(
+                            data['courseName'] ?? 'Unknown',
                             style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
                               fontSize: 14,
                               color: Colors.grey[800],
                             ),
                           ),
-                        ))
-                    .toList(),
-                rows: evaluations.map((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final ratings = data['ratings'] as Map<String, dynamic>;
-                  final averageRating =
-                      ratings.values.reduce((a, b) => a + b) / ratings.length;
-
-                  return DataRow(
-                    cells: [
-                      DataCell(
-                        Text(
-                          data['courseName'] ?? 'Unknown',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Colors.grey[800],
-                          ),
                         ),
-                      ),
-                      DataCell(
-                        FutureBuilder<String>(
-                          future: _getStudentName(data['studentId']),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                        DataCell(
+                          FutureBuilder<String>(
+                            future: _getStudentName(data['studentId']),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                );
+                              }
+                              return Text(
+                                snapshot.data ?? 'Unknown Student',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: Colors.grey[800],
+                                ),
                               );
-                            }
-                            return Text(
-                              snapshot.data ?? 'Unknown Student',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: Colors.grey[800],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      DataCell(_buildRatingStars(averageRating)),
-                      DataCell(
-                        Text(
-                          _formatDate(data['submittedAt'] as Timestamp),
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Colors.grey[800],
+                            },
                           ),
                         ),
-                      ),
-                      DataCell(
-                        IconButton(
-                          icon: const Icon(
-                            Icons.visibility_outlined,
-                            color: Colors.grey,
+                        DataCell(_buildRatingStars(averageRating)),
+                        DataCell(
+                          Text(
+                            _formatDate(data['submittedAt'] as Timestamp),
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: Colors.grey[800],
+                            ),
                           ),
-                          onPressed: () => _showDetailedEvaluation(data),
-                          tooltip: 'View Details',
                         ),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ],
+                        DataCell(
+                          IconButton(
+                            icon: const Icon(
+                              Icons.visibility_outlined,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () => _showDetailedEvaluation(data),
+                            tooltip: 'View Details',
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
           ),
         );
       },

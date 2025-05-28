@@ -295,22 +295,36 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Grade Assessment',
-          style: GoogleFonts.poppins(color: Colors.white),
-        ),
-        backgroundColor: Mycolors().darkGrey,
-      ),
-      body: SingleChildScrollView(
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: SingleChildScrollView(
         child: Container(
-          margin: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
+          constraints: const BoxConstraints(maxWidth: 500),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Grade Assessment',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 // Assessment Info Card
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -329,14 +343,6 @@ class _AssessmentGradingViewState extends State<AssessmentGradingView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Assessment Details',
-                        style: GoogleFonts.poppins(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
                       _buildInfoRow('Assessment:', widget.assessmentName),
                       const SizedBox(height: 12),
                       _buildInfoRow(

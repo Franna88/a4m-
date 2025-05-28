@@ -78,4 +78,11 @@ class _A4mAppBarState extends State<A4mAppBar> {
       ),
     );
   }
+
+  String _inferType(String fileUrl) {
+    if (fileUrl.contains('assessment')) return 'Assessment';
+    if (fileUrl.contains('assignment')) return 'Assignment';
+    if (fileUrl.contains('test')) return 'Test PDF';
+    return 'Submission';
+  }
 }

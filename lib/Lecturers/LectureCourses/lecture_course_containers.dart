@@ -41,28 +41,28 @@ class _LectureCourseContainersState extends State<LectureCourseContainers> {
     return MouseRegion(
       onEnter: (_) => setState(() => isHovered = true),
       onExit: (_) => setState(() => isHovered = false),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: isHovered ? 2 : 1,
-              blurRadius: isHovered ? 15 : 10,
-              offset: const Offset(0, 3),
+          onTap: () {
+            widget.changePage(6, courseId: widget.courseId, moduleId: '');
+          },
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: isHovered ? 2 : 1,
+                  blurRadius: isHovered ? 15 : 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              print("Course container tapped - Course ID: ${widget.courseId}");
-              widget.changePage(6, courseId: widget.courseId, moduleId: '');
-            },
-            borderRadius: BorderRadius.circular(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -77,33 +77,53 @@ class _LectureCourseContainersState extends State<LectureCourseContainers> {
                     ),
                     color: Colors.grey[200],
                   ),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      topRight: Radius.circular(16),
-                    ),
-                    child: ImageNetwork(
-                      image: widget.courseImage,
-                      height: 160,
-                      width: 400,
-                      duration: 100,
-                      fitAndroidIos: BoxFit.cover,
-                      fitWeb: BoxFitWeb.cover,
-                      onLoading: Container(
-                        color: Colors.grey[200],
-                        child: const Center(
-                          child: CircularProgressIndicator(),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
+                        ),
+                        child: ImageNetwork(
+                          image: widget.courseImage,
+                          height: 160,
+                          width: 400,
+                          duration: 100,
+                          fitAndroidIos: BoxFit.cover,
+                          fitWeb: BoxFitWeb.cover,
+                          onLoading: Container(
+                            color: Colors.grey[200],
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          onError: Container(
+                            color: Colors.grey[200],
+                            child: const Icon(
+                              Icons.error_outline,
+                              color: Colors.red,
+                              size: 32,
+                            ),
+                          ),
                         ),
                       ),
-                      onError: Container(
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.error_outline,
-                          color: Colors.red,
-                          size: 32,
+                      // This InkWell is on top of the image and will always catch taps
+                      Positioned.fill(
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(16),
+                              topRight: Radius.circular(16),
+                            ),
+                            onTap: () {
+                              widget.changePage(6,
+                                  courseId: widget.courseId, moduleId: '');
+                            },
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
                 Padding(
@@ -126,17 +146,15 @@ class _LectureCourseContainersState extends State<LectureCourseContainers> {
                       SizedBox(
                         height: 50,
                         child: Text(
-                          widget.courseDescription,
+                          'Courseware',
                           style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                            height: 1.5,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[800],
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(height: 16),
+
                       // Stats in two rows
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

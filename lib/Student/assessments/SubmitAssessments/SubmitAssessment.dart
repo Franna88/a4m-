@@ -43,7 +43,7 @@ class _SubmitAssessmentState extends State<SubmitAssessment> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Submit Submissions',
+                'Submissions',
                 style: GoogleFonts.poppins(
                   fontSize: 24,
                   fontWeight: FontWeight.w600,

@@ -77,8 +77,8 @@ class StudentLoginView extends StatefulWidget {
 }
 
 class _StudentLoginViewState extends State<StudentLoginView> {
-  final emailController = TextEditingController(text: 'student1@gmail.com');
-  final passwordController = TextEditingController(text: 'test123');
+  final emailController = TextEditingController(text: '');
+  final passwordController = TextEditingController(text: '');
   final studentCodeController = TextEditingController();
   bool isLoading = false;
 

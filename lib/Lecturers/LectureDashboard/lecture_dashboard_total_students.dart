@@ -94,13 +94,70 @@ class _LectureDashboardTotalStudentsState
 
   @override
   Widget build(BuildContext context) {
-    return DashboardMetricCard(
-      title: 'Total Students',
-      value: totalStudents.toString(),
-      subtitle: '$monthlyStudents new',
-      icon: Icons.arrow_upward,
-      iconColor: Mycolors().green,
-      subtitleColor: Mycolors().green,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+      ),
+      child: Row(
+        children: [
+          // Icon in rounded box
+          Container(
+            decoration: BoxDecoration(
+              color: Mycolors().green.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: const EdgeInsets.all(10),
+            child:
+                Icon(Icons.people_outline, color: Mycolors().green, size: 28),
+          ),
+          const SizedBox(width: 16),
+          // Texts
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Total Students',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[800],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      totalStudents.toString(),
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    if (monthlyStudents > 0) ...[
+                      const SizedBox(width: 8),
+                      Icon(Icons.arrow_upward,
+                          color: Mycolors().green, size: 18),
+                      Text(
+                        monthlyStudents.toString(),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Mycolors().green,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

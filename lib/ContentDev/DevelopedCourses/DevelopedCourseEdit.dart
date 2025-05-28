@@ -3,6 +3,8 @@ import 'package:a4m/Constants/myColors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_network/image_network.dart';
+import 'dart:html' as html;
+import 'dart:js' as js;
 
 class DevelopedCourseEdit extends StatefulWidget {
   final String courseName;
@@ -16,6 +18,7 @@ class DevelopedCourseEdit extends StatefulWidget {
   final Function(int) changePage;
   final String? courseStatus;
   final String? declineReason;
+  final String? previewPdfUrl;
   const DevelopedCourseEdit(
       {super.key,
       required this.courseName,
@@ -28,7 +31,8 @@ class DevelopedCourseEdit extends StatefulWidget {
       required this.onTap,
       required this.changePage,
       this.courseStatus,
-      this.declineReason});
+      this.declineReason,
+      this.previewPdfUrl});
 
   @override
   State<DevelopedCourseEdit> createState() => _DevelopedCourseEditState();
@@ -42,6 +46,10 @@ class _DevelopedCourseEditState extends State<DevelopedCourseEdit> {
       pageIndex = index;
     });
     changePage(5);
+  }
+
+  void _handleEditNavigation() {
+    widget.changePage(2);
   }
 
   @override
@@ -59,106 +67,166 @@ class _DevelopedCourseEditState extends State<DevelopedCourseEdit> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 320,
-              height: 180,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(15),
-                  topRight: Radius.circular(15),
-                ),
-              ),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(15),
-                  topRight: Radius.circular(15),
-                ),
-                child: Stack(
+            // Main clickable area (image, title, description, decline reason)
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: _handleEditNavigation,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Background Image using ImageNetwork
-                    Positioned.fill(
-                      child: ImageNetwork(
-                        image: widget
-                            .courseImage, // Firebase URL for the course image
-                        fitWeb: BoxFitWeb.cover, // Adjust for web compatibility
-                        fitAndroidIos: BoxFit.cover, // Adjust for mobile
-                        height: 180,
-                        width: 320,
-                        duration: 500,
-
-                        onLoading: const Center(
-                          child:
-                              CircularProgressIndicator(), // Loading indicator
+                    Container(
+                      width: 320,
+                      height: 180,
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(15),
+                          topRight: Radius.circular(15),
                         ),
                       ),
-                    ),
-                    // Gradient Overlay
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        height: 60,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Mycolors().green,
-                              const Color.fromARGB(0, 255, 255, 255),
-                            ],
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                          ),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(15),
+                          topRight: Radius.circular(15),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                        child: Stack(
                           children: [
-                            InkWell(
-                              onTap: () {
-                                widget
-                                    .changePage(5); // Navigate to modules page
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.only(right: 10),
-                                child: Container(
-                                  height: 45,
-                                  width: 45,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Mycolors().darkTeal,
+                            // Background Image using ImageNetwork
+                            Positioned.fill(
+                              child: ImageNetwork(
+                                image: widget.courseImage,
+                                fitWeb: BoxFitWeb.cover,
+                                fitAndroidIos: BoxFit.cover,
+                                height: 180,
+                                width: 320,
+                                duration: 500,
+                                onLoading: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
+                            ),
+                            // Gradient Overlay
+                            Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Container(
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Mycolors().green,
+                                      const Color.fromARGB(0, 255, 255, 255),
+                                    ],
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
                                   ),
-                                  child: Center(
-                                    child: Text(
-                                      widget.modulesComplete,
-                                      style: GoogleFonts.montserrat(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 12,
-                                      ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 10),
+                                      child: widget.previewPdfUrl != null &&
+                                              widget.previewPdfUrl!.isNotEmpty
+                                          ? IconButton(
+                                              icon: Icon(
+                                                Icons.info_outline,
+                                                color: Colors.white,
+                                                size: 28,
+                                              ),
+                                              onPressed: () {
+                                                _showPreviewPdfDialog(context);
+                                              },
+                                            )
+                                          : SizedBox
+                                              .shrink(), // Hide if no preview PDF
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            // Status Badge
+                            if (widget.courseStatus != null)
+                              Positioned(
+                                top: 10,
+                                right: 10,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        _getStatusColor(widget.courseStatus!),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    _getStatusText(widget.courseStatus!),
+                                    style: GoogleFonts.montserrat(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ),
                     ),
-                    // Status Badge
-                    if (widget.courseStatus != null)
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(widget.courseStatus!),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            _getStatusText(widget.courseStatus!),
-                            style: GoogleFonts.montserrat(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        widget.courseName,
+                        style: GoogleFonts.montserrat(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(left: 8, right: 5, bottom: 5),
+                      child: Text(
+                        widget.courseDescription,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.montserrat(
+                            fontSize: 12,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    // Decline Reason (if course is declined)
+                    if (widget.courseStatus == 'declined' &&
+                        widget.declineReason != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8.0, vertical: 4.0),
+                        child: InkWell(
+                          onTap: () {
+                            _showDeclineReasonDialog(context);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(8.0),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.red.shade200),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.info_outline,
+                                    color: Colors.red.shade700, size: 16),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Course Declined - Tap to view reason',
+                                    style: GoogleFonts.montserrat(
+                                      color: Colors.red.shade700,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -167,65 +235,6 @@ class _DevelopedCourseEditState extends State<DevelopedCourseEdit> {
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                widget.courseName,
-                style: GoogleFonts.montserrat(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 8, right: 5, bottom: 5),
-              child: Text(
-                widget.courseDescription,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.montserrat(
-                    fontSize: 12,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w600),
-              ),
-            ),
-            // Decline Reason (if course is declined)
-            if (widget.courseStatus == 'declined' &&
-                widget.declineReason != null)
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                child: InkWell(
-                  onTap: () {
-                    _showDeclineReasonDialog(context);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.shade200),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.info_outline,
-                            color: Colors.red.shade700, size: 16),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Course Declined - Tap to view reason',
-                            style: GoogleFonts.montserrat(
-                              color: Colors.red.shade700,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             const Spacer(),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -341,5 +350,31 @@ class _DevelopedCourseEditState extends State<DevelopedCourseEdit> {
         );
       },
     );
+  }
+
+  // Show preview PDF in a small popup
+  void _showPreviewPdfDialog(BuildContext context) {
+    if (widget.previewPdfUrl == null || widget.previewPdfUrl!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No preview PDF available for this course')));
+      return;
+    }
+
+    // Create popup dimensions similar to the course card
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final popupWidth = 350; // Slightly wider than course card
+    final popupHeight = 450; // Taller to fit PDF content
+
+    // Calculate centered position
+    final left = (screenWidth / 2) - (popupWidth / 2);
+    final top = (screenHeight / 2) - (popupHeight / 2);
+
+    // Open popup with Google Docs PDF viewer
+    final url =
+        'https://docs.google.com/viewer?embedded=true&url=${Uri.encodeComponent(widget.previewPdfUrl!)}';
+    final features =
+        'width=$popupWidth,height=$popupHeight,top=$top,left=$left,location=no,menubar=no,toolbar=no,status=no,scrollbars=yes,resizable=yes';
+    js.context.callMethod('open', [url, 'PDF Preview', features]);
   }
 }

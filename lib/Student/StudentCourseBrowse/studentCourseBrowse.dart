@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_network/image_network.dart';
+import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 import '../../Themes/Constants/myColors.dart';
 import '../../CommonComponents/inputFields/myDropDownMenu.dart';
 import '../../CommonComponents/inputFields/mySearchBar.dart';
@@ -25,6 +26,9 @@ class _StudentCourseBrowseState extends State<StudentCourseBrowse> {
   final categoryController = TextEditingController();
   final courseSearchController = TextEditingController();
   final String studentId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+  // Add loading state
+  bool isLoading = true;
 
   // Updated filter state
   String selectedCategory = 'All';
@@ -60,7 +64,7 @@ class _StudentCourseBrowseState extends State<StudentCourseBrowse> {
   @override
   void initState() {
     super.initState();
-    _fetchCourses();
+    _initializeData();
   }
 
   @override
@@ -69,6 +73,22 @@ class _StudentCourseBrowseState extends State<StudentCourseBrowse> {
     categoryController.dispose();
     courseSearchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _initializeData() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      await _fetchCourses();
+    } catch (e) {
+      print('Error initializing data: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _fetchCourses() async {
@@ -174,81 +194,133 @@ class _StudentCourseBrowseState extends State<StudentCourseBrowse> {
   @override
   Widget build(BuildContext context) {
     final filteredCourses = getFilteredCourses();
+    final screenWidth = MediaQuery.of(context).size.width;
+    const double itemWidth = 320;
+    int columns = 1;
+
+    if (screenWidth > 800) {
+      columns = ((screenWidth - 300) / itemWidth).floor().clamp(1, 4);
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(),
           Expanded(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (currentPreviewPdfUrl != null)
-                      _buildPdfPreview()
-                    else
-                      Column(
+            child: isLoading
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          color: Mycolors().green,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Loading courses...',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : SingleChildScrollView(
+                    controller: _scrollController,
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildSearchSection(filteredCourses.length),
-                          const SizedBox(height: 24),
-                          _buildCourseGrid(filteredCourses),
-                          if (filteredCourses.isNotEmpty)
-                            _buildDashboardButton(),
+                          if (currentPreviewPdfUrl != null)
+                            _buildPdfPreview()
+                          else
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildSearchSection(filteredCourses.length),
+                                const SizedBox(height: 24),
+                                if (filteredCourses.isEmpty && !isLoading)
+                                  Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(20),
+                                      child: Text(
+                                        'No courses found matching your criteria',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 16,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  LayoutGrid(
+                                    gridFit: GridFit.loose,
+                                    columnSizes:
+                                        List.generate(columns, (index) => 1.fr),
+                                    rowSizes: List.generate(
+                                      (filteredCourses.length / columns).ceil(),
+                                      (index) => auto,
+                                    ),
+                                    rowGap: 20,
+                                    columnGap: 20,
+                                    children: filteredCourses.map((course) {
+                                      return _buildCourseCard(course);
+                                    }).toList(),
+                                  ),
+                                if (filteredCourses.isNotEmpty)
+                                  _buildDashboardButton(),
+                              ],
+                            ),
                         ],
                       ),
-                  ],
-                ),
-              ),
-            ),
+                    ),
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Browse Courses',
-            style: GoogleFonts.poppins(
-              fontSize: 28,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[800],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Discover and enroll in new courses to expand your knowledge',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildHeader() {
+  //   return Container(
+  //     padding: const EdgeInsets.all(24),
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.grey.withOpacity(0.1),
+  //           spreadRadius: 1,
+  //           blurRadius: 10,
+  //           offset: const Offset(0, 3),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Text(
+  //           'Browse Courses',
+  //           style: GoogleFonts.poppins(
+  //             fontSize: 28,
+  //             fontWeight: FontWeight.w600,
+  //             color: Colors.grey[800],
+  //           ),
+  //         ),
+  //         const SizedBox(height: 8),
+  //         Text(
+  //           'Discover and enroll in new courses to expand your knowledge',
+  //           style: GoogleFonts.poppins(
+  //             fontSize: 16,
+  //             color: Colors.grey[600],
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildSearchSection(int courseCount) {
     return Container(
@@ -268,6 +340,14 @@ class _StudentCourseBrowseState extends State<StudentCourseBrowse> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            'Browse and Purchase Courses',
+            style: GoogleFonts.poppins(
+              fontSize: 28,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
+            ),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -460,153 +540,112 @@ class _StudentCourseBrowseState extends State<StudentCourseBrowse> {
     );
   }
 
-  Widget _buildCourseGrid(List<Map<String, dynamic>> filteredCourses) {
-    if (courses.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: CircularProgressIndicator(
-            color: Mycolors().green,
-          ),
-        ),
-      );
-    }
-
-    if (filteredCourses.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Text(
-            'No courses found matching your criteria',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final crossAxisCount = constraints.maxWidth > 1200
-            ? 3
-            : constraints.maxWidth > 800
-                ? 2
-                : 1;
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 24,
-            crossAxisSpacing: 24,
-            childAspectRatio: 0.8,
-          ),
-          itemCount: filteredCourses.length,
-          itemBuilder: (context, index) =>
-              _buildCourseCard(filteredCourses[index]),
-        );
-      },
-    );
-  }
-
   Widget _buildCourseCard(Map<String, dynamic> course) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+    return SizedBox(
+      width: 320,
+      height: 340,
       child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _showAddCourseDialog(course['id'], course),
-          borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(15),
+        elevation: 5,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(12)),
-                child: AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      ImageNetwork(
-                        image: course['courseImageUrl'] ?? 'images/course1.png',
-                        height: 220,
-                        width: 400,
-                        fitAndroidIos: BoxFit.cover,
-                        fitWeb: BoxFitWeb.cover,
-                        onLoading: Container(
-                          color: Mycolors().green.withOpacity(0.1),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                  Mycolors().green),
-                            ),
-                          ),
-                        ),
-                        onError: Container(
-                          color: Mycolors().green.withOpacity(0.1),
-                          child: Center(
-                            child: Icon(
-                              Icons.image_outlined,
-                              size: 48,
-                              color: Mycolors().green,
-                            ),
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(15),
+                      topRight: Radius.circular(15),
+                    ),
+                    child: ImageNetwork(
+                      image: course['courseImageUrl'] ?? 'images/course1.png',
+                      height: 180,
+                      width: 320,
+                      fitAndroidIos: BoxFit.cover,
+                      fitWeb: BoxFitWeb.cover,
+                      onLoading: Container(
+                        color: Mycolors().green.withOpacity(0.1),
+                        height: 180,
+                        width: 320,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Mycolors().green),
                           ),
                         ),
                       ),
-                      Container(
-                        decoration: BoxDecoration(
+                      onError: Container(
+                        color: Mycolors().green.withOpacity(0.1),
+                        height: 180,
+                        width: 320,
+                        child: Center(
+                          child: Icon(
+                            Icons.image_outlined,
+                            size: 48,
+                            color: Mycolors().green,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(15),
+                        topRight: Radius.circular(15),
+                      ),
+                      child: Container(
+                        decoration: const BoxDecoration(
                           gradient: LinearGradient(
+                            colors: [
+                              Color(0x00ECF5DE),
+                              Color(0x8F8AB747),
+                            ],
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Mycolors().green.withOpacity(0.7),
-                            ],
                           ),
                         ),
                       ),
-                      Positioned(
-                        bottom: 12,
-                        left: 12,
-                        right: 12,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Mycolors().darkTeal,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                'R ${(course['coursePrice'] is String ? double.tryParse(course['coursePrice']) ?? 0 : course['coursePrice'] ?? 0).toStringAsFixed(2)}',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 10,
+                    left: 10,
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 5,
+                            horizontal: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            color: Mycolors().darkTeal,
+                          ),
+                          child: Text(
+                            'R ${(course['coursePrice'] is String ? double.tryParse(course['coursePrice']) ?? 0 : course['coursePrice'] ?? 0).toStringAsFixed(2)}',
+                            style: GoogleFonts.montserrat(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
                             ),
-                            if (course['previewPdfUrl'] != null &&
-                                course['previewPdfUrl'].isNotEmpty)
-                              TextButton.icon(
+                          ),
+                        ),
+                        if (course['previewPdfUrl'] != null &&
+                            course['previewPdfUrl'].isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(5),
+                                color: Colors.white,
+                              ),
+                              child: TextButton.icon(
                                 onPressed: () {
                                   setState(() {
                                     currentPreviewPdfUrl =
@@ -616,110 +655,99 @@ class _StudentCourseBrowseState extends State<StudentCourseBrowse> {
                                   });
                                 },
                                 icon: const Icon(Icons.visibility,
-                                    color: Colors.white, size: 16),
+                                    size: 16, color: Colors.black87),
                                 label: Text(
                                   'Preview',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w500,
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
                                   ),
                                 ),
                                 style: TextButton.styleFrom(
-                                  backgroundColor:
-                                      Mycolors().green.withOpacity(0.3),
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
+                                    horizontal: 8,
+                                    vertical: 2,
                                   ),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                 ),
                               ),
-                          ],
-                        ),
-                      ),
-                    ],
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  course['courseName'] ?? 'Untitled Course',
+                  style: GoogleFonts.montserrat(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      course['courseName'] ?? 'Untitled Course',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[800],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      course['courseDescription'] ?? 'No description available',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                        height: 1.5,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildStatItem(
-                          Icons.person_outline,
-                          course['studentCount']?.toString() ?? '0',
-                          'Students',
-                        ),
-                        _buildStatItem(
-                          Icons.assignment_outlined,
-                          course['assessmentCount']?.toString() ?? '0',
-                          'Assessments',
-                        ),
-                        _buildStatItem(
-                          Icons.library_books_outlined,
-                          course['moduleCount']?.toString() ?? '0',
-                          'Modules',
-                        ),
-                      ],
-                    ),
-                  ],
+                padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+                child: Text(
+                  course['courseDescription'] ?? 'No description available',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
+              ),
+              const Spacer(),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Container(
+                  width: 300,
+                  height: 2,
+                  color: const Color.fromARGB(255, 189, 189, 189),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(15),
+                    child: DisplayCardIcons(
+                      icon: Icons.person,
+                      count: (course['studentCount'] ?? 0).toString(),
+                      tooltipText: 'Students',
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(15),
+                    child: DisplayCardIcons(
+                      icon: Icons.format_list_numbered,
+                      count: (course['assessmentCount'] ?? 0).toString(),
+                      tooltipText: 'Assessments',
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(15),
+                    child: DisplayCardIcons(
+                      icon: Icons.library_books,
+                      count: (course['moduleCount'] ?? 0).toString(),
+                      tooltipText: 'Modules',
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildStatItem(IconData icon, String count, String label) {
-    return Column(
-      children: [
-        Icon(icon, color: Mycolors().navyBlue, size: 20),
-        const SizedBox(height: 4),
-        Text(
-          count,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[800],
-          ),
-        ),
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
     );
   }
 
@@ -913,20 +941,20 @@ class _StudentCourseBrowseState extends State<StudentCourseBrowse> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatItem(
-                      Icons.person_outline,
-                      courseData['studentCount']?.toString() ?? '0',
-                      'Students',
+                    DisplayCardIcons(
+                      icon: Icons.person,
+                      count: courseData['studentCount']?.toString() ?? '0',
+                      tooltipText: 'Students',
                     ),
-                    _buildStatItem(
-                      Icons.assignment_outlined,
-                      courseData['assessmentCount']?.toString() ?? '0',
-                      'Assessments',
+                    DisplayCardIcons(
+                      icon: Icons.assignment_outlined,
+                      count: courseData['assessmentCount']?.toString() ?? '0',
+                      tooltipText: 'Assessments',
                     ),
-                    _buildStatItem(
-                      Icons.library_books_outlined,
-                      courseData['moduleCount']?.toString() ?? '0',
-                      'Modules',
+                    DisplayCardIcons(
+                      icon: Icons.library_books,
+                      count: courseData['moduleCount']?.toString() ?? '0',
+                      tooltipText: 'Modules',
                     ),
                   ],
                 ),

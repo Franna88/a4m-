@@ -3,16 +3,45 @@ import 'package:a4m/Themes/Constants/myColors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class CourseContainers extends StatefulWidget {
-  const CourseContainers({super.key});
+class CourseContainers extends StatelessWidget {
+  final List<Map<String, dynamic>>? courses;
+  const CourseContainers({super.key, this.courses});
 
-  @override
-  State<CourseContainers> createState() => _CourseContainersState();
-}
-
-class _CourseContainersState extends State<CourseContainers> {
   @override
   Widget build(BuildContext context) {
+    if (courses == null) {
+      return Center(
+        child: CircularProgressIndicator(color: Mycolors().green),
+      );
+    }
+    if (courses!.isEmpty) {
+      return Center(
+        child: Text(
+          'No courses available',
+          style: GoogleFonts.montserrat(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+    // Responsive grid: 1-4 columns
+    final screenWidth = MediaQuery.of(context).size.width;
+    int columns = 1;
+    if (screenWidth > 1200) {
+      columns = 4;
+    } else if (screenWidth > 900) {
+      columns = 3;
+    } else if (screenWidth > 600) {
+      columns = 2;
+    }
+    return Center(
+      child: Wrap(
+        spacing: 24,
+        runSpacing: 24,
+        children: courses!.map((course) => _buildCourseCard(course)).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCourseCard(Map<String, dynamic> course) {
     return Material(
       borderRadius: BorderRadius.circular(15),
       elevation: 5,
@@ -29,76 +58,49 @@ class _CourseContainersState extends State<CourseContainers> {
             Container(
               width: 320,
               height: 180,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(15),
                   topRight: Radius.circular(15),
                 ),
-                image: DecorationImage(
-                  image: AssetImage('images/course1.png'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-              child: Column(
-                children: [
-                  const Spacer(),
-                  Container(
-                    height: 60,
-                    width: 320,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Mycolors().green,
-                          const Color.fromARGB(0, 255, 255, 255),
-                        ],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                      ),
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 10),
-                        child: Container(
-                          height: 30,
-                          width: 80,
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(5),
-                              color: Mycolors().darkTeal),
-                          child: Center(
-                            child: Text(
-                              'R 323',
-                              style: GoogleFonts.montserrat(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                child: course['courseImageUrl'] != null &&
+                        course['courseImageUrl'].toString().isNotEmpty
+                    ? Image.network(
+                        course['courseImageUrl'],
+                        width: 320,
+                        height: 180,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Image.asset('images/course1.png',
+                              width: 320, height: 180, fit: BoxFit.cover);
+                        },
+                      )
+                    : Image.asset('images/course1.png',
+                        width: 320, height: 180, fit: BoxFit.cover),
               ),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
-                'Course Name',
+                course['courseName'] ?? 'Course Name',
                 style: GoogleFonts.montserrat(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             Padding(
               padding: const EdgeInsets.only(left: 8, right: 5, bottom: 5),
               child: Text(
-                'This learnership provides a solid foundation in operations, quality, maintenance and safety aspects of a business. ',
+                course['courseDescription'] ?? '',
                 style: GoogleFonts.montserrat(
                     fontSize: 12,
                     color: Colors.grey,
                     fontWeight: FontWeight.w600),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const Spacer(),
@@ -119,7 +121,7 @@ class _CourseContainersState extends State<CourseContainers> {
                     children: [
                       DisplayCardIcons(
                           icon: Icons.format_list_numbered,
-                          count: '7',
+                          count: (course['assessmentCount'] ?? '0').toString(),
                           tooltipText: 'Assessments'),
                     ],
                   ),
@@ -130,7 +132,7 @@ class _CourseContainersState extends State<CourseContainers> {
                     children: [
                       DisplayCardIcons(
                           icon: Icons.library_books,
-                          count: '7',
+                          count: (course['moduleCount'] ?? '0').toString(),
                           tooltipText: 'Modules'),
                     ],
                   ),

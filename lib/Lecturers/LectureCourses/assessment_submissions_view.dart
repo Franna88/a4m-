@@ -5,15 +5,18 @@ import 'package:a4m/Constants/myColors.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'assessment_grading_view.dart';
+import 'package:a4m/Lecturers/commonUi/lecturerPdfViewer.dart';
 
 class AssessmentSubmissionsView extends StatefulWidget {
   final String courseId;
   final String moduleId;
+  final Function(int, {String courseId, String moduleId}) changePage;
 
   const AssessmentSubmissionsView({
     super.key,
     required this.courseId,
     required this.moduleId,
+    required this.changePage,
   });
 
   @override
@@ -150,7 +153,9 @@ class _AssessmentSubmissionsViewState extends State<AssessmentSubmissionsView> {
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              widget.changePage(6, courseId: widget.courseId, moduleId: '');
+            },
           ),
           const SizedBox(width: 16),
           Text(
@@ -451,34 +456,47 @@ class _AssessmentSubmissionsViewState extends State<AssessmentSubmissionsView> {
   }
 
   Future<void> _openGradingView(Map<String, dynamic> submission) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AssessmentGradingView(
-          courseId: widget.courseId,
-          moduleId: widget.moduleId,
-          studentId: submission['id'],
-          assessmentName: submission['assessmentName'],
-          fileUrl: submission['fileUrl'],
-          currentMark: submission['mark']?.toDouble(),
-          currentComment: submission['comment'],
-        ),
+    await showDialog(
+      context: context,
+      builder: (context) => AssessmentGradingView(
+        courseId: widget.courseId,
+        moduleId: widget.moduleId,
+        studentId: submission['id'],
+        assessmentName: submission['assessmentName'],
+        fileUrl: submission['fileUrl'],
+        currentMark: submission['mark']?.toDouble(),
+        currentComment: submission['comment'],
       ),
     );
     fetchSubmissions(); // Refresh after grading
   }
 
   Future<void> _viewSubmission(String fileUrl) async {
-    if (await canLaunch(fileUrl)) {
-      await launch(fileUrl);
-    } else {
+    if (fileUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Could not open the file'),
+          content: Text('No file URL provided'),
           backgroundColor: Colors.red,
         ),
       );
+      return;
     }
+    await showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: SizedBox(
+          width: 600,
+          height: 800,
+          child: LecturerPdfViewer(
+            pdfUrl: fileUrl,
+            title: 'Student Submission',
+            showDownloadButton: true,
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildTableHeader() {
@@ -533,6 +551,17 @@ class _AssessmentSubmissionsViewState extends State<AssessmentSubmissionsView> {
                 fontWeight: FontWeight.w600,
                 color: Colors.grey[800],
               ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              'Grade',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[800],
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
           const SizedBox(width: 100), // Fixed width for actions column
@@ -606,6 +635,18 @@ class _AssessmentSubmissionsViewState extends State<AssessmentSubmissionsView> {
                       fontSize: 14,
                       color: _getStatusColor(submission['status']),
                     ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    submission['mark'] != null
+                        ? submission['mark'].toString()
+                        : '-',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.grey[800],
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
                 SizedBox(

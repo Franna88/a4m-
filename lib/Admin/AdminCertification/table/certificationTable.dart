@@ -22,6 +22,10 @@ class _CertificationTableState extends State<CertificationTable> {
 
   Future<void> fetchPurchasedCertificates() async {
     try {
+      setState(() {
+        isLoading = true;
+      });
+
       // Get all certificates
       QuerySnapshot certificatesSnapshot =
           await FirebaseFirestore.instance.collection('certificates').get();
@@ -44,7 +48,8 @@ class _CertificationTableState extends State<CertificationTable> {
                   .split('.')[0]
               : 'Unknown Date',
           'price': data['price'] ?? 'R 299',
-          'status': data['status'] ?? 'pending',
+          'status':
+              'Purchased', // Always purchased since it's in certificates collection
         });
       }
 
@@ -108,16 +113,17 @@ class _CertificationTableState extends State<CertificationTable> {
   Future<List<Map<String, dynamic>>> fetchModuleSubmissions(
       String courseId, String studentId) async {
     try {
+      // Get all modules for the course in a single query
       final moduleSnapshot = await FirebaseFirestore.instance
           .collection('courses')
           .doc(courseId)
           .collection('modules')
           .get();
 
-      List<Map<String, dynamic>> allSubmissions = [];
-
-      for (var moduleDoc in moduleSnapshot.docs) {
-        final submissionDoc = await FirebaseFirestore.instance
+      // Prepare batch of submission queries
+      List<Future<DocumentSnapshot>> submissionQueries =
+          moduleSnapshot.docs.map((moduleDoc) {
+        return FirebaseFirestore.instance
             .collection('courses')
             .doc(courseId)
             .collection('modules')
@@ -125,14 +131,28 @@ class _CertificationTableState extends State<CertificationTable> {
             .collection('submissions')
             .doc(studentId)
             .get();
+      }).toList();
+
+      // Execute all submission queries in parallel
+      List<DocumentSnapshot> submissionDocs =
+          await Future.wait(submissionQueries);
+
+      List<Map<String, dynamic>> allSubmissions = [];
+
+      // Process results
+      for (var i = 0; i < moduleSnapshot.docs.length; i++) {
+        var moduleDoc = moduleSnapshot.docs[i];
+        var submissionDoc = submissionDocs[i];
+        var moduleData = moduleDoc.data() as Map<String, dynamic>;
 
         if (submissionDoc.exists && submissionDoc.data() != null) {
-          final submissions =
-              submissionDoc.data()!['submittedAssessments'] ?? [];
+          final submissions = (submissionDoc.data()
+                  as Map<String, dynamic>)['submittedAssessments'] ??
+              [];
 
           for (var submission in submissions) {
             allSubmissions.add({
-              'moduleName': moduleDoc.data()['moduleName'] ?? 'Unknown Module',
+              'moduleName': moduleData['moduleName'] ?? 'Unknown Module',
               'assessmentName': submission['assessmentName'] ?? '',
               'mark': submission['mark'] ?? 0,
               'comment': submission['comment'] ?? '',
@@ -219,255 +239,286 @@ class _CertificationTableState extends State<CertificationTable> {
   }
 
   void showResultsSheet(Map<String, dynamic> cert) async {
-    final submissions =
-        await fetchModuleSubmissions(cert['courseId'], cert['studentId']);
-
-    if (!context.mounted) return;
-
+    // Show loading indicator immediately
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Mycolors().green),
         ),
-        child: Container(
-          width: 800,
-          height: 600,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: Colors.white,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Mycolors().green.withOpacity(0.1),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.school,
-                      color: Mycolors().green,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Results Sheet',
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                      splashRadius: 24,
-                      color: Colors.grey[600],
-                    ),
-                  ],
-                ),
-              ),
+      ),
+    );
 
-              // Student Info
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
+    try {
+      // Fetch submissions in background
+      final submissions =
+          await fetchModuleSubmissions(cert['courseId'], cert['studentId']);
+
+      // Remove loading indicator
+      Navigator.of(context).pop();
+
+      if (!context.mounted) return;
+
+      // Show the actual results sheet
+      showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: 800,
+            height: 600,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: Colors.white,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[200]!),
+                    color: Mycolors().green.withOpacity(0.1),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildInfoRow(
-                              Icons.person,
-                              'Student',
-                              cert['studentName'],
-                            ),
-                            const SizedBox(height: 12),
-                            _buildInfoRow(
-                              Icons.book,
-                              'Course',
-                              cert['courseName'],
-                            ),
-                          ],
-                        ),
+                      Icon(
+                        Icons.school,
+                        color: Mycolors().green,
+                        size: 24,
                       ),
-                      Container(
-                        height: 50,
-                        width: 1,
-                        color: Colors.grey[300],
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildInfoRow(
-                              Icons.calendar_today,
-                              'Completion Date',
-                              formatDateString(cert['completionDate']),
-                            ),
-                            const SizedBox(height: 12),
-                            _buildStatusBadge(cert['status']),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Results Table
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                      const SizedBox(width: 12),
                       Text(
-                        'Assessment Results',
+                        'Results Sheet',
                         style: GoogleFonts.poppins(
-                          fontSize: 16,
+                          fontSize: 20,
                           fontWeight: FontWeight.w600,
                           color: Colors.grey[800],
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Expanded(
-                        child: submissions.isEmpty
-                            ? Center(
-                                child: Text(
-                                  'No assessment results found',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.grey[600],
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                        splashRadius: 24,
+                        color: Colors.grey[600],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Student Info
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildInfoRow(
+                                Icons.person,
+                                'Student',
+                                cert['studentName'],
+                              ),
+                              const SizedBox(height: 12),
+                              _buildInfoRow(
+                                Icons.book,
+                                'Course',
+                                cert['courseName'],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          height: 50,
+                          width: 1,
+                          color: Colors.grey[300],
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildInfoRow(
+                                Icons.calendar_today,
+                                'Completion Date',
+                                formatDateString(cert['completionDate']),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildStatusBadge(cert['status']),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Results Table
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Assessment Results',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[800],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: submissions.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'No assessment results found',
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.grey[600],
+                                    ),
                                   ),
-                                ),
-                              )
-                            : Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey[200]!),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: SingleChildScrollView(
-                                    child: DataTable(
-                                      headingRowColor:
-                                          MaterialStateProperty.all(
-                                        Mycolors().green.withOpacity(0.1),
+                                )
+                              : Container(
+                                  decoration: BoxDecoration(
+                                    border:
+                                        Border.all(color: Colors.grey[200]!),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: SingleChildScrollView(
+                                      child: DataTable(
+                                        headingRowColor:
+                                            MaterialStateProperty.all(
+                                          Mycolors().green.withOpacity(0.1),
+                                        ),
+                                        dataRowMaxHeight: 70,
+                                        dataRowMinHeight: 60,
+                                        columns: [
+                                          _buildDataColumn('Module'),
+                                          _buildDataColumn('Assessment'),
+                                          _buildDataColumn('Mark'),
+                                          _buildDataColumn('Comments'),
+                                          _buildDataColumn('Date'),
+                                        ],
+                                        rows: submissions.map((submission) {
+                                          return DataRow(
+                                            cells: [
+                                              _buildDataCell(
+                                                  submission['moduleName']),
+                                              _buildDataCell(
+                                                  submission['assessmentName']
+                                                      .toString()
+                                                      .split('/')
+                                                      .last),
+                                              _buildDataCell(
+                                                '${submission['mark']}%',
+                                                align: TextAlign.center,
+                                                color: _getMarkColor(
+                                                    submission['mark']),
+                                              ),
+                                              _buildDataCell(
+                                                  submission['comment']),
+                                              DataCell(formatDateTimeCell(
+                                                  submission['gradedAt'])),
+                                            ],
+                                          );
+                                        }).toList(),
                                       ),
-                                      dataRowMaxHeight: 70,
-                                      dataRowMinHeight: 60,
-                                      columns: [
-                                        _buildDataColumn('Module'),
-                                        _buildDataColumn('Assessment'),
-                                        _buildDataColumn('Mark'),
-                                        _buildDataColumn('Comments'),
-                                        _buildDataColumn('Date'),
-                                      ],
-                                      rows: submissions.map((submission) {
-                                        return DataRow(
-                                          cells: [
-                                            _buildDataCell(
-                                                submission['moduleName']),
-                                            _buildDataCell(
-                                                submission['assessmentName']
-                                                    .toString()
-                                                    .split('/')
-                                                    .last),
-                                            _buildDataCell(
-                                              '${submission['mark']}%',
-                                              align: TextAlign.center,
-                                              color: _getMarkColor(
-                                                  submission['mark']),
-                                            ),
-                                            _buildDataCell(
-                                                submission['comment']),
-                                            DataCell(formatDateTimeCell(
-                                                submission['gradedAt'])),
-                                          ],
-                                        );
-                                      }).toList(),
                                     ),
                                   ),
                                 ),
-                              ),
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
 
-              // Summary Section
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[200]!),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Mycolors().green.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'Overall Average: ${_calculateAverage(submissions)}%',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Mycolors().green,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          // Implement PDF export
-                        },
-                        icon: const Icon(Icons.download),
-                        label: const Text('Results report'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Mycolors().green,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
+                // Summary Section
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Mycolors().green.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
+                          child: Text(
+                            'Overall Average: ${_calculateAverage(submissions)}%',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              color: Mycolors().green,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                        const Spacer(),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            // Implement PDF export
+                          },
+                          icon: const Icon(Icons.download),
+                          label: const Text('Results report'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Mycolors().green,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      print('Error showing results sheet: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error showing results sheet'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    }
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
@@ -505,32 +556,10 @@ class _CertificationTableState extends State<CertificationTable> {
   }
 
   Widget _buildStatusBadge(String status) {
-    Color bgColor;
-    Color textColor;
-    String statusText;
-    IconData icon;
-
-    switch (status.toLowerCase()) {
-      case 'approved':
-        bgColor = Colors.green[50]!;
-        textColor = Colors.green[700]!;
-        statusText = 'Approved';
-        icon = Icons.check_circle;
-        break;
-      case 'rejected':
-        bgColor = Colors.red[50]!;
-        textColor = Colors.red[700]!;
-        statusText = 'Rejected';
-        icon = Icons.cancel;
-        break;
-      case 'pending':
-      default:
-        bgColor = Colors.orange[50]!;
-        textColor = Colors.orange[700]!;
-        statusText = 'Pending';
-        icon = Icons.access_time;
-        break;
-    }
+    Color bgColor = Colors.green[50]!;
+    Color textColor = Colors.green[700]!;
+    IconData icon = Icons.check_circle;
+    String statusText = 'Purchased';
 
     return Row(
       children: [
@@ -673,7 +702,7 @@ class _CertificationTableState extends State<CertificationTable> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No certificates found',
+              'No purchased certificates found',
               style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -682,7 +711,7 @@ class _CertificationTableState extends State<CertificationTable> {
             ),
             const SizedBox(height: 8),
             Text(
-              'No students have purchased certificates yet',
+              'No students have purchased any certificates yet',
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 color: Colors.grey[500],
@@ -729,7 +758,7 @@ class _CertificationTableState extends State<CertificationTable> {
         ...purchasedCertificates.map((cert) {
           return TableRow(
             children: [
-              _buildTableCell(cert['courseName']),
+              _buildTableCell(cert['courseName'], withStar: true),
               _buildTableCell(cert['studentName']),
               _buildTableCell(formatDateString(cert['completionDate'])),
               _buildTableCell(cert['purchaseDate']),
@@ -760,16 +789,34 @@ class _CertificationTableState extends State<CertificationTable> {
     );
   }
 
-  Widget _buildTableCell(String text) {
+  Widget _buildTableCell(String text, {bool withStar = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-      child: Text(
-        text,
-        style: GoogleFonts.poppins(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: Colors.grey[800],
-        ),
+      child: Row(
+        children: [
+          if (withStar)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Tooltip(
+                message: 'Certificate Purchased',
+                child: Icon(
+                  Icons.star,
+                  color: Colors.amber,
+                  size: 20,
+                ),
+              ),
+            ),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[800],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

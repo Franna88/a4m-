@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_network/image_network.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:a4m/services/messaging_service.dart';
 
 class LectureNavbar extends StatefulWidget {
   final Function(int) changePage;
@@ -29,6 +30,8 @@ class _LectureNavbarState extends State<LectureNavbar> {
   int _totalStudents = 0;
   int _activeCourses = 0;
   int _pendingReviews = 0;
+  int _monthlyStudents = 0;
+  final MessagingService _messagingService = MessagingService();
 
   @override
   void initState() {
@@ -68,9 +71,12 @@ class _LectureNavbarState extends State<LectureNavbar> {
 
   Future<void> _fetchMetrics() async {
     try {
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
       final coursesSnapshot =
           await FirebaseFirestore.instance.collection('courses').get();
       Set<String> uniqueStudentIds = {};
+      Set<String> uniqueMonthlyStudentIds = {};
       int pendingReviews = 0;
       int activeCourses = 0;
 
@@ -93,6 +99,22 @@ class _LectureNavbarState extends State<LectureNavbar> {
                 if (student is Map<String, dynamic> &&
                     student['studentId'] != null) {
                   uniqueStudentIds.add(student['studentId'].toString());
+
+                  // Count monthly new students
+                  final registered = student['registered'];
+                  if (registered != null) {
+                    final registeredDate = registered is Timestamp
+                        ? registered.toDate()
+                        : registered is DateTime
+                            ? registered
+                            : null;
+
+                    if (registeredDate != null &&
+                        registeredDate.isAfter(startOfMonth)) {
+                      uniqueMonthlyStudentIds
+                          .add(student['studentId'].toString());
+                    }
+                  }
                 }
               }
             }
@@ -132,6 +154,7 @@ class _LectureNavbarState extends State<LectureNavbar> {
           _totalStudents = uniqueStudentIds.length;
           _activeCourses = activeCourses;
           _pendingReviews = pendingReviews;
+          _monthlyStudents = uniqueMonthlyStudentIds.length;
         });
       }
     } catch (e) {
@@ -213,7 +236,8 @@ class _LectureNavbarState extends State<LectureNavbar> {
     );
   }
 
-  Widget _buildQuickStat(String title, String value, IconData icon) {
+  Widget _buildQuickStat(String title, String value, IconData icon,
+      {String? subtitle, IconData? subtitleIcon, Color? subtitleColor}) {
     return Container(
       margin: const EdgeInsets.only(right: 16),
       padding: const EdgeInsets.all(16),
@@ -255,6 +279,29 @@ class _LectureNavbarState extends State<LectureNavbar> {
                   color: Colors.grey[800],
                 ),
               ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    if (subtitleIcon != null) ...[
+                      Icon(
+                        subtitleIcon,
+                        size: 12,
+                        color: subtitleColor ?? Mycolors().green,
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: subtitleColor ?? Mycolors().green,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ],
@@ -336,13 +383,14 @@ class _LectureNavbarState extends State<LectureNavbar> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'Here\'s what\'s happening with your courses',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
+                  // Remove the subtitle text for lecturers only
+                  // Text(
+                  //   'Here\'s what\'s happening with your courses',
+                  //   style: GoogleFonts.poppins(
+                  //     fontSize: 14,
+                  //     color: Colors.grey[600],
+                  //   ),
+                  // ),
                 ],
               ),
               Row(
@@ -353,10 +401,36 @@ class _LectureNavbarState extends State<LectureNavbar> {
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: IconButton(
-                      icon: const Icon(Icons.notifications_outlined),
-                      onPressed: () {
-                        // Handle notifications
+                    child: StreamBuilder<int>(
+                      stream: _messagingService.getUnreadCount(_userId),
+                      builder: (context, snapshot) {
+                        final unreadCount = snapshot.data ?? 0;
+                        return Tooltip(
+                          message: 'Notifications',
+                          child: Stack(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.notifications_outlined),
+                                onPressed: () {
+                                  // Handle notifications
+                                },
+                              ),
+                              if (unreadCount > 0)
+                                Positioned(
+                                  right: 8,
+                                  top: 8,
+                                  child: Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
                       },
                     ),
                   ),
@@ -380,6 +454,11 @@ class _LectureNavbarState extends State<LectureNavbar> {
                     'Total Students',
                     _totalStudents.toString(),
                     Icons.people_outline,
+                    subtitle:
+                        _monthlyStudents > 0 ? '${_monthlyStudents} new' : null,
+                    subtitleIcon:
+                        _monthlyStudents > 0 ? Icons.arrow_upward : null,
+                    subtitleColor: Mycolors().green,
                   ),
                   const SizedBox(width: 16),
                   _buildQuickStat(
@@ -568,7 +647,7 @@ class _LectureNavbarState extends State<LectureNavbar> {
                       children: [
                         _buildNavItem(Icons.dashboard, 'Dashboard', 0),
                         _buildNavItem(Icons.school, 'Courses', 1),
-                        _buildNavItem(Icons.people, 'Students', 2),
+                        // _buildNavItem(Icons.people, 'Students', 2),
                         // _buildNavItem(Icons.slideshow, 'Presentation', 3),
                         _buildNavItem(Icons.message, 'Messages', 4),
                         const SizedBox(height: 20),

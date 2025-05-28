@@ -151,13 +151,24 @@ class _NewlySubmitedModulesState extends State<NewlySubmitedModules> {
             color: Mycolors().green.withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Text(
-            '${recentSubmissions.length} submissions',
-            style: TextStyle(
-              fontSize: 14.0,
-              fontWeight: FontWeight.w600,
-              color: Mycolors().green,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${recentSubmissions.length} submissions',
+                style: TextStyle(
+                  fontSize: 14.0,
+                  fontWeight: FontWeight.w600,
+                  color: Mycolors().green,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.arrow_upward,
+                color: Mycolors().green,
+                size: 16,
+              ),
+            ],
           ),
         ),
       ],

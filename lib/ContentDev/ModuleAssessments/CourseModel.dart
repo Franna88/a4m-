@@ -131,6 +131,10 @@ class Module with ChangeNotifier {
   String? facilitatorGuidePdfName;
   String? facilitatorGuidePdfUrl; // ✅ Firestore URL
 
+  Uint8List? lecturerGuidePdf;
+  String? lecturerGuidePdfName;
+  String? lecturerGuidePdfUrl;
+
   Uint8List? answerSheetPdf;
   String? answerSheetPdfName;
   String? answerSheetPdfUrl; // ✅ Firestore URL
@@ -150,6 +154,11 @@ class Module with ChangeNotifier {
   Uint8List? assignmentsPdf;
   String? assignmentsPdfName;
   String? assignmentsPdfUrl; // ✅ Firestore URL
+
+  // Index PDF
+  Uint8List? indexPdf;
+  String? indexPdfName;
+  String? indexPdfUrl; // ✅ Firestore URL
 
   List<Question> questions;
   List<Task> tasks;
@@ -172,6 +181,9 @@ class Module with ChangeNotifier {
     this.facilitatorGuidePdf,
     this.facilitatorGuidePdfName,
     this.facilitatorGuidePdfUrl, // ✅ Firestore URL
+    this.lecturerGuidePdf,
+    this.lecturerGuidePdfName,
+    this.lecturerGuidePdfUrl,
     this.answerSheetPdf,
     this.answerSheetPdfName,
     this.answerSheetPdfUrl, // ✅ Firestore URL
@@ -187,6 +199,9 @@ class Module with ChangeNotifier {
     this.assignmentsPdf,
     this.assignmentsPdfName,
     this.assignmentsPdfUrl, // ✅ Firestore URL
+    this.indexPdf,
+    this.indexPdfName,
+    this.indexPdfUrl, // ✅ Firestore URL
     this.changes = const [],
     List<Question>? questions,
     List<Task>? tasks,
@@ -280,6 +295,9 @@ class Module with ChangeNotifier {
       'facilitatorGuidePdfUrl': facilitatorGuidePdfUrl,
       'facilitatorGuidePdfName': facilitatorGuidePdfName,
 
+      'lecturerGuidePdfUrl': lecturerGuidePdfUrl,
+      'lecturerGuidePdfName': lecturerGuidePdfName,
+
       'answerSheetPdfUrl': answerSheetPdfUrl,
       'answerSheetPdfName': answerSheetPdfName,
 
@@ -294,6 +312,9 @@ class Module with ChangeNotifier {
 
       'assignmentsPdfUrl': assignmentsPdfUrl,
       'assignmentsPdfName': assignmentsPdfName,
+
+      'indexPdfUrl': indexPdfUrl,
+      'indexPdfName': indexPdfName,
 
       'questions': questions.map((q) => q.toMap()).toList(),
       'tasks': tasks.map((t) => t.toMap()).toList(),
